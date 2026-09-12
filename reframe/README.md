@@ -76,6 +76,11 @@ implementation, not a GPU performance claim.
 
 ## Lab server: tmux entry points
 
+For the complete **eight-method RTX 5090 campaign**, including native v1
+baselines, shared few-shot prompts, HumanEval postprocessing and common timing,
+follow [EXPERIMENTS_5090.md](EXPERIMENTS_5090.md). The simple launchers below are
+individual smoke jobs, not the complete comparison matrix.
+
 Existing paths default to `/opt/miniconda3`, environment `fastdllm311`, model
 cache `/home/xuyouwen/hf_hub_local`, dataset cache
 `/home/xuyouwen/hf_home_local/datasets`. These scripts clear the old proxy and

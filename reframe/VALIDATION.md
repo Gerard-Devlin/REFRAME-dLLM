@@ -9,7 +9,7 @@ to upstream commit `a9b81e4`.
 - Windows, Python 3.12.13, PyTorch 2.13.0+cu130, Transformers 4.49.0.
 - lm-eval 0.4.8, Accelerate 0.34.2; the evaluation entry point loads successfully.
 - Local GPU: NVIDIA RTX 4060 Laptop, 8 GB. This is not the lab's RTX 5090.
-- `python -X utf8 -m pytest reframe/tests -q`: **25 passed, 1 skipped**.
+- `python -X utf8 -m pytest reframe/tests -q`: **28 passed, 1 skipped**.
   The skipped test requires FlashAttention, which is not installed locally.
   CUDA BF16 transport versus materialization passed with the torch backend.
 - Both server shell scripts pass `bash -n` syntax checking. Server jobs have
@@ -22,6 +22,10 @@ original tiny LLaDA architecture; completed-token writes; transactional
 fallback; original DualCache agreement in the stale/per-block-refresh control;
 oracle probes that do not change the baseline; read-only logit audits; and
 the lm-eval adapter's stop handling and repeated-call logging.
+Campaign tests additionally cover method arguments, replaying logged few-shot
+prompts, and preserving GSM8K scoring when switching to the cached dataset ID.
+All five native comparison modes also complete random-tiny generation. The
+full real-model campaign itself remains to be run on the lab server.
 
 ## End-to-end smoke checks
 

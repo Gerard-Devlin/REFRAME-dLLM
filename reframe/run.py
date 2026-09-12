@@ -9,7 +9,7 @@ import time
 import _bootstrap  # noqa: F401
 import torch
 
-from generate import generate_with_dual_cache, generate_with_prefix_cache
+from generate import generate, generate_with_dual_cache, generate_with_prefix_cache
 from model.configuration_llada import LLaDAConfig
 from model.modeling_llada import LLaDAModelLM
 from reframe_dllm.generate import generate_reframe, synchronize
@@ -44,7 +44,8 @@ def main():
     p.add_argument("--output", type=Path, default=Path("reframe/results/smoke.jsonl"))
     args = p.parse_args()
     methods = args.methods.split(",")
-    if set(methods) - {"native-dual", "native-prefix", "stale", "shift", "scale", "pair", "materialize"}:
+    if set(methods) - {"native-serial", "native-prefix-serial", "native-full", "native-dual",
+                       "native-prefix", "stale", "shift", "scale", "pair", "materialize"}:
         p.error("Unknown method")
     if min(args.gen_length, args.block_length, args.limit, args.repeats) < 1 or args.warmup < 0:
         p.error("Lengths, limit and repeats must be positive; warmup nonnegative")
@@ -125,18 +126,22 @@ def main():
                                            backend=args.backend, materialize=method == "materialize",
                                            max_pilot_error=args.max_pilot_error, ridge=args.ridge)
                     if method.startswith("native-"):
-                        generator = generate_with_dual_cache if method == "native-dual" else generate_with_prefix_cache
+                        generator = (generate_with_dual_cache if method == "native-dual" else
+                                     generate_with_prefix_cache if method in {"native-prefix", "native-prefix-serial"}
+                                     else generate)
+                        serial = method in {"native-serial", "native-prefix-serial"}
                         synchronize(prompt.device)
                         if prompt.device.type == "cuda":
                             torch.cuda.reset_peak_memory_stats(prompt.device)
                         started = time.perf_counter()
                         out, nfe = generator(model, prompt, steps=args.gen_length, gen_length=args.gen_length,
-                                             block_length=args.block_length, threshold=args.threshold,
-                                             factor=args.factor, mask_id=mask_id)
+                                             block_length=args.block_length, threshold=None if serial else args.threshold,
+                                             factor=None if serial else args.factor, mask_id=mask_id)
                         synchronize(prompt.device)
                         elapsed = time.perf_counter() - started
                         stats = dict(nfe=nfe, elapsed_seconds=elapsed, generated_slots=args.gen_length,
-                                     full_forwards=args.gen_length // args.block_length,
+                                     full_forwards=(nfe if method in {"native-full", "native-serial"}
+                                                    else args.gen_length // args.block_length),
                                      slots_per_second=args.gen_length / elapsed,
                                      peak_memory_bytes=(torch.cuda.max_memory_allocated(prompt.device)
                                                         if prompt.device.type == "cuda" else None))
@@ -146,6 +151,8 @@ def main():
                                                            threshold=args.threshold, factor=args.factor,
                                                            mask_id=mask_id, config=config,
                                                            audit_every=args.audit_every)
+                    if bool((out[:, prompt.shape[1]:] == mask_id).any().item()):
+                        raise RuntimeError(f"{method} left MASK tokens; this run is invalid")
                     if repeat < 0:
                         continue
                     ids = out[0, prompt.shape[1]:].tolist()
