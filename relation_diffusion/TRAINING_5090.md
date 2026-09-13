@@ -68,6 +68,9 @@ SESSION=relation-prepare bash relation_diffusion/scripts/launch_tmux.sh prepare
 
 脚本会打印具体日志和 tmux 名称。完成标记：`DATA_DIR/manifest.json` 和作业
 `exit_code=0`。若准备失败，请换新的 DATA_DIR 后重跑；默认拒绝覆盖已有数据。
+`independent_diagnostic.json` 比 manifest 更早写出，单独看到它不代表准备已结束。
+启动器会在数据 manifest 尚未就绪时拒绝启动 GPU 作业；请检查 prepare 的日志，
+成功后使用新的 RUN_DIR 重试 preflight，无需重新下载或准备已完成的数据。
 
 ## 2. 先运行“完全不训练”的开销检查
 

@@ -8,6 +8,11 @@ DATA_DIR="${DATA_DIR:-/home/xuyouwen/hf_home_local/relation_diffusion/wikitext2_
 RUN_DIR="${RUN_DIR:-$REPO/relation_diffusion/runs/${PHASE}_$(date +%Y%m%d_%H%M%S)}"
 SESSION="${SESSION:-relation-${PHASE}-$(date +%Y%m%d-%H%M%S)}"
 GPU_IDS="${GPU_IDS:-}"
+if [[ "$PHASE" != prepare && ! -s "$DATA_DIR/manifest.json" ]]; then
+    printf 'Data preparation is not complete: %s/manifest.json is missing or empty.\n' "$DATA_DIR" >&2
+    echo 'Check the prepare job.log and exit_code. Wait for successful preparation before launching; no GPU job was started.' >&2
+    exit 2
+fi
 if [[ "$PHASE" != prepare && ! "$GPU_IDS" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
     echo 'Set GPU_IDS explicitly, e.g. GPU_IDS=3 or GPU_IDS=0,1,2,3,4,5. Only use assigned idle GPUs.' >&2
     exit 2

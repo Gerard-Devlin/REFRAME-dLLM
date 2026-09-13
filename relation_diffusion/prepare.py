@@ -139,7 +139,11 @@ def main():
                     validation_sha256=digest(args.output / "validation.npy"), codecs=codecs,
                     prepare_seconds=time.perf_counter() - started,
                     note="Frozen train-only codes; test split not loaded; byte pilot, not BPE or benchmark accuracy")
-    (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    # Publish the completion marker only after every artifact is ready. Readers
+    # must never see a partially written manifest while prepare is still running.
+    pending_manifest = args.output / "manifest.json.tmp"
+    pending_manifest.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    pending_manifest.replace(args.output / "manifest.json")
     print(json.dumps(manifest, indent=2))
     print("No-neural-training diagnostic:", json.dumps(diagnostics))
 

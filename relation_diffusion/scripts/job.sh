@@ -3,6 +3,10 @@ set -euo pipefail
 source "${CONDA_ROOT:-/opt/miniconda3}/etc/profile.d/conda.sh"
 conda activate "${CONDA_ENV:-fastdllm311}"
 cd "$REPO"
+if [[ "$PHASE" != prepare && ! -s "$DATA_DIR/manifest.json" ]]; then
+    printf 'Data preparation is not complete: %s/manifest.json is missing or empty. Check the prepare job before retrying.\n' "$DATA_DIR" >&2
+    exit 2
+fi
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
 export HF_HOME=/home/xuyouwen/hf_home_local
 export HF_HUB_CACHE=/home/xuyouwen/hf_hub_local
