@@ -1,7 +1,11 @@
 # REFRAME-dLLM experimental prototype
 
 This directory implements **reference KV + query-side transport** for LLaDA.
-It is a research prototype, not a validated LLaDA-8B speedup or accuracy result.
+It is a research prototype. The first real LLaDA-8B check on an RTX 5090 found
+the default pair variant about **3.7 times slower** than native v1 DualCache
+on two repeated smoke prompts and four development prompts. See
+[the feasibility report](FEASIBILITY_5090.md) before scheduling a full campaign.
+No benchmark-wide speedup or accuracy preservation has been established.
 All new code lives here, alongside `v1/` and `v2/`. Neither upstream directory
 is modified. The runner imports the original model and native decoding code
 from `../v1/llada/` at runtime.
@@ -104,7 +108,9 @@ under `reframe/logs/` and `reframe/results/`, both ignored by Git. Successful
 jobs exit; if the session has already ended, read its log. Leave a live session
 using Ctrl-b then d.
 
-After smoke succeeds, the same GSM8K entry can run all 1319 test questions:
+After a future variant passes both feasibility and quality checks, the same
+GSM8K entry can run all 1319 test questions. The current pair variant has not
+passed that gate:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 GEN_LENGTH=256 LIMIT=1319 \

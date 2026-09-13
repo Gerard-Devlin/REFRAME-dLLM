@@ -1,5 +1,11 @@
 # Single-RTX-5090 comparison protocol
 
+**2026-09-13 status:** the default pair variant failed the first real-model
+feasibility check, taking about 3.7 times native DualCache latency. Read
+[FEASIBILITY_5090.md](FEASIBILITY_5090.md) before using the full-campaign commands.
+The protocol remains available for future variants; a full run of the current
+default is not recommended.
+
 All commands below run inside the **same tmux session** on the lab server.
 The campaign invokes unmodified v1 code. No new weights are needed.
 

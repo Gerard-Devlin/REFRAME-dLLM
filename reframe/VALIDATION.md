@@ -1,10 +1,31 @@
-# Local validation — 2026-09-12
+# Validation status — updated 2026-09-13
 
-This is a functional prototype. **No LLaDA-8B accuracy or speed result has been
-measured yet.** The original `v1/` and `v2/` source trees are unchanged relative
-to upstream commit `a9b81e4`.
+The real LLaDA-8B server validation is now complete for a bounded feasibility
+check. **The default pair variant did not accelerate inference:** about 3.7
+times native v1 DualCache latency on both two repeated smoke prompts and four
+separate development prompts. See [FEASIBILITY_5090.md](FEASIBILITY_5090.md)
+for the protocol, oracle/audit findings, timing and limitations. These are not
+full benchmark accuracy results. The original `v1/` and `v2/` source trees are
+unchanged relative to upstream commit `a9b81e4`.
 
-## Environment and checks
+## Server validation — 2026-09-13
+
+- RTX 5090 32 GB, physical GPU 3, existing `fastdllm311` environment.
+- PyTorch 2.7.1+cu128, FlashAttention 2.8.3.post1, Transformers 4.49.0,
+  Accelerate 0.34.2, lm-eval 0.4.8.
+- `python -X utf8 -m pytest reframe/tests -q`: **43 passed in 24.98 seconds**,
+  including FlashAttention and saved-checkpoint loading tests.
+- Fixed serialized lm-eval generation argument replay and the real-checkpoint
+  config-class mismatch. Real 8B oracle, audit and timing paths all completed.
+- Oracle: 2160 correlated observations from two prompts; audit: 42 decisions;
+  timing: two prompts with three repeats per method, plus four development
+  prompts with one measured repeat per method. Full refresh cost was measured
+  separately with CUDA events and unchanged native outputs.
+- GPU jobs ran under tmux, exited successfully, and released GPU 3.
+
+The remainder of this file records the earlier local prototype checks.
+
+## Historical local environment and checks — 2026-09-12
 
 - Windows, Python 3.12.13, PyTorch 2.13.0+cu130, Transformers 4.49.0.
 - lm-eval 0.4.8, Accelerate 0.34.2; the evaluation entry point loads successfully.
@@ -12,8 +33,8 @@ to upstream commit `a9b81e4`.
 - `python -X utf8 -m pytest reframe/tests -q`: **28 passed, 1 skipped**.
   The skipped test requires FlashAttention, which is not installed locally.
   CUDA BF16 transport versus materialization passed with the torch backend.
-- Both server shell scripts pass `bash -n` syntax checking. Server jobs have
-  not been executed; the scripts target the existing `fastdllm311` environment.
+- Both server shell scripts passed `bash -n` syntax checking. At that time,
+  server jobs had not yet been executed.
 
 Tests cover group softmax normalization with key translation; split-half RoPE
 transforms and inverse writes; grouped-query heads; FP64 algebra and BF16
@@ -25,7 +46,8 @@ the lm-eval adapter's stop handling and repeated-call logging.
 Campaign tests additionally cover method arguments, replaying logged few-shot
 prompts, and preserving GSM8K scoring when switching to the cached dataset ID.
 All five native comparison modes also complete random-tiny generation. The
-full real-model campaign itself remains to be run on the lab server.
+full task-accuracy campaign remains unrun; the feasibility check above now
+provides a reason to pause the default variant before that campaign.
 
 ## End-to-end smoke checks
 
@@ -62,16 +84,16 @@ comparisons, without feeding the full-model outputs into the trajectory. Those
 probe forwards are logged separately and their time remains included; this
 audited run must not be treated as a timing comparison.
 
-## Outstanding validation
+## Requirements before promoting a future variant
 
-1. Run the FlashAttention test on the lab server before using its backend.
-2. Run LLaDA-8B oracle diagnostics to test held-out prefix/suffix fit errors
-   over reference ages. Use at least five blocks to observe age four.
+1. Establish improved held-out approximation on more development prompts,
+   especially for prefix states. The current pair fit fails this first gate.
+2. Demonstrate actual common-boundary latency gains with all fit/write/fallback
+   work included. The current adapter fails this gate even in stale mode.
 3. Compare closed-loop outputs and task accuracy at matched prompts, few-shot
    examples, length, threshold, dtype and hardware.
-4. Compare common-boundary wall time, fallback rate and peak memory, including
-   first full forward, pilot fitting and completed-block writes. Only optimize
-   kernels further if the approximation maintains useful quality.
+4. Expand to full benchmark evaluations only after those checks succeed.
 
-Raw local smoke files stay in ignored `reframe/results/`; they are not benchmark
-results. No model weights, datasets or fabricated task scores are committed.
+Raw local and server files stay in ignored `reframe/results/`; measured server
+summaries are linked from the feasibility report. No model weights, datasets
+or fabricated task scores are committed.

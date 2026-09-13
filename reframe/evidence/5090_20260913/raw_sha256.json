@@ -1,0 +1,15 @@
+{
+  "timing/measurements.jsonl": "0b910d4b4e9eb0b509869587e7c4fe0865a82a05735fe1145d585b9b2e1d57b5",
+  "timing/prompts.jsonl": "6e340e3087367cf8fc130f541fd825a43f1bd01d1f0e2332dacf43815c859295",
+  "timing/manifest.json": "a180d72bda15320fbd74876be07c8f07434626b3814c3fba655d7ebefafba715",
+  "oracle/measurements.jsonl": "8b548b10cb2a93633a91107989939fe2921e891e980d88e18f99f6fbb9dd4aa9",
+  "audit/measurements.jsonl": "3f4e33e0736c1fe5b64300c4c5287c9dd33d6fe1cbc3eda2606701e45c611cb6",
+  "dev_measurements.jsonl": "be32b58734dd71340e2924e15d54fd0a68ed51b2c0251b1c47441cd930dcbea0",
+  "dev_prompts.jsonl": "37fbdac8f3b5ff4f8cde7bd63326accac331a20140a604513ff66dd6b2897e63",
+  "dev_protocol.json": "a6c9c24e4f7fac667bf4ea5d97322be789a4a62014f52aa3e47f002904569ecf",
+  "analysis.json": "41a5804477e7d7112a73d3b8543ca444a723bafc367867e1c4cab3fd3ef7f29d",
+  "analyze.py": "8666be963c34a2eeb96a66e468ea14d41c3ea4baa0ceecb36bf79111c4d72aaa",
+  "native_breakdown.json": "d31ddf81adf9b5c94455c2679afdcd9b44d08232398f32cbbc6d757f6c0a2470",
+  "profile_native.py": "949ac28566dd9ac310a77181b781fc4c8fdbfbdbd091802d8fe3151da74b6945",
+  "tests.log": "f73407ec2d6a10056e25a85146e40b383ac83438046d13e7960b35a509630f1e"
+}
