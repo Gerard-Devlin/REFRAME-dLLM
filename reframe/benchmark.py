@@ -51,6 +51,26 @@ def make_gsm_task(destination):
     (destination / "gsm8k_local.yaml").write_text(text, encoding="utf-8")
 
 
+def logged_generation_args(sample):
+    """Read both evaluator's in-memory and EvaluationTracker's saved format."""
+    arguments = sample.get("arguments")
+    try:
+        if isinstance(arguments, dict):
+            # lm-eval 0.4.8 rewrites requests to named fields when saving JSONL.
+            request = arguments["gen_args_0"]
+            prompt, kwargs = request["arg_0"], request["arg_1"]
+        elif isinstance(arguments, (list, tuple)):
+            prompt, kwargs = arguments[0]
+        else:
+            raise TypeError("arguments must be a mapping or sequence")
+    except (KeyError, IndexError, TypeError, ValueError) as exc:
+        raise ValueError(f"Unexpected lm-eval arguments for doc_id={sample.get('doc_id')}; "
+                         "expected gen_args_0.{arg_0,arg_1} or [[prompt, kwargs]]") from exc
+    if not isinstance(prompt, str) or not isinstance(kwargs, dict):
+        raise ValueError(f"Invalid prompt/kwargs types for doc_id={sample.get('doc_id')}")
+    return prompt, kwargs
+
+
 def export_prompts(source, task, limit, target):
     files = sorted(source.rglob(f"samples_{'gsm8k_local' if task == 'gsm8k' else 'humaneval'}_*.jsonl"))
     if len(files) != 1:
@@ -62,12 +82,15 @@ def export_prompts(source, task, limit, target):
         if doc_id in seen:
             continue
         seen.add(doc_id)
-        prompt, kwargs = sample["arguments"][0]
-        if not isinstance(prompt, str):
-            raise ValueError("Unexpected lm-eval prompt structure")
+        prompt, kwargs = logged_generation_args(sample)
         # Native Instruct HumanEval evaluator deliberately ignores stop strings.
+        until = kwargs.get("until", []) if task == "gsm8k" else []
+        if isinstance(until, str):
+            until = [until]
+        if not isinstance(until, list) or not all(isinstance(stop, str) for stop in until):
+            raise ValueError(f"Invalid stop strings for doc_id={doc_id}")
         rows.append(dict(id=str(doc_id), prompt=prompt,
-                         until=kwargs.get("until", []) if task == "gsm8k" else []))
+                         until=until))
     rows = rows[:limit]
     if not rows:
         raise ValueError("No evaluation prompts found")

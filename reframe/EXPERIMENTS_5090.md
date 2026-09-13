@@ -146,6 +146,12 @@ The first 16 questions are a preliminary performance sample, not a full-suite
 speed or tail-latency result. Increase the sample count/repeats before final
 claims, and repeat at length 512 only after the 256-token campaign is sound.
 
+Prompt replay accepts both the in-memory request list and lm-eval 0.4.8's saved
+`arguments.gen_args_0.arg_0` / `arg_1` mapping. If an older checkout fails with
+`KeyError: 0` during `export_prompts`, update the checkout and reuse the existing
+smoke/accuracy samples with a **new timing/audit output directory**. The failure
+occurs before launching generation, so the completed accuracy run is unaffected.
+
 Never compare native evaluator printed TPS directly with REFRAME evaluator
 printed TPS. Use the timing campaign's common measurement boundary. Serial
 versus parallel speedups include the sampler change; the primary cache speedup
