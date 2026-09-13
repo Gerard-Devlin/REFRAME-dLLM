@@ -19,8 +19,12 @@ Checks performed locally:
   functional evidence only, not language-model quality or speed claims.
 
 `RUN_DDP_TESTS=1 python -m pytest relation_diffusion/tests -q` passed all
-18 tests in 25.44 seconds, including preparation with the train-only
-independent categorical diagnostic and held-out scoring.
+19 tests in 25.79 seconds, including preparation with the train-only
+independent categorical diagnostic and held-out scoring. The read-only
+checkpoint context audit reproduces the existing normal-path scores, leaves
+checkpoint bytes unchanged, and detects a known copy dependency when its
+prefix or revealed history is shuffled. Its new CPU path is verified locally;
+the server checkpoints and BF16/FP32 audit results remain to be inspected.
 
 The opt-in `RUN_DDP_TESTS=1` test compares two CPU/Gloo workers against a
 single worker using the same global batch, samples, noise and four optimizer

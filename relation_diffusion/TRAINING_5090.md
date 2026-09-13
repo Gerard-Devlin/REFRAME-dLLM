@@ -197,6 +197,29 @@ CODEC=random OBJECTIVE=diffusion SEED=1234 STEPS=200 MAX_SECONDS=600 \
 
 ## 中断与恢复
 
+### 当增加步数几乎不改善损失时：先做不训练的上下文检查
+
+`audit` 只读取原有两个 checkpoint，不创建优化器或更改权重。检查包括：
+同一批验证样本上的频率模型对照；固定路径下打乱前缀/已揭示历史；
+训练式随机遮盖下打乱可见上下文；BF16 与 FP32 对照。
+打乱上下文后损失增加，才说明该组上下文对这个 checkpoint 的预测有帮助。
+它不提供自动的通过阈值，也不能单凭一个干预证明没有学习任何依赖。
+
+在控制 tmux 内先保留已完成的 pilot2000 路径，再设置新的输出路径：
+
+```bash
+export SOURCE_RUN="$RUN_DIR"  # 必须是刚完成的 pilot2000 目录
+export GPU_IDS=3
+export RUN_DIR="$PWD/relation_diffusion/runs/context_audit_$(date +%Y%m%d_%H%M%S)"
+bash relation_diffusion/scripts/launch_tmux.sh audit
+```
+
+若已经换过 RUN_DIR，请将 SOURCE_RUN 显式设置为真正的旧 pilot2000 目录。
+输出 `context_audit.json`，进度与摘要在 `job.log`。`frequency_control` 和 neural
+path NLL 使用相同验证块数量，避免将旧统计检查的 1024 块与 neural 的 256 块直接比较。
+随机遮盖的 masked-token loss 只用于同一模型内的干预对照，不能当成两种编码的
+原文空间质量指标。审计不会继续训练，也不会覆盖原 evaluation.json。
+
 预算用完会保留 `checkpoint.pt` 和 `status.json`。只有同样的训练配置允许恢复，
 尤其 `--steps` 是原定训练计划，不能改大后声称是同一条学习率曲线。
 需要延长训练计划时，应为所有对照重新设定相同计划，或明确记录为另一组实验。

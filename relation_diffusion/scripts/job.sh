@@ -48,6 +48,12 @@ for i in range(torch.cuda.device_count()):
         raise SystemExit('Requested GPU has insufficient free memory; refusing to launch. Check other users first.')
 PY
 SHAPE=(--width "$WIDTH" --layers "$LAYERS" --heads "$HEADS")
+if [[ "$PHASE" == audit ]]; then
+    if [[ "$NPROC" -ne 1 ]]; then echo 'Context audit uses one GPU. Specify one GPU.' >&2; exit 2; fi
+    python -m relation_diffusion.audit_context --source-run "$SOURCE_RUN" --data "$DATA_DIR" \
+        --output "$RUN_DIR/context_audit.json" --seed "$SEED" --limit "${EVAL_LIMIT:-256}"
+    exit 0
+fi
 if [[ "$PHASE" == preflight ]]; then
     if [[ "$NPROC" -ne 1 ]]; then echo 'Preflight measures single-GPU inference. Specify one GPU.' >&2; exit 2; fi
     python -m relation_diffusion.preflight --data "$DATA_DIR" --output "$RUN_DIR/preflight.json" "${SHAPE[@]}"

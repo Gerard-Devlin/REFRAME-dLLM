@@ -2,12 +2,20 @@
 # Launch exactly one explicitly selected phase. Never chain into long training.
 set -euo pipefail
 PHASE="${1:-}"
-case "$PHASE" in prepare|preflight|train|pilot) ;; *) echo 'Usage: bash relation_diffusion/scripts/launch_tmux.sh prepare|preflight|train|pilot' >&2; exit 2;; esac
+case "$PHASE" in prepare|preflight|train|pilot|audit) ;; *) echo 'Usage: bash relation_diffusion/scripts/launch_tmux.sh prepare|preflight|train|pilot|audit' >&2; exit 2;; esac
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DATA_DIR="${DATA_DIR:-/home/xuyouwen/hf_home_local/relation_diffusion/wikitext2_byte128_v1}"
 RUN_DIR="${RUN_DIR:-$REPO/relation_diffusion/runs/${PHASE}_$(date +%Y%m%d_%H%M%S)}"
 SESSION="${SESSION:-relation-${PHASE}-$(date +%Y%m%d-%H%M%S)}"
 GPU_IDS="${GPU_IDS:-}"
+if [[ "$PHASE" == audit ]]; then
+    for CODE in identity relation2; do
+        if [[ -z "${SOURCE_RUN:-}" || ! -s "$SOURCE_RUN/$CODE-diffusion-seed${SEED:-1234}/checkpoint.pt" ]]; then
+            echo 'Set SOURCE_RUN to the completed pilot directory containing both identity and relation2 checkpoints.' >&2
+            exit 2
+        fi
+    done
+fi
 if [[ "$PHASE" != prepare && ! -s "$DATA_DIR/manifest.json" ]]; then
     printf 'Data preparation is not complete: %s/manifest.json is missing or empty.\n' "$DATA_DIR" >&2
     echo 'Check the prepare job.log and exit_code. Wait for successful preparation before launching; no GPU job was started.' >&2
@@ -22,7 +30,7 @@ mkdir -p "$RUN_DIR"
 ENVFILE="$RUN_DIR/job.env"
 # Bash %q quoting preserves literal values; no eval or string-built commands.
 for NAME in REPO DATA_DIR RUN_DIR PHASE GPU_IDS; do printf 'export %s=%q\n' "$NAME" "${!NAME}" >> "$ENVFILE"; done
-for NAME in STEPS MAX_SECONDS GLOBAL_BATCH MICRO_BATCH WIDTH LAYERS HEADS SEED CODEC OBJECTIVE EVAL_LIMIT MIN_FREE_GIB CONDA_ROOT CONDA_ENV; do
+for NAME in STEPS MAX_SECONDS GLOBAL_BATCH MICRO_BATCH WIDTH LAYERS HEADS SEED CODEC OBJECTIVE EVAL_LIMIT MIN_FREE_GIB CONDA_ROOT CONDA_ENV SOURCE_RUN; do
     if [[ -v "$NAME" ]]; then printf 'export %s=%q\n' "$NAME" "${!NAME}" >> "$ENVFILE"; fi
 done
 printf '#!/usr/bin/env bash\nsource %q\nbash %q > %q 2>&1\nrc=$?\nprintf "%%s\\n" "$rc" > %q\nexit "$rc"\n' \

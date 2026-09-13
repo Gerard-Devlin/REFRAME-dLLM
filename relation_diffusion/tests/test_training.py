@@ -113,6 +113,17 @@ def test_train_resume_and_real_checkpoint_evaluation(prepared, tmp_path):
     assert result["examples"] == 3 and len(result["scores"]) == 3
     assert all(np.isfinite(r["path_bits_per_symbol"]) for r in result["scores"])
     assert result["error_spread"]["max_changed_original_positions"] <= 4
+    from relation_diffusion.audit_context import audit_checkpoint
+    from relation_diffusion.prepare import digest
+    before = digest(full / "checkpoint.pt")
+    audit = audit_checkpoint(full / "checkpoint.pt", prepared, 3, 2, torch.device("cpu"), [1, 4])
+    assert digest(full / "checkpoint.pt") == before
+    assert audit["frequency_control"]["heldout_examples"] == result["examples"]
+    paths = audit["precision_results"]["float32"]["paths"]
+    for row in result["scores"]:
+        if str(row["steps"]) in paths:
+            assert paths[str(row["steps"])]["normal"]["bits_per_symbol"] == pytest.approx(row["path_bits_per_symbol"], abs=1e-7)
+    assert paths["1"]["shuffle_history"]["delta_bits_vs_normal"] == 0
     run("relation_diffusion.preflight", "--data", prepared, "--output", tmp_path / "preflight.json",
         "--device", "cpu", "--dtype", "float32", "--width", 16, "--heads", 2,
         "--layers", 1, "--repeats", 1)
@@ -125,6 +136,26 @@ def test_refuses_unmatched_comparisons():
     other = dict(base, codec="relation2", trained_steps=2)
     with pytest.raises(ValueError, match="trained_steps"):
         compare([base, other])
+
+
+def test_context_interventions_detect_a_known_copy_dependency():
+    from relation_diffusion.audit_context import intervened_path_nll
+
+    class CopyModel(torch.nn.Module):
+        cfg = ModelConfig(vocab_size=2, length=4, width=8, heads=2, layers=1)
+
+        def forward(self, x):
+            previous = x.roll(1, dims=1)
+            return torch.stack([(previous == 0).float() * 6, (previous == 1).float() * 6], dim=-1)
+
+    model = CopyModel()
+    x = torch.tensor([[0, 0, 0, 0], [1, 1, 1, 1]])
+    donors = x.flip(0)
+    normal = path_nll(model, x, 1, 3)
+    assert torch.equal(intervened_path_nll(model, x, donors, 1, 3, "normal"), normal)
+    for kind in ("shuffle_history", "shuffle_prefix"):
+        assert (intervened_path_nll(model, x, donors, 1, 3, kind) > normal).all()
+        assert torch.equal(intervened_path_nll(model, x, x, 1, 3, kind), normal)
 
 
 @pytest.mark.skipif(os.environ.get("RUN_DDP_TESTS") != "1", reason="Opt-in two-process Gloo integration")
