@@ -42,7 +42,7 @@ conda activate fastdllm311
 cd /home/xuyouwen/REFRAME-dLLM
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
 git pull --ff-only
-python -m pytest relation_diffusion/tests -q
+CUDA_VISIBLE_DEVICES="" python -m pytest relation_diffusion/tests -q
 
 export DATA_DIR=/home/xuyouwen/hf_home_local/relation_diffusion/wikitext2_byte128_v1
 SESSION=relation-prepare bash relation_diffusion/scripts/launch_tmux.sh prepare
