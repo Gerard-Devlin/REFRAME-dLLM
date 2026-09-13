@@ -17,6 +17,25 @@ from reframe_dllm.model import ReframeConfig
 from reframe_dllm.oracle import NativeOracleWrapper, OracleProbe
 
 
+def load_checkpoint(model_path, dtype, device, backend):
+    """Use the config belonging to the local v1 model, even with HF auto_map.
+
+    trust_remote_code=True on AutoConfig selects the checkpoint's older remote
+    config, which lacks v1 additions such as train_max_sequence_length. The
+    local class fills its own defaults while preserving checkpoint values.
+    """
+    from transformers import AutoTokenizer
+
+    cfg = LLaDAConfig.from_pretrained(model_path)
+    cfg.flash_attention = backend == "flash"
+    model = LLaDAModelLM.from_pretrained(model_path, config=cfg, torch_dtype=dtype).eval().to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_path, trust_remote_code=True)
+    mask_id = cfg.mask_token_id
+    if not isinstance(mask_id, int) or not 0 <= mask_id < cfg.vocab_size:
+        raise ValueError("Checkpoint must specify an in-vocabulary mask_token_id")
+    return model, tokenizer, mask_id
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--tiny", action="store_true", help="Random tiny LLaDA; no downloads or quality claims")
@@ -73,13 +92,7 @@ def main():
             return output
         model.model.transformer.ff_out.register_forward_hook(suppress_mask)
     else:
-        from transformers import AutoConfig, AutoTokenizer
-        cfg = AutoConfig.from_pretrained(args.model_path, trust_remote_code=True)
-        cfg.flash_attention = args.backend == "flash"
-        model = LLaDAModelLM.from_pretrained(args.model_path, config=cfg, torch_dtype=dtype,
-                                            trust_remote_code=True).eval().to(args.device)
-        tokenizer = AutoTokenizer.from_pretrained(args.model_path, trust_remote_code=True)
-        mask_id = 126336
+        model, tokenizer, mask_id = load_checkpoint(args.model_path, dtype, args.device, args.backend)
     if args.backend == "flash" and any(b.flash_attn_func is None for b in model.model.transformer.blocks):
         raise RuntimeError("flash requested but not available; refusing silent backend mismatch")
     requests = ([json.loads(line) for line in args.prompts.read_text(encoding="utf-8").splitlines() if line.strip()]

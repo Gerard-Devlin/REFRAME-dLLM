@@ -152,6 +152,11 @@ Prompt replay accepts both the in-memory request list and lm-eval 0.4.8's saved
 smoke/accuracy samples with a **new timing/audit output directory**. The failure
 occurs before launching generation, so the completed accuracy run is unaffected.
 
+The timing/oracle/audit runner explicitly loads `model.configuration_llada.LLaDAConfig`
+from the local v1 implementation. A checkpoint's remote AutoConfig can lack local
+defaults such as `train_max_sequence_length`; mixing that config with the local
+model is invalid. Saved-checkpoint regression tests cover all three runner modes.
+
 Never compare native evaluator printed TPS directly with REFRAME evaluator
 printed TPS. Use the timing campaign's common measurement boundary. Serial
 versus parallel speedups include the sampler change; the primary cache speedup

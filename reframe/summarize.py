@@ -1,6 +1,6 @@
 """Summarize JSONL without treating oracle/audit/tiny runs as speed evidence."""
 import argparse
-from collections import defaultdict
+from collections import Counter, defaultdict
 import json
 from pathlib import Path
 from statistics import mean
@@ -35,6 +35,18 @@ def main():
         tps = (f"{sum(tokens) / elapsed:.3f}" if not diagnostic and all(t is not None for t in tokens) else "NA")
         print(method, len(values), *(f"{mean(r['stats'].get(m, 0) for r in values):.3f}" for m in
                                     ("elapsed_seconds", "nfe", "full_forwards", "fallback_refreshes")), tps)
+        reasons = Counter(reason.split("_layer_", 1)[0] for r in values
+                          for reason in r["stats"].get("fallback_reasons", []))
+        if reasons:
+            print(f"  fallback_reasons: {dict(sorted(reasons.items()))}")
+        audits = [audit for r in values for audit in r["stats"].get("audits", [])]
+        if audits:
+            print(f"  audited_decisions={len(audits)} "
+                  f"mean_logits_error={mean(a['logits_error'] for a in audits):.6f} "
+                  f"max_logits_error={max(a['logits_error'] for a in audits):.6f} "
+                  f"mean_top1_agreement_per_audit={mean(a['top1_agreement'] for a in audits):.6f}")
+            print(f"  commit_set_disagreements={sum(not a['commit_set_agreement'] for a in audits)}/{len(audits)} "
+                  f"committed_token_disagreements={sum(not a['committed_token_agreement'] for a in audits)}/{len(audits)}")
 
 
 if __name__ == "__main__":
