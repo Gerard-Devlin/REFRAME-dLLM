@@ -8,10 +8,9 @@ export HF_DATASETS_CACHE=/home/xuyouwen/hf_home_local/datasets
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_HUB_DISABLE_XET=1 TOKENIZERS_PARALLELISM=false
 source "${CONDA_ROOT:-/opt/miniconda3}/etc/profile.d/conda.sh"
-env_name="${CONDA_ENV:-relationv2}"
+env_name="${CONDA_ENV:-fastdllm311}"
 if [[ "$PHASE" == setup ]]; then
-    # New environment; existing fastdllm311 and torch/flash-attn remain intact.
-    conda create -y -n "$env_name" --clone fastdllm311 --offline
+    # Reuse the user's existing environment. Never clone/install torch or CUDA.
     conda activate "$env_name"
     python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple \
         'transformers==4.57.3' 'huggingface_hub>=0.34,<1' 'safetensors>=0.4.5' 'einops>=0.8' 'pytest>=8,<10'
@@ -19,9 +18,28 @@ if [[ "$PHASE" == setup ]]; then
     exit 0
 fi
 conda activate "$env_name"
+if [[ "$PHASE" == weights || "$PHASE" == subset ]]; then
+    unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE HF_DATASETS_OFFLINE HF_EVALUATE_OFFLINE
+    if [[ "$PHASE" == weights ]]; then
+        python -u -c "from relation_block.common import snapshot; print(snapshot(offline=False))"
+    else
+        python -u -m relation_block.download_subset \
+            --output "${SUBSET_DIR:-$HF_HOME/nemotron/math_code_100m_bpe2048_v1}" \
+            --tokens "${SUBSET_TOKENS:-100000000}" --length "${SEQ_LENGTH:-2048}" \
+            --seed "${SEED:-1234}" --reasoning "${REASONING:-any}"
+    fi
+    exit 0
+fi
 if [[ "$PHASE" == prepare ]]; then
     unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE HF_DATASETS_OFFLINE HF_EVALUATE_OFFLINE
-    python -u -m relation_block.prepare --data "$DATA_DIR" --download
+    if [[ "${TRAIN_SOURCE:-nemotron}" == nemotron ]]; then
+        python -u -m relation_block.prepare --data "$DATA_DIR" \
+            --source-dir "${SUBSET_DIR:-$HF_HOME/nemotron/math_code_100m_bpe2048_v1}" --length "${SEQ_LENGTH:-2048}"
+    elif [[ "$TRAIN_SOURCE" == alpaca ]]; then
+        python -u -m relation_block.prepare --data "$DATA_DIR" --download --length "${SEQ_LENGTH:-512}"
+    else
+        echo 'TRAIN_SOURCE must be nemotron or alpaca'; exit 2
+    fi
     exit 0
 fi
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_DATASETS_OFFLINE=1 HF_EVALUATE_OFFLINE=1

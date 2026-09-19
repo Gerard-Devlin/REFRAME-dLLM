@@ -72,17 +72,36 @@ table. 32 examples are a screening run, not a reliable quality-preservation clai
 
 ## Data and budgets
 
-Training source is the already tracked Alpaca conversation file under `v2/data/`.
-It is a convenient engineering/feasibility set, **not official v2's full data**.
-Exact duplicate token sequences are removed before a 256-example heldout split.
-The codec is fit only on the remainder. Exact GSM8K question matches are excluded;
-this does not establish absence of paraphrases or pretraining contamination.
-Long prompts (>256 tokens at default length512) are excluded; responses are
-truncated to length512. Logs count original unpadded tokens as well as padded
-slots. Complementary/noisy-clean computation is extra and is not misreported as
-additional unique training text.
+The default data path now uses a bounded export from
+`nvidia/Llama-Nemotron-Post-Training-Dataset`, configuration `SFT`, splits `math`
+and `code`. `download_subset` streams through the mirror, pins the resolved
+dataset revision, applies a seeded bounded shuffle and retains at most half the
+requested token budget per category. Token counts use the pinned v2 tokenizer
+and chat template, including prompt and response, not bytes or sample counts.
+Default export budget is 100M original tokens (50M each category), length2048.
+Only whole examples fitting the window and prompt<=half the window are kept;
+long reasoning traces are skipped, **never truncated into unfinished answers**.
+This is a length-selected, bounded stream sample, not an unbiased sample of the
+whole corpus. Export reports scanned/rejected counts and preserves provenance.
+Reasoning on/off are both accepted unless explicitly filtered. The auxiliary
+`system_prompt` metadata label is retained as metadata; actual conversation
+messages are taken from `input` and the complete assistant text from `output`.
 
-Default 200 updates * global batch12 * length512 = 1,228,800 padded slots;
+Completed category files can be reused after interruption; an incomplete
+category restarts deterministically. Streaming network bytes can exceed the
+retained subset size. Download budget and training-consumption budget are
+separate: downloading 100M tokens does not train for 100M tokens.
+
+Preparation verifies the subset hashes, removes exact duplicates and holds out
+256 examples, excluding their exact tokenized prompts from training too. The
+codec is fit only on training examples. Exact GSM8K question matches are excluded;
+this does not establish absence of paraphrases or pretraining contamination.
+The old bundled Alpaca path remains explicitly opt-in (`TRAIN_SOURCE=alpaca`),
+for engineering checks only. These are not official v2's complete training data
+or recipe. Logs count original unpadded tokens as well as padded slots.
+Complementary/noisy-clean computation is extra, not additional unique text.
+
+Default 200 updates * global batch12 * length2048 = 4,915,200 padded slots;
 actual original tokens are smaller and recorded in `status.json`. This is an
 engineering/early-adaptation run, not a promised sufficient learning budget.
 No automatic escalation to 10M/100M tokens. Compare both completed budgets first.
