@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$REPO"
+unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
+export HF_HOME=/home/xuyouwen/hf_home_local
+export HF_HUB_CACHE=/home/xuyouwen/hf_hub_local
+export HF_DATASETS_CACHE=/home/xuyouwen/hf_home_local/datasets
+export HF_ENDPOINT=https://hf-mirror.com
+export HF_HUB_DISABLE_XET=1 TOKENIZERS_PARALLELISM=false
+source "${CONDA_ROOT:-/opt/miniconda3}/etc/profile.d/conda.sh"
+env_name="${CONDA_ENV:-relationv2}"
+if [[ "$PHASE" == setup ]]; then
+    # New environment; existing fastdllm311 and torch/flash-attn remain intact.
+    conda create -y -n "$env_name" --clone fastdllm311 --offline
+    conda activate "$env_name"
+    python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple \
+        'transformers==4.57.3' 'huggingface_hub>=0.34,<1' 'safetensors>=0.4.5' 'einops>=0.8' 'pytest>=8,<10'
+    python -c "import torch, transformers, datasets; print(torch.__version__, transformers.__version__, datasets.__version__)"
+    exit 0
+fi
+conda activate "$env_name"
+if [[ "$PHASE" == prepare ]]; then
+    unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE HF_DATASETS_OFFLINE HF_EVALUATE_OFFLINE
+    python -u -m relation_block.prepare --data "$DATA_DIR" --download
+    exit 0
+fi
+export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_DATASETS_OFFLINE=1 HF_EVALUATE_OFFLINE=1
+if [[ "$PHASE" == compare ]]; then
+    IFS=',' read -ra runs <<< "${COMPARE_RUNS:?Set comma-separated evaluation directories}"
+    python -m relation_block.compare "${runs[@]}"
+    exit 0
+fi
+IFS=',' read -ra physical <<< "$GPU_IDS"
+declare -A seen=()
+uuids=()
+for id in "${physical[@]}"; do
+    [[ ! -v "seen[$id]" ]] || { echo "Duplicate GPU $id"; exit 2; }
+    seen[$id]=1
+    uuid="$(nvidia-smi -i "$id" --query-gpu=uuid --format=csv,noheader)"
+    uuids+=("$uuid")
+done
+export CUDA_VISIBLE_DEVICES="$(IFS=,; echo "${uuids[*]}")"
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-4}"
+python - <<'PY'
+import os, torch
+for i in range(torch.cuda.device_count()):
+    free, total = torch.cuda.mem_get_info(i)
+    print('logical GPU', i, torch.cuda.get_device_name(i), 'free GiB', free/2**30, flush=True)
+    if free/2**30 < float(os.getenv('MIN_FREE_GIB', '24')):
+        raise SystemExit('Insufficient free memory; choose idle GPUs')
+PY
+train_model() {
+    if [[ ${#physical[@]} -gt 1 ]]; then
+        python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node="${#physical[@]}" \
+            -m relation_block.train "$@"
+    else
+        python -u -m relation_block.train "$@"
+    fi
+}
+evaluate_model() {
+    # Explicitly use the first SELECTED physical GPU for every timing comparison.
+    CUDA_VISIBLE_DEVICES="${uuids[0]}" python -u -m relation_block.evaluate "$@"
+}
+case "$PHASE" in
+smoke|pilot)
+    # Explicitly requested bounded campaign; no automatic jump to longer runs.
+    steps="${STEPS:-200}"; limit="${EVAL_LIMIT:-32}"; rounds="${ROUNDS:-2,4,8,16}"; new_tokens="${MAX_NEW_TOKENS:-256}"
+    if [[ "$PHASE" == smoke ]]; then steps=2; limit=2; rounds=2; new_tokens=64; fi
+    ev=(--data "$DATA_DIR" --split dev --limit "$limit" --rounds "$rounds" --max-new-tokens "$new_tokens")
+    evaluate_model "${ev[@]}" --official --output "$RUN_DIR/native"
+    evaluate_model "${ev[@]}" --output "$RUN_DIR/baseline"
+    for arm in token relation; do
+        train_model --data "$DATA_DIR" --output "$RUN_DIR/$arm/train" --arm "$arm" \
+            --steps "$steps" --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}" \
+            --seed "${SEED:-1234}" --max-seconds "${MAX_SECONDS:-3600}"
+        evaluate_model "${ev[@]}" --checkpoint "$RUN_DIR/$arm/train/checkpoint.pt" --output "$RUN_DIR/$arm/eval"
+    done
+    python -m relation_block.compare "$RUN_DIR/native" "$RUN_DIR/baseline" "$RUN_DIR/token/eval" "$RUN_DIR/relation/eval" ;;
+preflight)
+    python -m pytest relation_block/tests -q
+    python -u -m relation_block.preflight --data "$DATA_DIR" ;;
+train)
+    args=(--data "$DATA_DIR" --output "$RUN_DIR/train" --arm "$ARM" --steps "${STEPS:-200}"
+          --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}"
+          --seed "${SEED:-1234}" --max-seconds "${MAX_SECONDS:-3600}")
+    if [[ -n "${RESUME:-}" ]]; then args+=(--resume "$RESUME"); fi
+    train_model "${args[@]}" ;;
+native|baseline|evaluate)
+    args=(--data "$DATA_DIR" --output "$RUN_DIR/eval" --split "${EVAL_SPLIT:-dev}" --limit "${EVAL_LIMIT:-32}"
+          --rounds "${ROUNDS:-2,4,8,16}" --max-new-tokens "${MAX_NEW_TOKENS:-256}")
+    if [[ "$PHASE" == native ]]; then args+=(--official); fi
+    if [[ "$PHASE" == evaluate ]]; then args+=(--checkpoint "$CHECKPOINT"); fi
+    evaluate_model "${args[@]}" ;;
+esac
