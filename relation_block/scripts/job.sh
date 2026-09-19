@@ -7,6 +7,10 @@ export HF_HUB_CACHE=/home/xuyouwen/hf_hub_local
 export HF_DATASETS_CACHE=/home/xuyouwen/hf_home_local/datasets
 export HF_ENDPOINT=https://hf-mirror.com
 export HF_HUB_DISABLE_XET=1 TOKENIZERS_PARALLELISM=false
+# Some existing conda activation hooks append to LD_LIBRARY_PATH without
+# guarding an initially unset variable. Define it before `set -u` reaches the
+# hook; this preserves any caller-provided value and avoids changing the env.
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
 source "${CONDA_ROOT:-/opt/miniconda3}/etc/profile.d/conda.sh"
 env_name="${CONDA_ENV:-fastdllm311}"
 if [[ "$PHASE" == setup ]]; then
