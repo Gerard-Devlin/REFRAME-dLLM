@@ -49,10 +49,11 @@ def main():
         cut = min(m["block_size"], x.shape[1] - 1)
         if cut != m["block_size"]:
             raise ValueError("Parity prompt too short")
-        _, kv = own(x[:, :cut], positions[:, :cut], clean_mask(cut, m["block_size"], "cuda"), cache=True)
+        own_prefill, kv = own(x[:, :cut], positions[:, :cut],
+                              clean_mask(cut, m["block_size"], "cuda"), cache=True)
+        own_prefill = own_prefill.float().cpu()
         cached = own(x[:, cut:], positions[:, cut:],
                      clean_mask(x.shape[1] - cut, m["block_size"], "cuda", past=cut), past=kv)[0].float().cpu()
-    cache_error = (cached - ours[:, cut:]).square().mean().sqrt() / ours[:, cut:].square().mean().sqrt()
     del kv, own
     gc.collect()
     torch.cuda.empty_cache()
@@ -61,12 +62,36 @@ def main():
                     local_files_only=True, dtype=torch.bfloat16).cuda().eval()
     with torch.no_grad():
         reference = official(x, use_cache=False, block_size=m["block_size"]).logits.float().cpu()
-    relative = ((ours - reference).square().mean().sqrt() / reference.square().mean().sqrt()).item()
-    agreement = (ours.argmax(-1) == reference.argmax(-1)).float().mean().item()
-    print(f"Official parity relative RMS={relative:.6g}, argmax agreement={agreement:.4f}; cache RMS={cache_error:.6g}", flush=True)
-    if relative > .01 or agreement < .98 or cache_error > .01:
+        official_prefill_output = official(x[:, :cut], use_cache=True,
+            update_past_key_values=True, block_size=m["block_size"])
+        official_prefill = official_prefill_output.logits.float().cpu()
+        official_cached = official(x[:, cut:], use_cache=True,
+            past_key_values=official_prefill_output.past_key_values,
+            update_past_key_values=False, block_size=m["block_size"]).logits.float().cpu()
+    def relative_rms(actual, expected):
+        return ((actual - expected).square().mean().sqrt() /
+                expected.square().mean().sqrt()).item()
+    def top1_agreement(actual, expected):
+        return (actual.argmax(-1) == expected.argmax(-1)).float().mean().item()
+    full_relative = relative_rms(ours, reference)
+    prefill_relative = relative_rms(own_prefill, official_prefill)
+    cached_relative = relative_rms(cached, official_cached)
+    full_agreement = top1_agreement(ours, reference)
+    cached_agreement = top1_agreement(cached, official_cached)
+    # Full-sequence and cached BF16 attention use different CUDA query shapes.
+    # Their drift is acceptable only when our result matches the official result
+    # on each corresponding path; never use cross-path equality as a backend gate.
+    official_cache_drift = relative_rms(official_cached, reference[:, cut:])
+    official_cache_top1 = top1_agreement(official_cached, reference[:, cut:])
+    print(f"Official path parity: full RMS={full_relative:.6g}, prefill RMS={prefill_relative:.6g}, "
+          f"cached RMS={cached_relative:.6g}; full/cached top1={full_agreement:.4f}/{cached_agreement:.4f}", flush=True)
+    print(f"Official BF16 cached-vs-full diagnostic: RMS={official_cache_drift:.6g}, "
+          f"top1={official_cache_top1:.4f}", flush=True)
+    if (full_relative > 1e-4 or prefill_relative > 1e-4 or cached_relative > 1e-4 or
+            full_agreement < 1.0 or cached_agreement < 1.0):
         raise AssertionError("Official parity failed. Stop; do not train around this failure.")
-    del official, reference, ours, cached
+    del official, official_prefill_output, official_prefill, official_cached
+    del reference, ours, own_prefill, cached
     gc.collect()
     torch.cuda.empty_cache()
     from .train import batch, loss
@@ -95,8 +120,14 @@ def main():
         losses[arm] = value.item()
     torch.cuda.synchronize()
     gate = dict(pass_=True, data_hash=digest(args.data / "manifest.json"),
-                implementation=implementation_hashes(), official_relative_rms=relative,
-                official_top1_agreement=agreement, cache_relative_rms=cache_error.item(),
+                implementation=implementation_hashes(),
+                official_full_relative_rms=full_relative,
+                official_prefill_relative_rms=prefill_relative,
+                official_cached_relative_rms=cached_relative,
+                official_full_top1_agreement=full_agreement,
+                official_cached_top1_agreement=cached_agreement,
+                official_bf16_cache_vs_full_rms=official_cache_drift,
+                official_bf16_cache_vs_full_top1=official_cache_top1,
                 losses=losses, two_microbatch_backward_seconds=time.perf_counter() - started,
                 peak_gib=torch.cuda.max_memory_allocated() / 2**30,
                 gpu=torch.cuda.get_device_name(), torch=torch.__version__,
