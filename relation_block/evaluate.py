@@ -141,7 +141,10 @@ def main():
     else:
         model = Model.load(root)
         if args.checkpoint:
-            metadata = load_adapter(model, args.checkpoint)
+            # Fold LoRA into the BF16 backbone before timing. Leaving the
+            # training wrappers active adds two unfused GEMMs to every linear
+            # layer and would measure adapter plumbing rather than the method.
+            metadata = load_adapter(model, args.checkpoint, merge=True)
             if metadata["data_hash"] != digest(args.data / "manifest.json"):
                 raise ValueError("Checkpoint data differs")
             if metadata["status"] != "complete":
@@ -161,7 +164,11 @@ def main():
     def run(ids, schedule):
         if args.official:
             calls = [0]
-            handle = model.register_forward_pre_hook(lambda *_: calls.__setitem__(0, calls[0] + 1))
+            # The remote generate implementation calls its own forward method
+            # directly, bypassing hooks on the outer PreTrainedModel. Its
+            # decoder is still invoked through __call__, so count there.
+            target = model.model if hasattr(model, "model") else model
+            handle = target.register_forward_pre_hook(lambda *_: calls.__setitem__(0, calls[0] + 1))
             try:
                 x = torch.tensor([ids], device="cuda")
                 out = model.generate(x, tokenizer=tok, max_new_tokens=args.max_new_tokens,
@@ -202,6 +209,7 @@ def main():
     write_json(args.output / "summary.json", dict(arm=arm, split=args.split, examples=len(samples),
         ids=[s["id"] for s in samples], max_new_tokens=args.max_new_tokens, block_size=m["block_size"],
         data_hash=digest(args.data / "manifest.json"), checkpoint=metadata,
+        adapter_execution="merged-bf16" if metadata else "none",
         gpu=torch.cuda.get_device_name(), torch=torch.__version__, results=results,
         scope="0-shot GSM8K, custom numeric extraction; exploratory dev if split=dev; not official lm-eval reproduction",
         sampler="official threshold, block cache only" if args.official else "shared fixed-round confidence quota, block cache only"))

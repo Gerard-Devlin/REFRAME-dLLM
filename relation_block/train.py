@@ -104,9 +104,10 @@ def main():
         raise ValueError("global batch must be divisible by GPU count * micro batch")
     if min(args.steps, args.global_batch, args.micro_batch, args.rank, args.save_every) <= 0:
         raise ValueError("Budgets must be positive")
+    device = torch.device("cuda", local)
     torch.cuda.set_device(local)
     if world > 1:
-        dist.init_process_group("nccl")
+        dist.init_process_group("nccl", device_id=device)
     m = manifest(args.data)
     from .preflight import require_gate, implementation_hashes
     require_gate(args.data)
@@ -114,7 +115,6 @@ def main():
         raise ValueError("Output is not empty; use a new run or explicit --resume")
     args.output.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(args.seed)
-    device = torch.device("cuda", local)
     model = Model.load(snapshot(), device)
     add_lora(model, args.rank)
     model.gradient_checkpointing = True
@@ -188,10 +188,14 @@ def main():
             total /= world
         status = "complete" if completed == args.steps else ("budget_exhausted" if stop.item() else "running")
         if rank == 0:
-            print(json.dumps(dict(step=completed, loss=total.item(), seconds=elapsed,
-                                  original_tokens=seen_tokens,
-                                  padded_tokens=completed * args.global_batch * m["length"],
-                                  peak_gib=torch.cuda.max_memory_allocated() / 2**30)), flush=True)
+            record = dict(arm=args.arm, step=completed, loss=total.item(), lr=optimizer.param_groups[0]["lr"],
+                          seconds=elapsed, training_seconds=elapsed_before + elapsed,
+                          original_tokens=seen_tokens,
+                          padded_tokens=completed * args.global_batch * m["length"], world_size=world,
+                          peak_gib=torch.cuda.max_memory_allocated() / 2**30)
+            print(json.dumps(record), flush=True)
+            with (args.output / "metrics.jsonl").open("a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
             if completed % args.save_every == 0 or status != "running":
                 current = dict(meta, completed_steps=completed, training_seconds=elapsed_before + elapsed,
                                original_tokens=seen_tokens,
@@ -201,7 +205,7 @@ def main():
                 tmp.replace(args.output / "checkpoint.pt")
                 write_json(args.output / "status.json", current)
         if world > 1:
-            dist.barrier()
+            dist.barrier(device_ids=[local])
         if status != "running":
             break
     if world > 1:

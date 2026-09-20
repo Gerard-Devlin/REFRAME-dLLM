@@ -187,7 +187,22 @@ def adapter_state(model):
     return {n: p.detach().cpu() for n, p in model.named_parameters() if p.requires_grad}
 
 
-def load_adapter(model, path):
+@torch.no_grad()
+def merge_lora(model):
+    """Fold every LoRA update into its base weight for deployment timing."""
+    merged = 0
+    for parent in model.modules():
+        for name, child in list(parent.named_children()):
+            if not isinstance(child, LoRA):
+                continue
+            delta = (child.b @ child.a) * child.scale
+            child.base.weight.add_(delta.to(child.base.weight.dtype))
+            setattr(parent, name, child.base)
+            merged += 1
+    return merged
+
+
+def load_adapter(model, path, merge=False):
     ckpt = torch.load(path, map_location="cpu", weights_only=True)
     add_lora(model, ckpt["meta"]["rank"])
     params = dict(model.named_parameters())
@@ -197,6 +212,8 @@ def load_adapter(model, path):
     with torch.no_grad():
         for n, x in ckpt["adapter"].items():
             params[n].copy_(x)
+    if merge and merge_lora(model) == 0:
+        raise ValueError("Adapter contained no LoRA modules to merge")
     return ckpt["meta"]
 
 

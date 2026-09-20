@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import torch
 from relation_block.codec import Codec, fit
-from relation_block.model import Model, add_lora, clean_mask, training_mask, adapter_state, load_adapter
+from relation_block.model import Model, LoRA, add_lora, clean_mask, training_mask, adapter_state, load_adapter
 from relation_block.train import loss
 from relation_block.evaluate import answer, generate
 
@@ -138,6 +138,25 @@ def test_lora_loss_gradients_checkpoint_and_roundtrip(tmp_path):
     m.eval(); restored.eval()
     pos, mask = torch.arange(16)[None], clean_mask(16, 8, "cpu")
     torch.testing.assert_close(m(ids, pos, mask)[0], restored(ids, pos, mask)[0])
+
+
+def test_lora_merged_adapter_matches_unmerged(tmp_path):
+    torch.manual_seed(19)
+    original = Model(cfg()).eval()
+    base = copy.deepcopy(original)
+    add_lora(base, 4)
+    with torch.no_grad():
+        for module in base.modules():
+            if isinstance(module, LoRA):
+                module.b.normal_(std=.01)
+    path = tmp_path / "checkpoint.pt"
+    torch.save({"meta": {"rank": 4}, "adapter": adapter_state(base)}, path)
+    merged = copy.deepcopy(original)
+    load_adapter(merged, path, merge=True)
+    assert not any(isinstance(x, LoRA) for x in merged.modules())
+    ids = torch.randint(0, 39, (2, 16))
+    pos, mask = torch.arange(16)[None].expand(2, -1), clean_mask(16, 8, "cpu")
+    torch.testing.assert_close(base(ids, pos, mask)[0], merged(ids, pos, mask)[0], atol=2e-5, rtol=2e-5)
 
 
 @pytest.mark.parametrize("prefix_length", [5, 8, 11, 16])
