@@ -114,6 +114,13 @@ def main():
     if args.output.exists() and any(args.output.iterdir()) and not args.resume:
         raise ValueError("Output is not empty; use a new run or explicit --resume")
     args.output.mkdir(parents=True, exist_ok=True)
+    writer = None
+    if rank == 0:
+        try:
+            from torch.utils.tensorboard import SummaryWriter
+        except ImportError as exc:
+            raise RuntimeError("TensorBoard is required: pip install tensorboard") from exc
+        writer = SummaryWriter(log_dir=str(args.output / "tensorboard"), flush_secs=5)
     torch.manual_seed(args.seed)
     model = Model.load(snapshot(), device)
     add_lora(model, args.rank)
@@ -147,6 +154,8 @@ def main():
     rows = json.loads((args.data / "train.json").read_text())
     accum = args.global_batch // (world * args.micro_batch)
     started = time.perf_counter()
+    previous_elapsed = 0.
+    tokens_at_start = seen_tokens
     completed = start_step
     status = "complete" if start_step >= args.steps else "running"
     for step in range(start_step, args.steps):
@@ -196,6 +205,14 @@ def main():
             print(json.dumps(record), flush=True)
             with (args.output / "metrics.jsonl").open("a", encoding="utf-8") as f:
                 f.write(json.dumps(record) + "\n")
+            writer.add_scalar("train/loss", record["loss"], completed)
+            writer.add_scalar("train/learning_rate", record["lr"], completed)
+            writer.add_scalar("progress/original_tokens", seen_tokens, completed)
+            writer.add_scalar("performance/original_tokens_per_second",
+                              (seen_tokens - tokens_at_start) / max(elapsed, 1e-9), completed)
+            writer.add_scalar("performance/step_seconds", elapsed - previous_elapsed, completed)
+            writer.add_scalar("memory/peak_allocated_gib", record["peak_gib"], completed)
+            previous_elapsed = elapsed
             if completed % args.save_every == 0 or status != "running":
                 current = dict(meta, completed_steps=completed, training_seconds=elapsed_before + elapsed,
                                original_tokens=seen_tokens,
@@ -208,6 +225,9 @@ def main():
             dist.barrier(device_ids=[local])
         if status != "running":
             break
+    if writer is not None:
+        writer.flush()
+        writer.close()
     if world > 1:
         dist.destroy_process_group()
     if status == "budget_exhausted":

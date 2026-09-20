@@ -17,7 +17,8 @@ if [[ "$PHASE" == setup ]]; then
     # Reuse the user's existing environment. Never clone/install torch or CUDA.
     conda activate "$env_name"
     python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple \
-        'transformers==4.57.3' 'huggingface_hub>=0.34,<1' 'safetensors>=0.4.5' 'einops>=0.8' 'pytest>=8,<10'
+        'transformers==4.57.3' 'huggingface_hub>=0.34,<1' 'safetensors>=0.4.5' 'einops>=0.8' \
+        'pytest>=8,<10' 'tensorboard>=2.18,<3'
     python -c "import torch, transformers, datasets; print(torch.__version__, transformers.__version__, datasets.__version__)"
     exit 0
 fi

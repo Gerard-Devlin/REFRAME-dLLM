@@ -176,6 +176,12 @@ def test_answers():
     assert answer("no answer") is None
 
 
+def test_tensorboard_is_lazy_training_dependency():
+    # Unit tests import the objective without needing to instantiate a writer.
+    from relation_block.train import loss as imported_loss
+    assert imported_loss is loss
+
+
 def test_global_microbatch_gradients_match():
     torch.manual_seed(3)
     a = Model(cfg()); add_lora(a, 4)
