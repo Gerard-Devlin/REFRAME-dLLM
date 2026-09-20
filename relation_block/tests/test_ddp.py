@@ -18,7 +18,6 @@ def setup_model():
              num_key_value_heads=2, num_hidden_layers=2, rms_norm_eps=1e-6,
              rope_theta=1000000., tie_word_embeddings=True)
     m = Model(c)
-    add_lora(m, 4)
     m.gradient_checkpointing = True
     return m
 
@@ -38,6 +37,9 @@ def worker(rank, store, output):
     dist.init_process_group("gloo", init_method=store, rank=rank, world_size=2)
     m = setup_model()
     ddp = DistributedDataParallel(m, broadcast_buffers=False)
+    from torch.distributed.optim import ZeroRedundancyOptimizer
+    from relation_block.full_state import save_checkpoint, restore_checkpoint
+    optimizer = ZeroRedundancyOptimizer(m.parameters(), optimizer_class=torch.optim.AdamW, lr=2e-5)
     ids, prefix, response, noise, prob, codec = inputs()
     for j in range(2):
         i = j*2 + rank
@@ -48,6 +50,27 @@ def worker(rank, store, output):
             (value * response[i:i+1].sum() * 2 / response.sum()).backward()
     if rank == 0:
         torch.save({n: p.grad for n, p in m.named_parameters() if p.requires_grad}, output)
+    optimizer.step()
+    saved = save_checkpoint(Path(output).parent / "full", m, optimizer, {"completed_steps": 1}, rank, 2)
+    optimizer.zero_grad(set_to_none=True)
+    # Restore into a fresh DDP + ZeRO instance and check the next Adam update.
+    restored = setup_model()
+    restored_ddp = DistributedDataParallel(restored, broadcast_buffers=False)
+    opt2 = ZeroRedundancyOptimizer(restored.parameters(), optimizer_class=torch.optim.AdamW, lr=2e-5)
+    restore_checkpoint(saved, restored, opt2, rank, 2, {})
+    for net, opt in ((ddp, optimizer), (restored_ddp, opt2)):
+        # Uneven tail: 3 real examples, rank 1's final slot is zero-weight padding.
+        for j in range(2):
+            slot = j * 2 + rank
+            i = min(slot, 2)
+            value = loss(net, ids[i:i+1], response[i:i+1], prefix[i:i+1], codec,
+                         noise[i:i+1], prob[i:i+1], 40, 8)
+            (value * response[i:i+1].sum() * 2 / response[:3].sum() * int(slot < 3)).backward()
+        opt.step()
+    for a, b in zip(m.parameters(), restored.parameters()):
+        torch.testing.assert_close(a, b, rtol=0, atol=0)
+    if rank == 0:
+        torch.save(m.state_dict(), output + ".final")
     dist.destroy_process_group()
 
 
@@ -63,3 +86,10 @@ def test_two_process_matches_global_batch(tmp_path):
     for n, p in m.named_parameters():
         if p.requires_grad:
             torch.testing.assert_close(p.grad, grads[n], atol=3e-5, rtol=3e-5)
+    opt = torch.optim.AdamW(m.parameters(), lr=2e-5)
+    opt.step(); opt.zero_grad(set_to_none=True)
+    loss(m, ids[:3], response[:3], prefix[:3], codec, noise[:3], prob[:3], 40, 8).backward()
+    opt.step()
+    distributed = torch.load(output + ".final", weights_only=True)
+    for name, value in m.state_dict().items():
+        torch.testing.assert_close(value, distributed[name], atol=2e-6, rtol=2e-6)

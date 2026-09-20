@@ -118,7 +118,7 @@ class Model(nn.Module):
             self.lm_head.weight = self.model.embed_tokens.weight
         self.gradient_checkpointing = False
 
-    def forward(self, ids, positions, mask, past=None, cache=False, select=None):
+    def forward(self, ids, positions, mask, past=None, cache=False, select=None, targets=None):
         x = self.model.embed_tokens(ids)
         saved = []
         for i, layer in enumerate(self.model.layers):
@@ -135,7 +135,19 @@ class Model(nn.Module):
         # During training return selected hidden states; compute vocab loss in
         # recomputed chunks to avoid retaining B*2L*150k logits.
         if select is not None:
-            return x[select]
+            hidden = x[select]
+            if targets is None:
+                return hidden
+            # Keep the trainable (possibly tied) head INSIDE the DDP forward.
+            losses = []
+            for start in range(0, len(targets), 32):
+                h, t = hidden[start:start + 32], targets[start:start + 32]
+                def head_loss(h, t):
+                    return F.cross_entropy(self.lm_head(h).float(), t, reduction="sum")
+                losses.append(checkpoint(head_loss, h, t, use_reentrant=False))
+            if not losses:
+                raise ValueError("Batch has no supervised targets")
+            return torch.stack(losses).sum()
         return self.lm_head(x), saved if cache else None
 
     @classmethod

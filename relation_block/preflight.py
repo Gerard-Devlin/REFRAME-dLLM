@@ -6,13 +6,13 @@ from pathlib import Path
 import time
 import torch
 from .common import digest, manifest, snapshot, write_json
-from .model import Model, add_lora, clean_mask
+from .model import Model, clean_mask
 from .codec import Codec
 
 
 def implementation_hashes():
     root = Path(__file__).parent
-    return {n: digest(root / n) for n in ("common.py", "prepare.py", "model.py", "codec.py", "train.py", "evaluate.py", "preflight.py")}
+    return {n: digest(root / n) for n in ("common.py", "prepare.py", "model.py", "codec.py", "train.py", "full_state.py", "full_smoke.py", "evaluate.py", "preflight.py")}
 
 
 def require_gate(data):
@@ -33,6 +33,14 @@ def main():
     m = manifest(args.data)
     gate_path = args.data / "preflight.json"
     write_json(gate_path, {"pass": False, "status": "running"})
+    # Extend the existing 128 train-split dev items using ONLY the local cache.
+    from datasets import load_dataset
+    dev = load_dataset("openai/gsm8k", "main", split="train")
+    development = [{"id": f"train:{i}", **dev[i]} for i in range(256)]
+    existing = json.loads((args.data / "gsm8k_dev.json").read_text())
+    if development[:len(existing)] != existing:
+        raise ValueError("Cached GSM8K differs from the prepared development data")
+    write_json(args.data / "gsm8k_dev_full.json", development)
     root = snapshot()
     from transformers import AutoTokenizer, AutoModelForCausalLM
     tok = AutoTokenizer.from_pretrained(root, local_files_only=True)
@@ -95,8 +103,8 @@ def main():
     gc.collect()
     torch.cuda.empty_cache()
     from .train import batch, loss
-    own = Model.load(root)
-    add_lora(own, 16)
+    own = Model.load(root, dtype=torch.float32)
+    own.requires_grad_(True)
     own.gradient_checkpointing = True
     own.train()
     rows = json.loads((args.data / "train.json").read_text())
@@ -108,15 +116,18 @@ def main():
     for arm in ("token", "relation"):
         own.zero_grad(set_to_none=True)
         codec = Codec(spec, identity=arm == "token").cuda()
-        value = loss(own, raw, response, prefix, codec, torch.rand_like(raw, dtype=torch.float),
-                     torch.full((1, m["length"] // m["block_size"]), .5, device="cuda"),
-                     m["mask_id"], m["block_size"])
+        with torch.autocast("cuda", dtype=torch.bfloat16):
+            value = loss(own, raw, response, prefix, codec, torch.rand_like(raw, dtype=torch.float),
+                         torch.full((1, m["length"] // m["block_size"]), .5, device="cuda"),
+                         m["mask_id"], m["block_size"])
         value.backward()
         gradients = [v.grad for v in own.parameters() if v.requires_grad and v.grad is not None]
+        if len(gradients) != len(list(own.parameters())):
+            raise AssertionError("Full training requires gradients for every parameter")
         if not torch.isfinite(value) or not gradients or not all(torch.isfinite(g).all() for g in gradients):
             raise AssertionError("Non-finite loss/gradient")
         if not any((g != 0).any() for g in gradients):
-            raise AssertionError("All adapter gradients zero")
+            raise AssertionError("All full-model gradients zero")
         losses[arm] = value.item()
     torch.cuda.synchronize()
     gate = dict(pass_=True, data_hash=digest(args.data / "manifest.json"),

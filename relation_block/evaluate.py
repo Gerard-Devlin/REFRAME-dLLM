@@ -9,7 +9,8 @@ import time
 import torch
 from .common import digest, manifest, snapshot, write_json
 from .codec import Codec
-from .model import Model, clean_mask, load_adapter
+from .model import Model, clean_mask
+from .full_state import load_full_model
 
 
 def answer(text, gold=False):
@@ -139,25 +140,26 @@ def main():
         schedules = ["official-threshold"]
         arm = "official-native"
     else:
-        model = Model.load(root)
         if args.checkpoint:
-            # Fold LoRA into the BF16 backbone before timing. Leaving the
-            # training wrappers active adds two unfused GEMMs to every linear
-            # layer and would measure adapter plumbing rather than the method.
-            metadata = load_adapter(model, args.checkpoint, merge=True)
+            model, metadata = load_full_model(args.checkpoint)
             if metadata["data_hash"] != digest(args.data / "manifest.json"):
                 raise ValueError("Checkpoint data differs")
-            if metadata["status"] != "complete":
-                raise ValueError("Incomplete training budget; resume first")
             if metadata["implementation"] != implementation_hashes():
                 raise ValueError("Checkpoint was trained with a different implementation")
+        else:
+            model = Model.load(root)
         arm = metadata["arm"] if metadata else "unadapted-token"
         codec = Codec(spec, identity=arm != "relation").cuda()
         model.eval()
         schedules = [int(s) for s in args.rounds.split(",")]
         if not schedules or min(schedules) < 1:
             raise ValueError("Invalid rounds")
-    samples = json.loads((args.data / f"gsm8k_{args.split}.json").read_text())
+    eval_path = args.data / ("gsm8k_dev_full.json" if args.split == "dev" else "gsm8k_test.json")
+    samples = json.loads(eval_path.read_text())
+    if metadata and metadata.get("evaluation_data_hash") != digest(eval_path) and args.split == "dev":
+        raise ValueError("Development data differs from checkpoint")
+    if args.limit > len(samples):
+        raise ValueError(f"Requested {args.limit} examples, only {len(samples)} available")
     samples = samples[:args.limit]
     if not samples:
         raise ValueError("Empty evaluation")
@@ -196,6 +198,7 @@ def main():
             pred, target = answer(text), answer(sample["answer"], gold=True)
             record = dict(id=sample["id"], prediction=text, extracted=pred, target=target,
                           correct=pred is not None and pred == target, seconds=seconds,
+                          length_capped=len(generated) >= args.max_new_tokens and m["eos_id"] not in generated,
                           tokens=len(generated), calls=calls, peak_gib=torch.cuda.max_memory_allocated() / 2**30)
             records.append(record)
             with (args.output / f"samples_{schedule}.jsonl").open("a", encoding="utf-8") as f:
@@ -203,13 +206,14 @@ def main():
             print(f"{arm} rounds={schedule} {len(records)}/{len(samples)} correct={record['correct']} seconds={seconds:.3f}", flush=True)
         times = sorted(x["seconds"] for x in records)
         results[str(schedule)] = dict(accuracy=sum(x["correct"] for x in records) / len(records),
+            truncation_rate=sum(x["length_capped"] for x in records) / len(records),
             mean_seconds=sum(times) / len(times), p95_seconds=times[min(len(times)-1, math.ceil(.95*len(times))-1)],
             tokens_per_second=sum(x["tokens"] for x in records) / sum(times),
             mean_calls=sum(sum(x["calls"].values()) for x in records) / len(records))
     write_json(args.output / "summary.json", dict(arm=arm, split=args.split, examples=len(samples),
         ids=[s["id"] for s in samples], max_new_tokens=args.max_new_tokens, block_size=m["block_size"],
         data_hash=digest(args.data / "manifest.json"), checkpoint=metadata,
-        adapter_execution="merged-bf16" if metadata else "none",
+        adaptation="full" if metadata else "none", evaluation_data_hash=digest(eval_path),
         gpu=torch.cuda.get_device_name(), torch=torch.__version__, results=results,
         scope="0-shot GSM8K, custom numeric extraction; exploratory dev if split=dev; not official lm-eval reproduction",
         sampler="official threshold, block cache only" if args.official else "shared fixed-round confidence quota, block cache only"))

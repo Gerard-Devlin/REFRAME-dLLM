@@ -85,27 +85,38 @@ evaluate_model() {
     CUDA_VISIBLE_DEVICES="${uuids[0]}" python -u -m relation_block.evaluate "$@"
 }
 case "$PHASE" in
-smoke|pilot)
-    # Explicitly requested bounded campaign; no automatic jump to longer runs.
-    steps="${STEPS:-200}"; limit="${EVAL_LIMIT:-32}"; rounds="${ROUNDS:-2,4,8,16}"; new_tokens="${MAX_NEW_TOKENS:-256}"
-    if [[ "$PHASE" == smoke ]]; then steps=2; limit=2; rounds=2; new_tokens=64; fi
-    ev=(--data "$DATA_DIR" --split dev --limit "$limit" --rounds "$rounds" --max-new-tokens "$new_tokens")
-    evaluate_model "${ev[@]}" --official --output "$RUN_DIR/native"
-    evaluate_model "${ev[@]}" --output "$RUN_DIR/baseline"
+smoke)
+    python -u -m relation_block.full_smoke --data "$DATA_DIR" --output "$RUN_DIR" \
+        --world-size "${#physical[@]}" --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}" ;;
+pilot|full)
+    if [[ "$PHASE" == full ]]; then
+        # A full campaign explicitly authorizes both gates followed by the epoch.
+        # Standalone smoke remains bounded and never starts formal training.
+        CUDA_VISIBLE_DEVICES="${uuids[0]}" python -m pytest relation_block/tests -q
+        CUDA_VISIBLE_DEVICES="${uuids[0]}" python -u -m relation_block.preflight --data "$DATA_DIR"
+        python -u -m relation_block.full_smoke --data "$DATA_DIR" --output "$RUN_DIR/full_smoke" \
+            --world-size "${#physical[@]}" --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}"
+    fi
+    # Full epoch by default. STEPS is an explicit bounded override, never an implicit 200-step cap.
     for arm in token relation; do
         train_model --data "$DATA_DIR" --output "$RUN_DIR/$arm/train" --arm "$arm" \
-            --steps "$steps" --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}" \
-            --seed "${SEED:-1234}" --max-seconds "${MAX_SECONDS:-3600}"
-        evaluate_model "${ev[@]}" --checkpoint "$RUN_DIR/$arm/train/checkpoint.pt" --output "$RUN_DIR/$arm/eval"
+            --steps "${STEPS:-0}" --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}" \
+            --seed "${SEED:-1234}" --max-seconds "${MAX_SECONDS:-0}" --lr "${LR:-2e-5}" \
+            --save-every "${SAVE_EVERY:-500}" --eval-every "${EVAL_EVERY:-1000}" \
+            --eval-limit "${EVAL_LIMIT:-32}" --final-eval-limit "${FINAL_EVAL_LIMIT:-256}" \
+            --rounds "${ROUNDS:-2,4,8,16}" --max-new-tokens "${MAX_NEW_TOKENS:-512}"
     done
-    python -m relation_block.compare "$RUN_DIR/native" "$RUN_DIR/baseline" "$RUN_DIR/token/eval" "$RUN_DIR/relation/eval" ;;
+    python -m relation_block.compare "$RUN_DIR/token/eval/final" "$RUN_DIR/relation/eval/final" ;;
 preflight)
     python -m pytest relation_block/tests -q
     python -u -m relation_block.preflight --data "$DATA_DIR" ;;
 train)
-    args=(--data "$DATA_DIR" --output "$RUN_DIR/train" --arm "$ARM" --steps "${STEPS:-200}"
+    args=(--data "$DATA_DIR" --output "$RUN_DIR/train" --arm "$ARM" --steps "${STEPS:-0}"
           --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}"
-          --seed "${SEED:-1234}" --max-seconds "${MAX_SECONDS:-3600}")
+          --seed "${SEED:-1234}" --max-seconds "${MAX_SECONDS:-0}" --lr "${LR:-2e-5}"
+          --save-every "${SAVE_EVERY:-500}" --eval-every "${EVAL_EVERY:-1000}"
+          --eval-limit "${EVAL_LIMIT:-32}" --final-eval-limit "${FINAL_EVAL_LIMIT:-256}"
+          --rounds "${ROUNDS:-2,4,8,16}" --max-new-tokens "${MAX_NEW_TOKENS:-512}")
     if [[ -n "${RESUME:-}" ]]; then args+=(--resume "$RESUME"); fi
     train_model "${args[@]}" ;;
 native|baseline|evaluate)

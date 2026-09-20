@@ -6,7 +6,7 @@ relation weights or demonstrated speedups** in this directory.
 
 ## What is implemented
 
-- Frozen starting checkpoint: `Efficient-Large-Model/Fast_dLLM_v2_1.5B`, revision
+- Pinned starting checkpoint: `Efficient-Large-Model/Fast_dLLM_v2_1.5B`, revision
   `da5608172d2b74380e4e780baa19c71645e4f981`. Downloads run on the server only.
 - Train-only sparse one-layer BPE coupling: fixed pairs (1,2), (3,4), ... in
   each 32-token block. For each supported anchor, swap its most frequent
@@ -17,10 +17,9 @@ relation weights or demonstrated speedups** in this directory.
 - First token of each block, prompt tokens and all special IDs are protected.
   No answer-dependent pair selection, no future-block side information.
   O(vocabulary) lookup storage, no vocabulary-squared allocations.
-- Token and relation arms start from identical weights. Both use rank-16 LoRA
-  on Q/K/V/O and gate/up/down projections, frozen embeddings and LM head,
-  no adapter dropout. This is a restricted adaptation experiment; a negative
-  result does not establish failure of full-parameter relation training.
+- Token and relation arms start from identical weights and train **all parameters**,
+  including tied embeddings/output head, attention, MLP and normalization layers.
+  The production training/evaluation path does not use LoRA.
 - Training uses complementary masks on eligible response positions. The noisy
   branch sees its own block and earlier **clean original-text** blocks only.
   The clean branch sees previous/current clean blocks. Positions are duplicated
@@ -29,16 +28,25 @@ relation weights or demonstrated speedups** in this directory.
   This boundary loss and relation/clean split are explicit adaptation choices,
   **not an exact reproduction of the original v2 fine-tuning recipe**.
 - Chunked/recomputed vocabulary losses and layer gradient checkpointing reduce
-  training memory. BF16 frozen weights, FP32 LoRA parameters/AdamW state.
-- Global samples and mask draws are deterministic by step, independent of GPU
-  count. Gradient accumulation is normalized by global response-token count.
-  Single GPU / torchrun DDP. Periodic resumable adapter checkpoints.
-  `GPU_IDS` is an explicit list of physical nvidia-smi indices. `smoke` and
-  `pilot` campaigns train on all selected devices and evaluate serially on the
-  first selected device. Global batch must divide by world size * micro batch;
-  six GPUs with global batch12 and micro batch1 use two accumulation steps.
+  training memory. FP32 master parameters and AdamW state, BF16 autocast forward.
+  The chunked trainable output head runs inside the DDP forward.
+- One seeded, shuffled epoch without replacement; the final partial batch is
+  token-normalized and empty ranks participate with zero-weight dummy examples.
+  DDP + ZeroRedundancyOptimizer shard AdamW states across selected GPUs. Single
+  GPU uses AdamW. Six GPUs, global batch12, microbatch1 accumulate twice.
+- `GPU_IDS` explicitly selects physical nvidia-smi indices. `full` runs both arms
+  sequentially on all selected GPUs; evaluation runs on the first selected GPU.
+  `pilot` uses the same epoch budget but requires pre-existing gates. `STEPS=0` means
+  one epoch; a positive value explicitly limits the run within that epoch.
+- Full checkpoints every 500 updates, at evaluation points and at completion:
+  FP32 model, per-rank optimizer/RNG shards, sampler/scheduler position, BF16
+  inference export. Retain the newest two checkpoints per arm. Resume requires
+  the same GPU count, data, implementation and planned schedule. Old adapter
+  checkpoints cannot resume full training. Checkpoint publication is atomic.
+- TensorBoard and JSONL report globally token-weighted loss, gradient norm,
+  learning rate, original/supervised tokens, throughput, ETA and per-rank memory.
 - Free-running GSM8K numeric accuracy, full generation latency, p95, tokens/s,
-  call counts and output texts. Dev = first 128 GSM8K TRAIN examples, used for
+  call counts and output texts. Dev = first 256 GSM8K TRAIN examples, used for
   evaluation only; test is separately opt-in. No test-based codec fitting.
 
 ## Baselines and what the numbers mean
@@ -47,8 +55,8 @@ relation weights or demonstrated speedups** in this directory.
 |---|---|---|
 | `native` | Original official v2 | Official threshold=0.9, sub-block=8, block cache only |
 | `baseline` | Original v2, explicit backend | Shared fixed-round confidence quota |
-| `train` ARM=token then `evaluate` | Token LoRA | Shared fixed-round confidence quota |
-| `train` ARM=relation then `evaluate` | Relation LoRA | Same shared sampler |
+| `train` ARM=token then `evaluate` | Token full training | Shared fixed-round confidence quota |
+| `train` ARM=relation then `evaluate` | Relation full training | Same shared sampler |
 
 The native row is a reference, **not a claim to reproduce every optimized v2
 configuration** (sub-block/DualCache is disabled here). The token/relation pair
@@ -101,12 +109,14 @@ for engineering checks only. These are not official v2's complete training data
 or recipe. Logs count original unpadded tokens as well as padded slots.
 Complementary/noisy-clean computation is extra, not additional unique text.
 
-Default 200 updates * global batch12 * length2048 = 4,915,200 padded slots;
-actual original tokens are smaller and recorded in `status.json`. This is an
-engineering/early-adaptation run, not a promised sufficient learning budget.
-No automatic escalation to 10M/100M tokens. Compare both completed budgets first.
-Same original-token budget does not guarantee identical wall-clock compute;
-record `training_seconds`, peak memory and hardware separately.
+Default training consumes one complete prepared training epoch. Learning rate
+2e-5, 3% warmup, cosine decay, AdamW weight decay0.01, clipping1.0. Intermediate
+evaluation every 1000 updates uses 32 fixed dev examples; final evaluation uses
+256, at rounds2/4/8/16 and max generation512. Length-cap rates are reported.
+There is no default one-hour stop. Explicit MAX_SECONDS saves and stops;
+resume is explicit. Training compute, evaluation and checkpoint I/O are not
+reported as the same timing metric. Short-smoke measurements give provisional
+full-epoch compute ETA; they do not predict learning quality.
 
 ## Gates and tests
 
@@ -114,10 +124,22 @@ record `training_seconds`, peak memory and hardware separately.
 `preflight` first invalidates any old gate, then:
 
 1. compares real-checkpoint logits to the pinned official remote implementation;
-2. compares cached and uncached outputs at a complete block boundary;
+2. compares full/prefill/cached paths against the corresponding official paths;
 3. checks token/relation forward + backward on real weights, without an optimizer step.
 
-Only a passing gate for the exact implementation/data enables training/evaluation.
+Preflight also extends the original 128 dev items to 256 from the offline cache,
+checking that the original prefix is unchanged. The existing data manifest is
+not rewritten. Full checkpoint metadata fingerprints the extended dev file.
+
+Formal training additionally requires `smoke`: on the actual selected GPUs,
+each arm runs four full optimizer steps, saves/exits, restores the sharded
+checkpoint, finishes four more steps, and evaluates the full BF16 export.
+The gate matches implementation/data/GPU-count/batch settings. OOM or resume
+failure stops the campaign; no fallback to LoRA or a smaller batch occurs.
+`full` performs preflight and actual-topology smoke automatically before both
+training arms. Standalone `smoke` never starts the epoch. Successful smoke
+discards its temporary large checkpoints after export evaluation; logs, metrics,
+status and gate results remain. Failed smoke checkpoints remain for diagnosis.
 Remote code is executed only for official parity/native evaluation, from the
 pinned local snapshot downloaded through the mirror. The explicit backend loads
 safetensors with strict keys and rejects unsupported RoPE/sliding-window configs.
@@ -131,8 +153,10 @@ RUN_DDP_TESTS=1 python -m pytest relation_block/tests -q
 
 Checks cover bijection/specials/prompt/block boundaries, sparse fitting, local
 error propagation, transitive attention leakage, independent Qwen reference
-parity, cache parity, LoRA gradients/checkpoints, free generation, microbatch
-equivalence and optional real two-process CPU/Gloo gradient equivalence.
+parity, cache parity, full-parameter gradients, BF16 autocast/FP32 optimizer,
+checkpoint retention/export, exact next-update resume, epoch tail coverage,
+free generation and real two-process CPU/Gloo sharded-optimizer equivalence.
+Historical LoRA utility tests remain separate from the training path.
 
 Local tiny tests do not establish real-checkpoint/NCCL compatibility; server
 gate results and completed training/evaluation logs are required.
