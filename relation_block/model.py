@@ -30,6 +30,7 @@ class Attention(nn.Module):
         super().__init__()
         d, self.h, self.k = c["hidden_size"], c["num_attention_heads"], c["num_key_value_heads"]
         self.d = c.get("head_dim") or d // self.h
+        self.groups = self.h // self.k
         self.q_proj = nn.Linear(d, self.h * self.d, bias=True)
         self.k_proj = nn.Linear(d, self.k * self.d, bias=True)
         self.v_proj = nn.Linear(d, self.k * self.d, bias=True)
@@ -51,9 +52,21 @@ class Attention(nn.Module):
         q, k = q * co + rotate(q) * si, k * co + rotate(k) * si
         if past is not None:
             k, v = torch.cat((past[0], k), 2), torch.cat((past[1], v), 2)
+        # Match Transformers' SDPA wrapper for masked CUDA attention. With a
+        # block mask it explicitly expands KV heads instead of enable_gqa=True.
+        # The two paths are algebraically equivalent but use different BF16
+        # kernels and diverge measurably after many layers. Keep the compact KV
+        # form in cache and expand only the tensors passed to attention.
         saved = (k, v) if cache else None
-        out = F.scaled_dot_product_attention(q, k, v, attn_mask=mask,
-                                            is_causal=False, enable_gqa=True)
+        if self.groups != 1:
+            k_attn = k[:, :, None, :, :].expand(b, self.k, self.groups, k.shape[-2], self.d)
+            v_attn = v[:, :, None, :, :].expand(b, self.k, self.groups, v.shape[-2], self.d)
+            k_attn = k_attn.reshape(b, self.h, k.shape[-2], self.d)
+            v_attn = v_attn.reshape(b, self.h, v.shape[-2], self.d)
+        else:
+            k_attn, v_attn = k, v
+        out = F.scaled_dot_product_attention(q, k_attn, v_attn, attn_mask=mask,
+                                             is_causal=False, scale=self.d ** -0.5)
         return self.o_proj(out.transpose(1, 2).reshape(b, n, -1)), saved
 
 

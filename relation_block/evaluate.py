@@ -135,7 +135,7 @@ def main():
         if args.checkpoint:
             raise ValueError("Official baseline is unadapted")
         model = AutoModelForCausalLM.from_pretrained(root, trust_remote_code=True,
-                local_files_only=True, torch_dtype=torch.bfloat16).cuda().eval()
+                local_files_only=True, dtype=torch.bfloat16).cuda().eval()
         schedules = ["official-threshold"]
         arm = "official-native"
     else:

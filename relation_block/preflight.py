@@ -58,7 +58,7 @@ def main():
     torch.cuda.empty_cache()
     print("Comparing original checkpoint against official pinned modeling code...", flush=True)
     official = AutoModelForCausalLM.from_pretrained(root, trust_remote_code=True,
-                    local_files_only=True, torch_dtype=torch.bfloat16).cuda().eval()
+                    local_files_only=True, dtype=torch.bfloat16).cuda().eval()
     with torch.no_grad():
         reference = official(x, use_cache=False, block_size=m["block_size"]).logits.float().cpu()
     relative = ((ours - reference).square().mean().sqrt() / reference.square().mean().sqrt()).item()
