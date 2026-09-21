@@ -85,6 +85,13 @@ evaluate_model() {
     CUDA_VISIBLE_DEVICES="${uuids[0]}" python -u -m relation_block.evaluate "$@"
 }
 case "$PHASE" in
+diagnose-length)
+    python -u -m relation_block.diagnose length --data "$DATA_DIR" --output "$RUN_DIR/diagnostic" \
+        --source "${SOURCE_RUN:?Set SOURCE_RUN to the completed full training run}" \
+        --limit "${EVAL_LIMIT:-256}" --reconstruction-limit "${RECONSTRUCTION_LIMIT:-32}" ;;
+diagnose-zero)
+    python -u -m relation_block.diagnose zero --data "$DATA_DIR" --output "$RUN_DIR/diagnostic" \
+        --world-size "${#physical[@]}" --global-batch "${GLOBAL_BATCH:-12}" ;;
 smoke)
     python -u -m relation_block.full_smoke --data "$DATA_DIR" --output "$RUN_DIR" \
         --world-size "${#physical[@]}" --global-batch "${GLOBAL_BATCH:-12}" --micro-batch "${MICRO_BATCH:-1}" ;;

@@ -163,6 +163,25 @@ gate results and completed training/evaluation logs are required.
 
 ## Stop / continue criteria
 
+Continuation diagnostics are isolated in `diagnose.py`; they do not change the
+training/evaluation implementation hashes or invalidate existing checkpoints.
+`diagnose-length` uses one selected GPU and a completed `SOURCE_RUN`: original,
+token and relation weights each run the same dev questions at 16 rounds, with
+512/1024 output caps. It reports paired recovery/regression, cap rates, latency
+and a whitespace repeated-4-gram heuristic. An additional fixed-mask probe on
+heldout training-domain examples instruments the existing objective and reports
+reconstruction accuracy for EOS, boundary and ordinary tokens. Each probability
+setting includes both complementary masks; CE across representations is not
+directly comparable. Generation measurements exclude reconstruction work.
+
+`diagnose-zero` uses all explicitly selected GPUs for four genuine full-parameter
+optimizer steps at LR=0. It checks every saved FP32 and exported BF16 tensor
+against the original safetensors, then compares last-position prompt logits and
+eight deterministic 128-token generation probes before/after loading. It saves
+its checkpoint in a fresh diagnostic directory and never resumes the old run.
+Passing establishes this bounded roundtrip, not nonzero-LR training correctness.
+Neither diagnostic starts further training automatically.
+
 Stop on parity, cache, inversion, NaN, or leakage failures. If adapted token
 quality collapses relative to the same-sampler original model, fix the training
 recipe before attributing anything to the codec. If relation adaptation only
