@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 PHASE="${1:-}"
-case "$PHASE" in setup|weights|subset|prepare|preflight|native|baseline|train|evaluate|compare|smoke|pilot|full|diagnose-length|diagnose-zero) ;; *) echo 'phase: setup weights subset prepare preflight native baseline train evaluate compare smoke pilot full diagnose-length diagnose-zero'; exit 2;; esac
+case "$PHASE" in setup|weights|subset|prepare|preflight|native|baseline|train|evaluate|compare|smoke|pilot|full|diagnose-length|diagnose-zero|continuation) ;; *) echo 'phase: setup weights subset prepare preflight native baseline train evaluate compare smoke pilot full diagnose-length diagnose-zero continuation'; exit 2;; esac
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUN_DIR="${RUN_DIR:-$REPO/relation_block/runs/${PHASE}_$(date +%Y%m%d_%H%M%S)}"
 DATA_DIR="${DATA_DIR:-/home/xuyouwen/hf_home_local/relation_block/nemotron_bpe2048_v1}"
@@ -9,7 +9,7 @@ GPU_IDS="${GPU_IDS:-}"
 if [[ "$PHASE" != setup && "$PHASE" != weights && "$PHASE" != subset && "$PHASE" != prepare && "$PHASE" != compare ]]; then
     [[ "$GPU_IDS" =~ ^[0-9]+(,[0-9]+)*$ ]] || { echo 'Set GPU_IDS explicitly, e.g. 3 or 0,1,2,3,4,5'; exit 2; }
     [[ -s "$DATA_DIR/manifest.json" ]] || { echo 'Prepare has not finished: missing manifest.json'; exit 2; }
-    if [[ "$PHASE" != train && "$PHASE" != smoke && "$PHASE" != pilot && "$PHASE" != full && "$PHASE" != diagnose-zero && "$GPU_IDS" == *,* ]]; then
+    if [[ "$PHASE" != train && "$PHASE" != smoke && "$PHASE" != pilot && "$PHASE" != full && "$PHASE" != diagnose-zero && "$PHASE" != continuation && "$GPU_IDS" == *,* ]]; then
         echo 'Use one GPU for preflight or standalone evaluation; train/smoke/pilot accept multiple GPUs'; exit 2
     fi
 fi
