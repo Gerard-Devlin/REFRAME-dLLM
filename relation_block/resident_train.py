@@ -47,9 +47,15 @@ def main():
     p.add_argument("--boundary-probes", action='store_true')
     p.add_argument("--eval-at-start", action='store_true')
     p.add_argument("--keep-checkpoints", action='store_true')
+    p.add_argument("--lora-rank", type=int, default=0, help='0 = full FT; positive = frozen backbone plus LoRA, alpha=2r')
     args = p.parse_args()
     world, rank, local = (int(os.getenv(k, d)) for k, d in (("WORLD_SIZE", 1), ("RANK", 0), ("LOCAL_RANK", 0)))
     args.global_batch = args.global_batch or 2 * world
+    if args.lora_rank < 0:
+        raise ValueError('LoRA rank must be nonnegative')
+    if args.lora_rank:
+        from .adaptation import save_lora, restore_lora
+        save_checkpoint, restore_checkpoint = save_lora, restore_lora
     if (args.boundary_probes or args.boundary_mode == 'masked') and args.arm != 'token':
         raise ValueError('Boundary A/B is token-only')
     from .boundary import masked_loss
@@ -79,19 +85,25 @@ def main():
     torch.manual_seed(args.seed)
     model = Model.load(snapshot(), device, dtype=torch.float32)
     model.requires_grad_(True)
+    if args.lora_rank:
+        from .model import add_lora
+        add_lora(model, args.lora_rank)
+        assert not model.model.embed_tokens.weight.requires_grad and not model.lm_head.weight.requires_grad
+        assert all(p.requires_grad == (name.endswith('.a') or name.endswith('.b')) for name,p in model.named_parameters())
     model.gradient_checkpointing = True
     total_params = sum(x.numel() for x in model.parameters())
     trainable = sum(x.numel() for x in model.parameters() if x.requires_grad)
-    assert trainable == total_params
+    assert (0 < trainable < total_params) if args.lora_rank else trainable == total_params
+    train_params = [p for p in model.parameters() if p.requires_grad]
     if rank == 0:
-        print(f"FULL training: total={total_params:,}, trainable={trainable:,}, world_size={world}", flush=True)
+        print(f"adaptation={'lora' if args.lora_rank else 'full'} rank={args.lora_rank}: total={total_params:,}, trainable={trainable:,}, world_size={world}", flush=True)
     wrapped = DDP(model, device_ids=[local], broadcast_buffers=False, gradient_as_bucket_view=True) if world > 1 else model
     if world > 1:
         from torch.distributed.optim import ZeroRedundancyOptimizer
-        optimizer = ZeroRedundancyOptimizer(model.parameters(), optimizer_class=torch.optim.AdamW,
+        optimizer = ZeroRedundancyOptimizer(train_params, optimizer_class=torch.optim.AdamW,
                                             lr=args.lr, weight_decay=args.weight_decay, foreach=False)
     else:
-        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, foreach=False)
+        optimizer = torch.optim.AdamW(train_params, lr=args.lr, weight_decay=args.weight_decay, foreach=False)
     rows = json.loads((args.data / "train.json").read_text())
     batches = epoch_batches(len(rows), args.global_batch, args.seed)
     if args.steps > len(batches):
@@ -112,6 +124,11 @@ def main():
                 length=m["length"], block_size=m["block_size"], dtype="fp32-master/bf16-autocast",
                 objective="complementary response CE plus clean boundary CE", adaptation="full",
                 implementation=hashes, trainable_parameters=trainable, total_parameters=total_params)
+    checkpoint_format = 'lora-resident-v1' if args.lora_rank else 'full-v1'
+    if args.lora_rank:
+        meta.update(adaptation='lora', lora_rank=args.lora_rank, lora_alpha=2*args.lora_rank,
+                    lora_scaling=2., lora_dropout=0., backbone_dtype='fp32',
+                    adaptation_sha256=digest(Path(__file__).with_name('adaptation.py')))
     if args.boundary_probes or args.boundary_mode == 'masked':
         meta.update(boundary_mode=args.boundary_mode, boundary_sha256=digest(Path(__file__).with_name('boundary.py')),
                     objective=('complementary response CE plus clean boundary CE' if args.boundary_mode == 'clean'
@@ -186,7 +203,7 @@ def main():
                         raise FloatingPointError("Non-finite full-training loss")
                     weighted.backward()
                 numerator += value.detach() * count
-            grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1., error_if_nonfinite=True)
+            grad_norm = torch.nn.utils.clip_grad_norm_(train_params, 1., error_if_nonfinite=True)
             optimizer.step()
             if world > 1:
                 dist.all_reduce(numerator)
@@ -239,11 +256,18 @@ def main():
                                training_seconds=train_seconds, evaluation_seconds=eval_seconds,
                                status=status, steady_step_seconds=steady, peak_gib_by_rank=record["peak_gib_by_rank"],
                                evaluation_data_hash=digest(args.data / "gsm8k_dev_full.json"))
+                if args.lora_rank:
+                    from .adaptation import update_statistics
+                    stats = update_statistics(model)
+                    current['adapter_update'] = stats
+                    if rank == 0:
+                        print('ADAPTER_UPDATE', json.dumps(stats), flush=True)
+                        for key,value in stats.items(): writer.add_scalar('adapter/'+key,value,completed)
                 checkpoint_root = args.output / 'checkpoints' / f'budget_{completed:08d}' if args.keep_checkpoints else args.output
                 saved = save_checkpoint(checkpoint_root, model, optimizer, current, rank, world)
                 if args.keep_checkpoints and rank == 0:
                     write_json(args.output / 'latest.json', dict(checkpoint=str(saved.relative_to(args.output.resolve()))))
-                    write_json(args.output / 'status.json', dict(current, world_size=world, format='full-v1'))
+                    write_json(args.output / 'status.json', dict(current, world_size=world, format=checkpoint_format))
                 if evaluate:
                     eval_tick = time.perf_counter()
                     # Every rank keeps model/optimizer resident and evaluates a disjoint shard.
@@ -257,8 +281,8 @@ def main():
                     if rank == 0:
                         write_json(args.output / "evaluation_time.json", {"seconds": eval_seconds})
                         current["evaluation_seconds"] = eval_seconds
-                        write_json(saved / "metadata.json", dict(current, world_size=world, format="full-v1"))
-                        write_json(args.output / "status.json", dict(current, world_size=world, format="full-v1"))
+                        write_json(saved / "metadata.json", dict(current, world_size=world, format=checkpoint_format))
+                        write_json(args.output / "status.json", dict(current, world_size=world, format=checkpoint_format))
             if status != "running":
                 break
     finally:

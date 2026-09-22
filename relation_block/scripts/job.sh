@@ -85,6 +85,21 @@ evaluate_model() {
     CUDA_VISIBLE_DEVICES="${uuids[0]}" python -u -m relation_block.evaluate "$@"
 }
 case "$PHASE" in
+lora-sweep)
+    python -u -m relation_block.full_smoke --data "$DATA_DIR" --output "$RUN_DIR/full_smoke" \
+        --world-size "${#physical[@]}" --global-batch "${GLOBAL_BATCH:-$((2 * ${#physical[@]}))}" --micro-batch 1
+    for lora_rank in 0 8 32 64; do
+        name="lora_r${lora_rank}"
+        if [[ "$lora_rank" == 0 ]]; then name=full; fi
+        python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node="${#physical[@]}" \
+            -m relation_block.resident_train --data "$DATA_DIR" --output "$RUN_DIR/$name/train" --arm token \
+            --global-batch "${GLOBAL_BATCH:-$((2 * ${#physical[@]}))}" --micro-batch 1 \
+            --lr "${LR:-4e-6}" --seed "${SEED:-1234}" --eval-limit "${EVAL_LIMIT:-256}" \
+            --rounds 4,8,16 --max-new-tokens 512 --reconstruction-limit "${RECONSTRUCTION_LIMIT:-32}" \
+            --token-budget 2000000 --eval-token-budgets 500000,1000000,2000000 \
+            --boundary-mode clean --boundary-probes --eval-at-start --keep-checkpoints --lora-rank "$lora_rank"
+    done
+    python -u -m relation_block.lora_report "$RUN_DIR" ;;
 boundary-ab)
     # Same ranks/batch/order/LR for both fresh token runs; do not consume RESUME.
     python -u -m relation_block.full_smoke --data "$DATA_DIR" --output "$RUN_DIR/full_smoke" \

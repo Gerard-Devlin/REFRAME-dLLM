@@ -16,8 +16,8 @@ def bf16_copy(model):
     # Same tensor rounding as checkpoint export; do not mutate FP32 masters or DDP.
     with torch.device('meta'):
         result = Model(model.config)
-    result.load_state_dict({k: v.detach().to(dtype=torch.bfloat16, copy=True)
-                           for k, v in model.state_dict().items()}, assign=True)
+    from .adaptation import merged_state
+    result.load_state_dict(merged_state(model), assign=True)
     if model.config.get('tie_word_embeddings', False):
         result.lm_head.weight = result.model.embed_tokens.weight
     return result.requires_grad_(False).eval()
