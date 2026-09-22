@@ -40,7 +40,8 @@ def test_weighted_reconstruction_not_rank_mean():
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason='CUDA required')
-def test_real_resident_eval_preserves_master_and_rng(tmp_path, monkeypatch):
+@pytest.mark.parametrize('boundary_probes', [False, True])
+def test_real_resident_eval_preserves_master_and_rng(tmp_path, monkeypatch, boundary_probes):
     from relation_block import resident_eval as e
     import transformers
     master = tiny().cuda().train()
@@ -56,12 +57,17 @@ def test_real_resident_eval_preserves_master_and_rng(tmp_path, monkeypatch):
         def decode(self, *a, **kw): return '#### 1'
     monkeypatch.setattr(transformers.AutoTokenizer, 'from_pretrained', lambda *a, **kw: Tok())
     cpu, cuda = torch.get_rng_state(), torch.cuda.get_rng_state()
-    e.evaluate_resident(master, tmp_path, tmp_path/'eval', 'token', 0, 1, 2, '2', 4, 1)
+    e.evaluate_resident(master, tmp_path, tmp_path/'eval', 'token', 0, 1, 2, '2', 4, 1,
+                        boundary_probes=boundary_probes)
     assert master.training
     assert torch.equal(cpu, torch.get_rng_state()) and torch.equal(cuda, torch.cuda.get_rng_state())
     for k, v in master.state_dict().items(): assert torch.equal(v, original[k])
     result = json.loads((tmp_path/'eval/summary.json').read_text())
     assert result['results']['2']['accuracy'] == 1
+    assert 'mean_generated_tokens' in result['results']['2']
+    if boundary_probes:
+        assert set(result['reconstruction_by_objective']) == {'clean', 'masked'}
+        assert 'cross_entropy' in result['reconstruction_by_objective']['masked']['0.5']['categories']['boundary']
     # The original FP32 training model still supports backward after evaluation.
     from relation_block.train import loss
     from relation_block.codec import Codec

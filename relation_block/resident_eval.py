@@ -40,17 +40,25 @@ def merge_reconstruction(shards):
         if not total:
             raise ValueError('Empty reconstruction shards')
         categories = {}
-        for name in ('all', 'boundary', 'ordinary', 'eos'):
+        names = ['all', 'boundary', 'ordinary', 'eos']
+        if all('block_first' in s['categories'] for s in parts):
+            names.append('block_first')
+        for name in names:
             count = sum(s['categories'][name]['total'] for s in parts)
             correct = sum(s['categories'][name]['correct'] for s in parts)
             categories[name] = dict(correct=correct, total=count, accuracy=correct/count if count else None)
+            if all('ce_sum' in s['categories'][name] for s in parts):
+                ce_sum = sum(s['categories'][name]['ce_sum'] for s in parts)
+                categories[name].update(ce_sum=ce_sum, cross_entropy=ce_sum/count if count else None,
+                                        loss_contribution=ce_sum/total)
         result[key] = dict(cross_entropy=sum(s['cross_entropy'] * s['categories']['all']['total'] for s in parts)/total,
                            categories=categories)
     return result
 
 
 @torch.no_grad()
-def evaluate_resident(master, data, output, arm, rank, world, limit, rounds, cap, reconstruction_limit):
+def evaluate_resident(master, data, output, arm, rank, world, limit, rounds, cap, reconstruction_limit,
+                      boundary_probes=False):
     from transformers import AutoTokenizer
     output = Path(output)
     output.mkdir(parents=True, exist_ok=True)
@@ -87,21 +95,32 @@ def evaluate_resident(master, data, output, arm, rank, world, limit, rounds, cap
             merged = merge_records(shards, [r['id'] for r in rows])
             results[str(budget)] = dict(accuracy=sum(r['correct'] for r in merged)/limit,
                 truncation_rate=sum(r['length_capped'] for r in merged)/limit,
+                mean_generated_tokens=sum(r['tokens'] for r in merged)/limit,
                 mean_calls=sum(sum(r['calls'].values()) for r in merged)/limit)
             if rank == 0:
                 (output / f'samples_{budget}.jsonl').write_text(''.join(json.dumps(r, ensure_ascii=False)+'\n' for r in merged), encoding='utf-8')
         heldout = json.loads((data / 'heldout.json').read_text())[:reconstruction_limit]
         # Keep original index-based seeds, independent of world size/sharding.
-        local_probes = [reconstruction(model, codec, [heldout[i]], cfg, seed=1234+i)
-                        for i in range(rank, len(heldout), world)]
-        local = merge_reconstruction(local_probes) if local_probes else {}
-        gathered = [None] * world
-        if world > 1:
-            dist.all_gather_object(gathered, local)
-        else:
-            gathered[0] = local
+        probes = {}
+        for mode in (('clean', 'masked') if boundary_probes else ('legacy',)):
+            if mode == 'legacy':
+                local_probes = [reconstruction(model, codec, [heldout[i]], cfg, seed=1234+i)
+                                for i in range(rank, len(heldout), world)]
+            else:
+                from .boundary import reconstruction as boundary_reconstruction
+                local_probes = [boundary_reconstruction(model, codec, [heldout[i]], cfg, mode, seed=1234+i)
+                                for i in range(rank, len(heldout), world)]
+            local = merge_reconstruction(local_probes) if local_probes else {}
+            gathered = [None] * world
+            if world > 1:
+                dist.all_gather_object(gathered, local)
+            else:
+                gathered[0] = local
+            probes[mode] = merge_reconstruction(gathered)
         if rank == 0:
-            write_json(output / 'summary.json', dict(results=results, reconstruction=merge_reconstruction(gathered),
+            write_json(output / 'summary.json', dict(results=results, reconstruction=probes.get('legacy'),
+                reconstruction_by_objective=probes if boundary_probes else None,
+                reconstruction_partition='boundary non-EOS + interior non-EOS + EOS' if boundary_probes else 'legacy',
                 examples=limit, ids=[r['id'] for r in rows], world_size=world,
                 evaluation_seconds=time.perf_counter()-tick, evaluator_sha256=digest(Path(__file__)),
                 scope='Resident distributed accuracy evaluation. Wall time is not single-GPU inference latency.'))

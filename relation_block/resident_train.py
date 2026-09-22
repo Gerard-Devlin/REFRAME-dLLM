@@ -43,9 +43,17 @@ def main():
     p.add_argument("--token-budget", type=int, default=2000000)
     p.add_argument("--eval-token-budgets", default="500000,1000000,2000000")
     p.add_argument("--reconstruction-limit", type=int, default=32)
+    p.add_argument("--boundary-mode", choices=['clean', 'masked'], default='clean')
+    p.add_argument("--boundary-probes", action='store_true')
+    p.add_argument("--eval-at-start", action='store_true')
+    p.add_argument("--keep-checkpoints", action='store_true')
     args = p.parse_args()
     world, rank, local = (int(os.getenv(k, d)) for k, d in (("WORLD_SIZE", 1), ("RANK", 0), ("LOCAL_RANK", 0)))
     args.global_batch = args.global_batch or 2 * world
+    if (args.boundary_probes or args.boundary_mode == 'masked') and args.arm != 'token':
+        raise ValueError('Boundary A/B is token-only')
+    from .boundary import masked_loss
+    objective_loss = loss if args.boundary_mode == 'clean' else masked_loss
     if min(args.global_batch, args.micro_batch, args.save_every, args.eval_limit, args.reconstruction_limit) < 1 or args.steps < 0:
         raise ValueError("Invalid training budget")
     if args.global_batch % (world * args.micro_batch):
@@ -104,6 +112,10 @@ def main():
                 length=m["length"], block_size=m["block_size"], dtype="fp32-master/bf16-autocast",
                 objective="complementary response CE plus clean boundary CE", adaptation="full",
                 implementation=hashes, trainable_parameters=trainable, total_parameters=total_params)
+    if args.boundary_probes or args.boundary_mode == 'masked':
+        meta.update(boundary_mode=args.boundary_mode, boundary_sha256=digest(Path(__file__).with_name('boundary.py')),
+                    objective=('complementary response CE plus clean boundary CE' if args.boundary_mode == 'clean'
+                               else 'complementary response CE including boundaries; preceding noisy-position logits'))
     start, seen, supervised, train_seconds, eval_seconds = 0, 0, 0, 0., 0.
     if args.resume:
         old = restore_checkpoint(args.resume, model, optimizer, rank, world, meta)
@@ -131,6 +143,13 @@ def main():
     torch.cuda.reset_peak_memory_stats()
     invocation_start = time.perf_counter()
     try:
+        if args.eval_at_start and not args.resume:
+            from .resident_eval import evaluate_resident
+            initial_tick = time.perf_counter()
+            evaluate_resident(model, args.data, args.output.parent / 'eval/step_00000000', args.arm, rank, world,
+                              args.eval_limit, args.rounds, args.max_new_tokens,
+                              args.reconstruction_limit, boundary_probes=args.boundary_probes)
+            eval_seconds += time.perf_counter() - initial_tick
         for step in range(start, stop_step):
             torch.cuda.synchronize()
             tick = time.perf_counter()
@@ -159,7 +178,7 @@ def main():
                 count = response.sum() if active else torch.zeros((), device=device)
                 with wrapped.no_sync() if world > 1 and j < accum - 1 else nullcontext():
                     with torch.autocast("cuda", dtype=torch.bfloat16):
-                        value = loss(wrapped, raw, response, prefix, codec,
+                        value = objective_loss(wrapped, raw, response, prefix, codec,
                                      random_mask[lo:lo + len(selected)].to(device),
                                      probs[lo:lo + len(selected)].to(device), m["mask_id"], m["block_size"])
                         weighted = value * count * world / den
@@ -220,7 +239,11 @@ def main():
                                training_seconds=train_seconds, evaluation_seconds=eval_seconds,
                                status=status, steady_step_seconds=steady, peak_gib_by_rank=record["peak_gib_by_rank"],
                                evaluation_data_hash=digest(args.data / "gsm8k_dev_full.json"))
-                saved = save_checkpoint(args.output, model, optimizer, current, rank, world)
+                checkpoint_root = args.output / 'checkpoints' / f'budget_{completed:08d}' if args.keep_checkpoints else args.output
+                saved = save_checkpoint(checkpoint_root, model, optimizer, current, rank, world)
+                if args.keep_checkpoints and rank == 0:
+                    write_json(args.output / 'latest.json', dict(checkpoint=str(saved.relative_to(args.output.resolve()))))
+                    write_json(args.output / 'status.json', dict(current, world_size=world, format='full-v1'))
                 if evaluate:
                     eval_tick = time.perf_counter()
                     # Every rank keeps model/optimizer resident and evaluates a disjoint shard.
@@ -229,7 +252,7 @@ def main():
                     destination = args.output.parent / "eval" / f"step_{completed:08d}"
                     evaluate_resident(model, args.data, destination, args.arm, rank, world,
                                       args.eval_limit, args.rounds, args.max_new_tokens,
-                                      args.reconstruction_limit)
+                                      args.reconstruction_limit, boundary_probes=args.boundary_probes)
                     eval_seconds += time.perf_counter() - eval_tick
                     if rank == 0:
                         write_json(args.output / "evaluation_time.json", {"seconds": eval_seconds})

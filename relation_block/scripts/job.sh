@@ -85,6 +85,20 @@ evaluate_model() {
     CUDA_VISIBLE_DEVICES="${uuids[0]}" python -u -m relation_block.evaluate "$@"
 }
 case "$PHASE" in
+boundary-ab)
+    # Same ranks/batch/order/LR for both fresh token runs; do not consume RESUME.
+    python -u -m relation_block.full_smoke --data "$DATA_DIR" --output "$RUN_DIR/full_smoke" \
+        --world-size "${#physical[@]}" --global-batch "${GLOBAL_BATCH:-$((2 * ${#physical[@]}))}" --micro-batch 1
+    for mode in clean masked; do
+        python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node="${#physical[@]}" \
+            -m relation_block.resident_train --data "$DATA_DIR" --output "$RUN_DIR/$mode/train" --arm token \
+            --global-batch "${GLOBAL_BATCH:-$((2 * ${#physical[@]}))}" --micro-batch 1 \
+            --lr "${LR:-4e-6}" --seed "${SEED:-1234}" --eval-limit "${EVAL_LIMIT:-256}" \
+            --rounds 4,8,16 --max-new-tokens 512 --reconstruction-limit "${RECONSTRUCTION_LIMIT:-32}" \
+            --token-budget 1000000 --eval-token-budgets 250000,500000,1000000 \
+            --boundary-mode "$mode" --boundary-probes --eval-at-start --keep-checkpoints
+    done
+    python -u -m relation_block.boundary_report "$RUN_DIR" ;;
 resident)
     args=(--data "$DATA_DIR" --output "$RUN_DIR/train" --arm "${ARM:-token}"
           --global-batch "${GLOBAL_BATCH:-$((2 * ${#physical[@]}))}" --micro-batch 1
