@@ -25,3 +25,6 @@ output_models/
 
 # Downloaded ALLaVA-4V (HF) + full-download logs (see fast_dvlm/data/download_example_dataset.sh)
 fast_dvlm/data/ALLaVA-4V/
+
+# Frozen relation-adapter experiment outputs
+/relation_adapter/runs/
