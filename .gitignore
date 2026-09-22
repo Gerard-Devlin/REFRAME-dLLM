@@ -28,3 +28,4 @@ fast_dvlm/data/ALLaVA-4V/
 
 # Frozen relation-adapter experiment outputs
 /relation_adapter/runs/
+/denoising_dag/runs/
