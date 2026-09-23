@@ -26,7 +26,7 @@ conda activate "$env_name"
 if [[ "$PHASE" == weights || "$PHASE" == subset ]]; then
     unset HF_HUB_OFFLINE TRANSFORMERS_OFFLINE HF_DATASETS_OFFLINE HF_EVALUATE_OFFLINE
     if [[ "$PHASE" == weights ]]; then
-        python -u -c "from relation_block.common import snapshot; print(snapshot(offline=False))"
+        python -u -m relation_block.download_weights --sizes "${MODEL_SIZES:-1.5b}"
     else
         python -u -m relation_block.download_subset \
             --output "${SUBSET_DIR:-$HF_HOME/nemotron/math_code_100m_bpe2048_v1}" \

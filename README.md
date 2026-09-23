@@ -1,15 +1,3 @@
-# REFRAME-dLLM
-
-Experimental query-side transport of evolving dLLM KV caches, built on
-Fast-dLLM v1. **New implementation, tests, and experiment scripts are isolated
-in [`reframe/`](reframe/README.md)**, alongside the unchanged `v1/` and `v2/`.
-
-This is a locally tested prototype. Real LLaDA-8B task quality and speedups
-have not yet been established. See [validation](reframe/VALIDATION.md) and
-[tmux server commands](reframe/README.md#lab-server-tmux-entry-points).
-
-The original upstream project documentation follows.
-
 # Fast-dLLM
 [![Project](https://img.shields.io/static/v1?label=Project&message=Github&color=blue&logo=github-pages)](https://nvlabs.github.io/Fast-dLLM)
 [![arXiv v1](https://img.shields.io/badge/Paper-v1-red.svg)](https://arxiv.org/abs/2505.22618)

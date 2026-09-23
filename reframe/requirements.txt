@@ -1,7 +1,0 @@
-# Reuse the server's working Torch/CUDA/FlashAttention installation.
-# Dependencies for the core runner + unit tests only.
-transformers==4.49.0
-huggingface-hub>=0.26,<1.0
-pytest>=8,<10
-
-# lm-eval entry point additionally needs v1/requirements.txt.
