@@ -12,7 +12,11 @@ export TOKENIZERS_PARALLELISM=false HF_HUB_DISABLE_XET=1
 export HF_ENDPOINT=https://hf-mirror.com
 if [[ "$MODE" == download ]]; then
     export HF_HUB_OFFLINE=0 TRANSFORMERS_OFFLINE=0 HF_DATASETS_OFFLINE=0
-    python -u -m denoising_dag.download --sizes "${MODEL_SIZES:-1.5b,7b}"
+    export HF_HUB_DOWNLOAD_TIMEOUT="${HF_HUB_DOWNLOAD_TIMEOUT:-180}"
+    export HF_HUB_ETAG_TIMEOUT="${HF_HUB_ETAG_TIMEOUT:-60}"
+    export DENOISING_DAG_DOWNLOAD_WORKERS="${DENOISING_DAG_DOWNLOAD_WORKERS:-1}"
+    python -u -m denoising_dag.download --sizes "${MODEL_SIZES:-1.5b,7b}" \
+        --retries "${DOWNLOAD_RETRIES:-20}"
     exit 0
 fi
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_DATASETS_OFFLINE=1 HF_EVALUATE_OFFLINE=1

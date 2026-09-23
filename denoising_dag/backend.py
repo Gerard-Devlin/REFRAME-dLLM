@@ -2,6 +2,7 @@
 from dataclasses import dataclass, replace
 import hashlib
 import json
+import os
 from pathlib import Path
 import time
 import torch
@@ -19,7 +20,8 @@ def snapshot_path(size, download=False):
     from huggingface_hub import snapshot_download
     repo,revision=MODELS[size]
     return Path(snapshot_download(repo,revision=revision,local_files_only=not download,
-        allow_patterns=['*.json','*.py','*.safetensors','*.txt','*.jinja'],max_workers=4))
+        allow_patterns=['*.json','*.py','*.safetensors','*.txt','*.jinja'],
+        max_workers=int(os.environ.get('DENOISING_DAG_DOWNLOAD_WORKERS','1')) if download else 4))
 
 
 @dataclass(frozen=True)
