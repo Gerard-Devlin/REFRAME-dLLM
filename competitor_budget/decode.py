@@ -3,12 +3,12 @@
 Derived from the pinned Fast_dLLM_v2_1.5B modeling.py `generate` method
 (Apache-2.0, NVIDIA CORPORATION & AFFILIATES, 2025). Only the decision after
 `unmask_idx &= mask_idx[:, start:end]` is extended. Prefill, token shift,
-sub-blocks, caches, stop handling, and the number of model calls are retained.
+sub-blocks, caches, and stop handling are retained. No probe calls are added.
 """
 
 import torch
 
-from .budget import decide
+from .budget import PredictionHistory, decide
 
 
 @torch.no_grad()
@@ -29,6 +29,7 @@ def generate(
     *,
     policy="native",
     margin=0.0,
+    guard=None,
     observer=None,
     **kwargs,
 ):
@@ -80,6 +81,7 @@ def generate(
                 small_block_end_idx = small_block_start_idx + small_block_size
                 start = -block_size + small_block_start_idx
                 end = None if block_size == small_block_end_idx else -block_size + small_block_end_idx
+                history = PredictionHistory() if guard is not None and guard.min_observations > 1 else None
                 while True:
                     mask_idx = (x_t[:, -block_size:] == mask_id)
                     if mask_idx[:, start:end].sum() == 0:
@@ -117,8 +119,11 @@ def generate(
                     unmask_idx = unmask_idx & mask_idx[:, start:end]
 
                     if policy != "native":
+                        observations = (history.update(x_1, x1_p, mask_idx[:, start:end], guard.min_confidence)
+                                        if history is not None else None)
                         decision = decide(p_1t, x_1, mask_idx[:, start:end], threshold, margin,
-                                          include_top1_bound=observer is not None)
+                                          include_top1_bound=observer is not None,
+                                          guard=guard, observations=observations, stop_token=stop_token)
                         if not torch.equal(decision.baseline, unmask_idx):
                             raise AssertionError("Commit logic differs from the pinned v2 decoder")
                         if observer is not None:

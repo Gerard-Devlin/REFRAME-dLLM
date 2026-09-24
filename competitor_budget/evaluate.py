@@ -1,6 +1,7 @@
 """Paired native/runner-up experiments on the pinned 1.5B v2 checkpoint."""
 
 import argparse
+from dataclasses import asdict
 from decimal import Decimal, InvalidOperation
 import hashlib
 import json
@@ -12,6 +13,7 @@ import time
 import torch
 
 from .decode import generate
+from .presets import PRESETS
 
 
 MODEL_ID = "Efficient-Large-Model/Fast_dLLM_v2_1.5B"
@@ -82,10 +84,18 @@ def run(model, ids, args, policy, capture=False, collect=False):
         options = dict(max_new_tokens=args.max_new_tokens, block_size=args.block_size,
                        small_block_size=args.small_block_size, threshold=args.threshold,
                        temperature=0, use_block_cache=args.use_block_cache)
-        if policy == "official":
+        if policy == "threshold90":
+            options["threshold"] = 0.90
+        if policy in ("official", "threshold90"):
             output = model.generate(source, **options)
         else:
-            output = generate(model, source, **options, policy=policy, margin=args.margin,
+            preset = policy if policy in PRESETS else getattr(args, "preset", "original")
+            margin, guard = PRESETS[preset]
+            if preset == "original" and args.mode != "sweep":
+                margin = args.margin
+            output = generate(model, source, **options,
+                              policy="budget" if policy in PRESETS else policy,
+                              margin=margin, guard=guard,
                               observer=events.append if collect else None)
         torch.cuda.synchronize()
         seconds = time.perf_counter() - started
@@ -129,9 +139,23 @@ def observe_stats(events, original_tokens, prompt_length):
                 comparable_unique_extra=comparable, unique_extra_matching_native_final=match)
 
 
+def method_names(mode):
+    if mode == "observe":
+        return ("observe",)
+    if mode == "compare":
+        return ("official", "budget")
+    return ("official", "threshold90", *PRESETS)
+
+
+def method_order(names, index, world):
+    # Rotate within each GPU as well as across GPUs, even if world == len(names).
+    offset = (index // world + index % world) % len(names)
+    return names[offset:] + names[:offset]
+
+
 def summarize(records, mode):
     result = {}
-    names = ("observe",) if mode == "observe" else ("official", "budget")
+    names = method_names(mode)
     for name in names:
         rows = [record[name] for record in records]
         result[name] = dict(
@@ -139,6 +163,7 @@ def summarize(records, mode):
             mean_nfe=sum(row["calls"] for row in rows) / len(rows),
             mean_seconds=sum(row["seconds"] for row in rows) / len(rows),
             truncation_rate=sum(row["length_capped"] for row in rows) / len(rows),
+            mean_generated_tokens=sum(row["tokens"] for row in rows) / len(rows),
             total_nfe=sum(row["calls"] for row in rows), total_seconds=sum(row["seconds"] for row in rows),
         )
     if mode == "observe":
@@ -150,11 +175,16 @@ def summarize(records, mode):
         result["opportunity"]["future_token_agreement"] = (result["opportunity"]["unique_extra_matching_native_final"] /
             result["opportunity"]["comparable_unique_extra"] if result["opportunity"]["comparable_unique_extra"] else None)
     else:
-        result["paired"] = dict(
-            nfe_ratio=result["budget"]["total_nfe"] / result["official"]["total_nfe"],
-            aggregate_sample_latency_speedup=result["official"]["total_seconds"] / result["budget"]["total_seconds"],
-            budget_minus_official_accuracy=result["budget"]["accuracy"] - result["official"]["accuracy"],
-        )
+        comparisons = {}
+        for name in names[1:]:
+            comparisons[name] = dict(
+                nfe_ratio=result[name]["total_nfe"] / result["official"]["total_nfe"],
+                aggregate_sample_latency_speedup=result["official"]["total_seconds"] / result[name]["total_seconds"],
+                budget_minus_official_accuracy=result[name]["accuracy"] - result["official"]["accuracy"],
+                correct_to_wrong=sum(r["official"]["correct"] and not r[name]["correct"] for r in records),
+                wrong_to_correct=sum(not r["official"]["correct"] and r[name]["correct"] for r in records),
+            )
+        result["paired"] = comparisons["budget"] if mode == "compare" else comparisons
     return result
 
 
@@ -162,7 +192,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=Path, required=True, help="Prepared GSM8K JSON list with id/question/answer")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--mode", choices=("observe", "compare"), default="observe")
+    parser.add_argument("--mode", choices=("observe", "compare", "sweep"), default="observe")
+    parser.add_argument("--preset", choices=tuple(PRESETS), default="original",
+                        help="compare/observe policy; sweep runs every preset plus native threshold=0.90")
     parser.add_argument("--limit", type=int, default=32)
     parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--block-size", type=int, default=32)
@@ -173,10 +205,16 @@ def main():
     args = parser.parse_args()
     if args.limit < 1 or not (0 <= args.threshold <= 1):
         parser.error("Positive limit and threshold in [0,1] required")
+    if not 0 <= args.margin < 1:
+        parser.error("margin must be in [0,1)")
+    if (args.mode == "sweep" or args.preset != "original") and args.margin != 0:
+        parser.error("Fixed presets define their own margin; omit --margin")
     samples = json.loads(args.dataset.read_text(encoding="utf-8"))
     if args.limit > len(samples):
         parser.error(f"Requested {args.limit} samples, only {len(samples)} available")
     samples = samples[:args.limit]
+    if args.mode == "sweep" and not all(str(s["id"]).startswith("train:") for s in samples):
+        parser.error("Tune the sweep on train-split development questions, then use compare on held-out test")
     rank = int(os.environ.get("RANK", "0"))
     world = int(os.environ.get("WORLD_SIZE", "1"))
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
@@ -184,7 +222,7 @@ def main():
         parser.error("Use at most one GPU per example")
     torch.cuda.set_device(local_rank)
     if world > 1:
-        torch.distributed.init_process_group("nccl")
+        torch.distributed.init_process_group("nccl", device_id=torch.device("cuda", local_rank))
     if rank == 0:
         if args.output.exists() and any(args.output.iterdir()):
             parser.error("Output directory must be new or empty")
@@ -202,9 +240,9 @@ def main():
 
     # Identical unrelated warmup, excluded from both measured methods.
     warmup = prompt_ids(tokenizer, "What is one plus one?")
-    run(model, warmup, args, "official")
-    if args.mode == "compare":
-        run(model, warmup, args, "budget")
+    names = method_names(args.mode)
+    for name in names:
+        run(model, warmup, args, name)
     path = args.output / f"rank_{rank}.jsonl"
     for index in range(rank, len(samples), world):
         sample = samples[index]
@@ -217,7 +255,7 @@ def main():
             record["events"] = measured.pop("events")
             methods = (("observe", measured),)
         else:
-            order = ("official", "budget") if index % 2 == 0 else ("budget", "official")
+            order = method_order(names, index, world)
             methods = tuple((name, run(model, ids, args, name)) for name in order)
         for name, outcome in methods:
             output_text = tokenizer.decode(outcome["tokens"], skip_special_tokens=True)
@@ -243,14 +281,20 @@ def main():
         summary = dict(mode=args.mode, model=MODEL_ID, revision=REVISION, dataset=str(args.dataset),
             dataset_sha256=hashlib.sha256(args.dataset.read_bytes()).hexdigest(),
             implementation_sha256={name: hashlib.sha256((Path(__file__).parent / name).read_bytes()).hexdigest()
-                for name in ("budget.py", "decode.py", "evaluate.py")},
+                for name in ("budget.py", "decode.py", "evaluate.py", "presets.py")},
             ids=[s["id"] for s in samples], threshold=args.threshold, margin=args.margin,
+            preset=args.preset,
+            policy_configs={name: dict(margin=margin, guard=asdict(guard) if guard is not None else None)
+                            for name, (margin, guard) in PRESETS.items()},
+            threshold90_reference=0.90 if args.mode == "sweep" else None,
             max_new_tokens=args.max_new_tokens, block_size=args.block_size,
             small_block_size=args.small_block_size, block_cache=args.use_block_cache,
             gpus=world, parity=parity, results=summarize(records, args.mode),
             scope="Exploratory fixed GSM8K prompts. Certificate assumes compatible joint marginals; no lossless claim.")
         (args.output / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(summary["results"], ensure_ascii=False, indent=2), flush=True)
+        from .report import render
+        print(render(summary), flush=True)
     if world > 1:
         torch.distributed.destroy_process_group()
 

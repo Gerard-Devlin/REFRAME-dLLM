@@ -32,7 +32,7 @@ python -m pytest competitor_budget/tests -q
 args=(--dataset "$DATASET" --output "$RUN_DIR/eval" --mode "$MODE"
       --limit "${LIMIT:-32}" --max-new-tokens "${MAX_NEW_TOKENS:-512}"
       --block-size "${BLOCK_SIZE:-32}" --small-block-size "${SMALL_BLOCK_SIZE:-8}"
-      --threshold "${THRESHOLD:-0.95}" --margin "${MARGIN:-0.0}")
+      --threshold "${THRESHOLD:-0.95}" --margin "${MARGIN:-0.0}" --preset "${PRESET:-original}")
 if [[ "${USE_BLOCK_CACHE:-0}" == 1 ]]; then args+=(--use-block-cache); fi
 if [[ ${#physical[@]} -gt 1 ]]; then
     python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node="${#physical[@]}" \
