@@ -1,5 +1,42 @@
 # Conditional relation updates
 
+The 119k-parameter residual-head pilot is paused: its held-out action predictions
+did not improve over reuse. Existing training commands and results remain for
+reproduction. Do not scale this head or inject it into online generation on the
+basis of a small KL improvement.
+
+## Full-trajectory action-replay oracle
+
+`bash relation_update/scripts/launch_tmux.sh oracle` runs a separate **offline
+cost-space diagnostic**. Set `GPU_IDS`, `DATA_DIR`, a new `TRACE_DIR`, and optionally
+`ORACLE_PROMPTS=32`, `TIMING_REPEATS=2`, `MAX_NEW_TOKENS=512`, `THRESHOLD=0.90`.
+All selected GPUs process disjoint held-out prompts. No head is trained or used.
+
+For every prompt it runs warmed, unwrapped native generation for timing, a
+CUDA-event forward timing pass, and an action observation pass. It checks identical
+outputs and forward inputs between the latter passes, and verifies the recorded
+commit action against the next actual native input. These repeated runs are
+offline measurement overhead, not a proposed online decoding procedure.
+
+Every call is retained; the old 32-transition reservoir cannot supply this bound.
+The supported policy is deliberately narrow: same subblock, no EOS/MASK proposals,
+no cache writes or prefill, no consecutive skipped calls, and no unverified terminal
+action. A dynamic program finds the maximum forward time saved by a perfect
+future-aware oracle under these constraints. Subblock crossings are excluded,
+not silently counted as failures. This is a ceiling for this scope only.
+
+`TRACE_DIR/summary.json` contains aggregate modeled speedup, native latency,
+selected calls, timing validity, and the 1.5x cost target. Each `prompts/*.json`
+retains the complete actions, old-probability replay actions, exclusion reasons,
+call times, and selected indices, plus gate-cost sensitivity at 0.1/0.5/0.85 ms.
+Only full-model forward cost is removed; sampler/commit work remains. Gate and
+replay costs are omitted from the zero-overhead bound. If separately measured
+forward costs exceed native latency, the latency estimate is invalidated.
+
+A high oracle bound says nothing about whether a cheap gate can identify those
+states. No local risk guarantee, end-to-end quality, or realized speedup is claimed.
+This stage does not implement a gate or online skipping.
+
 This experiment replaces relation-token recoding with a small output-side model
 of how a frozen Fast-dLLM v2 prediction changes after an actual native commit.
 The tokenizer, embeddings, Transformer, LM head and native generation policy

@@ -14,7 +14,7 @@ export HF_DATASETS_OFFLINE=1 TOKENIZERS_PARALLELISM=false
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-1}"
 unset HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy
 
-[[ "$MODE" == collect || "$MODE" == train ]] || { echo 'MODE must be collect or train'; exit 2; }
+[[ "$MODE" == collect || "$MODE" == train || "$MODE" == oracle ]] || { echo 'MODE must be collect, train or oracle'; exit 2; }
 if [[ "$MODE" == train ]]; then
     python - "$TRACE_DIR/manifest.json" <<'PY'
 import json
@@ -40,7 +40,7 @@ for id in "${physical[@]}"; do
 done
 export CUDA_VISIBLE_DEVICES="$(IFS=,; echo "${uuids[*]}")"
 export EXPECTED_GPU_COUNT="${#physical[@]}"
-if [[ "$MODE" == collect ]]; then
+if [[ "$MODE" != train ]]; then
     export MIN_FREE_GIB="${MIN_FREE_GIB:-8}"
 else
     export MIN_FREE_GIB="${MIN_FREE_GIB:-2}"
@@ -62,7 +62,13 @@ for i in range(expected):
 PY
 
 python -m pytest relation_update/tests -q
-if [[ "$MODE" == collect ]]; then
+if [[ "$MODE" == oracle ]]; then
+    module=relation_update.oracle
+    args=(--data "$DATA_DIR" --output "$TRACE_DIR"
+          --prompts "${ORACLE_PROMPTS:-32}" --repeats "${TIMING_REPEATS:-2}"
+          --max-new-tokens "${MAX_NEW_TOKENS:-512}"
+          --threshold "${THRESHOLD:-0.90}" --seed "${SEED:-1234}")
+elif [[ "$MODE" == collect ]]; then
     module=relation_update.collect
     args=(--data "$DATA_DIR" --output "$TRACE_DIR"
           --train-prompts "${TRAIN_PROMPTS:-256}" --heldout-prompts "${HELDOUT_PROMPTS:-64}"

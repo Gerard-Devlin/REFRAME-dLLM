@@ -2,7 +2,7 @@
 set -euo pipefail
 
 MODE="${1:-}"
-[[ "$MODE" == collect || "$MODE" == train ]] || { echo 'Usage: bash relation_update/scripts/launch_tmux.sh collect|train'; exit 2; }
+[[ "$MODE" == collect || "$MODE" == train || "$MODE" == oracle ]] || { echo 'Usage: bash relation_update/scripts/launch_tmux.sh collect|train|oracle'; exit 2; }
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 GPU_IDS="${GPU_IDS:?Set comma-separated physical GPU IDs explicitly}"
 [[ "$GPU_IDS" =~ ^[0-9]+(,[0-9]+)*$ ]] || { echo 'Invalid GPU_IDS; expected physical IDs such as 3 or 0,1,2,3'; exit 2; }
@@ -15,7 +15,7 @@ done
 
 DATA_DIR="${DATA_DIR:-/home/xuyouwen/hf_home_local/relation_block/nemotron_bpe2048_v1}"
 TRACE_DIR="${TRACE_DIR:?Set TRACE_DIR to the trace collection directory}"
-if [[ "$MODE" == collect ]]; then
+if [[ "$MODE" == collect || "$MODE" == oracle ]]; then
     [[ -s "$DATA_DIR/manifest.json" ]] || { echo "Missing prepared-data manifest: $DATA_DIR/manifest.json"; exit 2; }
     [[ ! -e "$TRACE_DIR" ]] || { echo "TRACE_DIR already exists; choose a new collection directory: $TRACE_DIR"; exit 2; }
 else
@@ -27,7 +27,7 @@ DATA_DIR="$(realpath -m "$DATA_DIR")"
 TRACE_DIR="$(realpath -m "$TRACE_DIR")"
 RUN_DIR="${RUN_DIR:-$REPO/relation_update/runs/${MODE}_$(date +%Y%m%d_%H%M%S)_$$}"
 RUN_DIR="$(realpath -m "$RUN_DIR")"
-if [[ "$MODE" == collect && ( "$RUN_DIR" == "$TRACE_DIR" || "$RUN_DIR" == "$TRACE_DIR/"* ) ]]; then
+if [[ "$MODE" != train && ( "$RUN_DIR" == "$TRACE_DIR" || "$RUN_DIR" == "$TRACE_DIR/"* ) ]]; then
     echo 'RUN_DIR cannot equal or be inside the new TRACE_DIR'; exit 2
 fi
 [[ "${RESUME:-0}" == 0 || "${RESUME:-0}" == 1 ]] || { echo 'RESUME must be 0 or 1'; exit 2; }
@@ -55,7 +55,7 @@ fi
 for name in REPO GPU_IDS MODE DATA_DIR TRACE_DIR RUN_DIR; do
     printf 'export %s=%q\n' "$name" "${!name}" >> "$RUN_DIR/job.env"
 done
-for name in TRAIN_PROMPTS HELDOUT_PROMPTS MAX_PAIRS_PER_PROMPT TOP_K FEATURE_SIZE MAX_NEW_TOKENS THRESHOLD SEED EPOCHS BATCH_PER_GPU WIDTH LR RESUME CONDA_ENV CONDA_ROOT MIN_FREE_GIB HF_HOME HF_HUB_CACHE HF_DATASETS_CACHE HF_ENDPOINT; do
+for name in ORACLE_PROMPTS TIMING_REPEATS TRAIN_PROMPTS HELDOUT_PROMPTS MAX_PAIRS_PER_PROMPT TOP_K FEATURE_SIZE MAX_NEW_TOKENS THRESHOLD SEED EPOCHS BATCH_PER_GPU WIDTH LR RESUME CONDA_ENV CONDA_ROOT MIN_FREE_GIB HF_HOME HF_HUB_CACHE HF_DATASETS_CACHE HF_ENDPOINT; do
     if [[ -v "$name" ]]; then
         printf 'export %s=%q\n' "$name" "${!name}" >> "$RUN_DIR/job.env"
     fi
