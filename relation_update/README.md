@@ -32,6 +32,11 @@ call times, and selected indices, plus gate-cost sensitivity at 0.1/0.5/0.85 ms.
 Only full-model forward cost is removed; sampler/commit work remains. Gate and
 replay costs are omitted from the zero-overhead bound. If separately measured
 forward costs exceed native latency, the latency estimate is invalidated.
+The separate `forward_only_modeled_ceiling` uses one timing pass's forward costs
+for both numerator and denominator and sets all non-forward work to zero. This
+more optimistic cost ceiling remains interpretable when cross-pass timing is
+inconsistent, but is still conditional on measured call weights, not a measured
+end-to-end improvement or a noise-free hardware guarantee.
 
 A high oracle bound says nothing about whether a cheap gate can identify those
 states. No local risk guarantee, end-to-end quality, or realized speedup is claimed.

@@ -229,6 +229,38 @@ def summarize(calls, native_seconds):
                      "No learned gate, online skipping or measured speedup.")
 
 
+def aggregate_bounds(rows):
+    """Keep cross-pass wall estimates distinct from same-pass forward-only cost.
+
+    Setting every non-forward cost to zero is MORE optimistic, and does not mix
+    two passes' clock rates. It is still a model of the measured call weights,
+    not a noise-free hardware guarantee or an achievable decoder speedup.
+    """
+    native = sum(r['native_seconds'] for r in rows)
+    forward = sum(r['all_forward_seconds'] for r in rows)
+    saved = sum(r['saved_forward_seconds'] for r in rows)
+    valid = bool(rows) and all(r['timing_valid'] for r in rows)
+    retained = sum(r['denoise_calls']-r['selected_calls'] for r in rows)
+    return dict(native_seconds=native, all_forward_seconds=forward, saved_forward_seconds=saved,
+        selected_calls=sum(r['selected_calls'] for r in rows),
+        total_calls=sum(r['calls'] for r in rows),
+        denoise_calls=sum(r['denoise_calls'] for r in rows),
+        supported_calls=sum(r['supported_calls'] for r in rows),
+        equal_supported_calls=sum(r['equal_supported_calls'] for r in rows),
+        invalid_timing_prompts=sum(not r['timing_valid'] for r in rows),
+        timing_valid=valid,
+        zero_overhead_modeled_speedup=native/(native-saved) if valid else None,
+        saved_native_fraction=saved/native if valid else None,
+        forward_only_modeled_ceiling=forward/(forward-saved) if forward>saved else None,
+        forward_only_note="All non-forward work set to zero; same timing pass numerator/denominator. "
+                          "Optimistic ceiling for these measured call weights, NOT end-to-end speedup.",
+        reaches_1_5x_cost_target=(native/(native-saved)>=1.5) if valid else None,
+        forward_only_reaches_1_5x=(forward/(forward-saved)>=1.5) if forward>saved else None,
+        overhead_sensitivity=[dict(gate_ms=ms,
+            modeled_speedup=native/(native-saved+retained*ms/1000) if valid else None)
+            for ms in (0.1,0.5,0.85)])
+
+
 @torch.inference_mode()
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -317,17 +349,9 @@ def main():
                     for row in json.loads((args.output/f"rank_{worker}.json").read_text())]
         if len(all_rows) != len(jobs) or len({r['prompt_id'] for r in all_rows}) != len(jobs):
             raise AssertionError("Missing or duplicate prompts")
-        native = sum(r['native_seconds'] for r in all_rows)
-        saved = sum(r['saved_forward_seconds'] for r in all_rows)
-        valid = all(r['timing_valid'] for r in all_rows)
         summary = dict(status="complete",model=MODEL_ID,revision=REVISION,
             scope="Same-subblock only; no EOS/cache/prefill skips; no adjacent skips; perfect future oracle",
-            prompts=len(all_rows),native_seconds=native,saved_forward_seconds=saved,
-            selected_calls=sum(r['selected_calls'] for r in all_rows),
-            total_calls=sum(r['calls'] for r in all_rows),
-            timing_valid=valid,zero_overhead_modeled_speedup=native/(native-saved) if valid else None,
-            saved_native_fraction=saved/native if valid else None,
-            reaches_1_5x_cost_target=(native/(native-saved)>=1.5) if valid else None,
+            prompts=len(all_rows),**aggregate_bounds(all_rows),
             learned_identifiability_measured=False,online_speedup_measured=False,
             settings=vars(args)|dict(data=str(args.data),output=str(args.output),world_size=world),
             implementation_sha256={name:sha256(Path(__file__).parent/name)

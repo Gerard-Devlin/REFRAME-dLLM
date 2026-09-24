@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 import torch
 
-from relation_update.oracle import ActionObserver, action, max_independent, summarize
+from relation_update.oracle import ActionObserver, action, max_independent, summarize, aggregate_bounds
 
 
 def test_weighted_oracle_matches_exhaustive_and_never_skips_adjacent():
@@ -108,3 +108,8 @@ def test_time_bound_includes_non_skippable_cost_and_rejects_bad_timing():
     assert r['saved_native_fraction']==pytest.approx(1/6)
     assert not summarize(calls,4)['timing_valid']
     assert summarize(calls,4)['zero_overhead_modeled_speedup'] is None
+    totals=aggregate_bounds([summarize(calls,4),summarize(calls,6)])
+    assert totals['invalid_timing_prompts']==1
+    assert totals['zero_overhead_modeled_speedup'] is None
+    assert totals['forward_only_modeled_ceiling']==pytest.approx(10/8)
+    assert totals['forward_only_reaches_1_5x'] is False
