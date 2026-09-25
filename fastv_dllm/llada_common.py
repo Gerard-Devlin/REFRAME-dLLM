@@ -1,6 +1,7 @@
 """Contracts for the original LLaDA-8B-Instruct checkpoint."""
 
 from pathlib import Path
+import os
 
 from .common import extract_answer, load_samples, prompt_ids, sha256, write_json
 
@@ -11,8 +12,11 @@ MASK_ID = 126336
 
 def snapshot():
     from huggingface_hub import snapshot_download
-
-    path = Path(snapshot_download(MODEL_ID, revision=REVISION, local_files_only=True))
+    try:
+        path = Path(snapshot_download(MODEL_ID, revision=REVISION, local_files_only=True))
+    except Exception:
+        cache = Path(os.environ.get("HF_HUB_CACHE", Path(os.environ.get("HF_HOME", "~/.cache/huggingface")) / "hub"))
+        path = cache.expanduser() / "models--GSAI-ML--LLaDA-8B-Instruct" / "snapshots" / REVISION
     if not (path / "config.json").is_file():
         raise RuntimeError("Pinned LLaDA checkpoint is incomplete")
     return path
