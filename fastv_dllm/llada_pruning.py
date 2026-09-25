@@ -98,6 +98,15 @@ class LLaDABlockForward:
     def __call__(self, input_ids, target_positions, prune=True):
         if input_ids.shape[0] != 1 or not target_positions:
             raise ValueError("LLaDA FastV pilot requires batch=1 and active target positions")
+        target_set = set(target_positions)
+        future_masks = [i for i, token in enumerate(input_ids[0].tolist())
+                        if token == MASK_ID and i not in target_set]
+        # No candidate can be removed in the final block (or when all support
+        # is requested).  Use the exact upstream forward and avoid paying the
+        # attention-capture/ranking overhead.
+        if prune and (not future_masks or self.config.support_keep_ratio == 1):
+            target = torch.tensor(target_positions, device=input_ids.device)
+            return self.model(input_ids).logits.index_select(1, target)
         core = self.model.model
         hidden = core.transformer.wte(input_ids)
         if core.config.input_emb_norm:
@@ -112,13 +121,10 @@ class LLaDABlockForward:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
                 relevance = self._relevance(capture, target_positions)
-                target_set = set(target_positions)
                 # FastV protects every text token and prunes only its redundant
                 # modality.  For LLaDA the corresponding redundant class is the
                 # untouched future MASK canvas.  Prompt and already revealed
                 # language tokens must never compete with those masks.
-                future_masks = [i for i, token in enumerate(input_ids[0].tolist())
-                                if token == MASK_ID and i not in target_set]
                 protected = [i for i in positions if i not in target_set and i not in set(future_masks)]
                 candidate_keep = choose_support(
                     relevance, target_positions, self.config.support_keep_ratio,
