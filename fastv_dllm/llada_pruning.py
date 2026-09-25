@@ -7,17 +7,27 @@ import time
 import torch
 from torch import nn
 
+from .llada_common import MASK_ID
 
-def choose_support(relevance, targets, keep_ratio):
+
+def choose_support(relevance, targets, keep_ratio, candidates=None, protected=None):
     targets = sorted(set(int(x) for x in targets))
-    support = [i for i in range(relevance.numel()) if i not in set(targets)]
+    target_set = set(targets)
+    if candidates is None:
+        candidates = [i for i in range(relevance.numel()) if i not in target_set]
+    else:
+        candidates = sorted(set(int(x) for x in candidates) - target_set)
+    if protected is None:
+        protected = []
+    protected = sorted(set(int(x) for x in protected) - target_set - set(candidates))
+    support = candidates
     count = min(len(support), max(0, math.ceil(len(support) * float(keep_ratio))))
     if count:
         candidates = torch.tensor(support, device=relevance.device)
         selected = candidates[torch.topk(relevance.index_select(0, candidates), count, sorted=False).indices].tolist()
     else:
         selected = []
-    return sorted(targets + selected)
+    return sorted(targets + protected + selected)
 
 
 class PositionedRotary(nn.Module):
@@ -102,16 +112,28 @@ class LLaDABlockForward:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
                 relevance = self._relevance(capture, target_positions)
-                candidate_keep = choose_support(relevance, target_positions, self.config.support_keep_ratio)
+                target_set = set(target_positions)
+                # FastV protects every text token and prunes only its redundant
+                # modality.  For LLaDA the corresponding redundant class is the
+                # untouched future MASK canvas.  Prompt and already revealed
+                # language tokens must never compete with those masks.
+                future_masks = [i for i, token in enumerate(input_ids[0].tolist())
+                                if token == MASK_ID and i not in target_set]
+                protected = [i for i in positions if i not in target_set and i not in set(future_masks)]
+                candidate_keep = choose_support(
+                    relevance, target_positions, self.config.support_keep_ratio,
+                    candidates=future_masks, protected=protected,
+                )
                 keep = candidate_keep if prune else positions
                 if hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
-                support = [i for i in positions if i not in set(target_positions)]
-                kept_support = [i for i in candidate_keep if i not in set(target_positions)]
+                support = future_masks
+                kept_support = [i for i in candidate_keep if i in set(future_masks)]
                 denominator = float(relevance[support].sum().item()) if support else 0.0
                 layer_record = dict(
                     layer=number, original_tokens=len(positions), targets=len(set(target_positions)),
-                    support=len(support), kept_support=len(kept_support), deep_tokens=len(candidate_keep),
+                    support=len(support), protected=len(protected), kept_support=len(kept_support),
+                    deep_tokens=len(candidate_keep),
                     retained_support_mass=(float(relevance[kept_support].sum().item()) / denominator if denominator else 1.0),
                     score_seconds=time.perf_counter() - started,
                 )

@@ -17,6 +17,13 @@ def test_zero_and_full_support_ratios():
     assert choose_support(relevance, [2, 5], 1) == list(range(8))
 
 
+def test_known_language_tokens_are_always_protected():
+    relevance = torch.tensor([100.0, 1.0, 2.0, 3.0, 4.0, 99.0])
+    keep = choose_support(relevance, targets=[4], keep_ratio=0.33,
+                          candidates=[1, 2, 3], protected=[0, 5])
+    assert keep == [0, 3, 4, 5]
+
+
 def test_config_rejects_invalid_ratio():
     for value in (-0.1, 1.1):
         try:
