@@ -159,7 +159,7 @@ def main():
             if record["flash_native"]["backend"]["flash_calls"] <= 0:
                 raise AssertionError("Explicit flash-attn did not execute")
         with path.open("a", encoding="utf-8") as f: f.write(json.dumps(record, ensure_ascii=False) + "\n")
-        print(f"rank={rank} {index + 1}/{len(samples)} {sample['id']}", flush=True)
+        print(f"rank={rank} {index + 1}/{len(samples)} {record['id']}", flush=True)
     if world > 1: torch.distributed.barrier()
     if rank == 0:
         records=[]
