@@ -39,20 +39,19 @@ PY
 python -m pytest fastv_dllm/tests -q
 
 case "$MODE" in
-  audit) default_limit=1; default_tokens=64 ;;
-  probe) default_limit=32; default_tokens=512 ;;
-  smoke) default_limit=2; default_tokens=64 ;;
-  evaluate) default_limit=256; default_tokens=512 ;;
+  audit) default_limit=1; default_tokens=64; default_ratio=1.0 ;;
+  probe) default_limit=32; default_tokens=256; default_ratio=0.5 ;;
+  smoke) default_limit=2; default_tokens=256; default_ratio=0.5 ;;
+  evaluate) default_limit=256; default_tokens=256; default_ratio=0.5 ;;
 esac
 args=(--stage "$MODE" --dataset "$DATASET" --output "$RUN_DIR/output"
-      --limit "${LIMIT:-$default_limit}" --max-new-tokens "${MAX_NEW_TOKENS:-$default_tokens}"
-      --block-size "${BLOCK_SIZE:-32}" --small-block-size "${SMALL_BLOCK_SIZE:-8}"
+      --limit "${LIMIT:-$default_limit}" --gen-length "${GEN_LENGTH:-$default_tokens}"
+      --block-length "${BLOCK_LENGTH:-32}"
       --threshold "${THRESHOLD:-0.90}" --prune-after-layer "${PRUNE_AFTER_LAYER:-4}"
-      --support-keep "${SUPPORT_KEEP:-8}" --observe-layers "${OBSERVE_LAYERS:-2,4,8,12}"
-      --observe-keeps "${OBSERVE_KEEPS:-4,8,12,16}")
+      --support-keep-ratio "${SUPPORT_KEEP_RATIO:-$default_ratio}")
 if [[ ${#physical[@]} -gt 1 ]]; then
     python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node="${#physical[@]}" \
-        -m fastv_dllm.evaluate "${args[@]}"
+        -m fastv_dllm.llada_evaluate "${args[@]}"
 else
-    python -u -m fastv_dllm.evaluate "${args[@]}"
+    python -u -m fastv_dllm.llada_evaluate "${args[@]}"
 fi
