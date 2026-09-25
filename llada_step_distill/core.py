@@ -36,6 +36,9 @@ TRAIN_QUOTAS = {
     "safety": 9_536,
 }
 assert sum(TRAIN_QUOTAS.values()) == 10_000_000
+ACCELERATION_RECORDS = 1_000_000
+RETENTION_RECORDS = 9_000_000
+REAL_TRANSITION_RECORDS = 200_000
 
 DATA_FILES = {
     "math": ("SFT/math/math_v1.jsonl", "SFT/math/math_v1.1.jsonl"),
@@ -170,13 +173,13 @@ def validation_quotas(total: int = 20_000) -> dict[str, int]:
 
 
 def choose_kind(sample_id: str) -> str:
-    """Exactly one deterministic retention bucket in ten in expectation."""
-    return "retention" if stable_u64("kind", sample_id) % 10 == 0 else "acceleration"
+    """One deterministic acceleration bucket in ten in expectation."""
+    return "acceleration" if stable_u64("kind", sample_id) % 10 == 0 else "retention"
 
 
 def is_real_transition(sample_id: str) -> bool:
-    """Approximately 200k of 9M acceleration rows, finalized exactly in prepare."""
-    return stable_u64("real", sample_id) % 45 == 0
+    """One real-transition row in five acceleration rows."""
+    return stable_u64("real", sample_id) % 5 == 0
 
 
 def shard_order(count: int, seed: int) -> list[int]:

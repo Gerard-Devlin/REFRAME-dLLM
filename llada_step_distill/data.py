@@ -186,11 +186,12 @@ def prepare(
                         continue
                     if counters["train"][domain] < train_quota[domain]:
                         split = "train"
-                        # Exactly one retention row per ten training rows.
-                        kind = "retention" if train_index % 10 == 0 else "acceleration"
+                        # Keep all 10M language examples, but collect expensive
+                        # teacher trajectory supervision for only one in ten.
+                        kind = "acceleration" if train_index % 10 == 0 else "retention"
                         item["kind"] = kind
                         if kind == "acceleration":
-                            item["real_transition"] = acceleration_index % 45 == 0
+                            item["real_transition"] = acceleration_index % 5 == 0
                             acceleration_index += 1
                         else:
                             item["real_transition"] = False
@@ -217,9 +218,11 @@ def prepare(
     database.commit()
     database.close()
     shards = {split: writer.close() for split, writer in writers.items()}
-    retention = sum(1 for i in range(train_size) if i % 10 == 0)
-    acceleration = train_size - retention
-    real = sum(1 for i in range(acceleration) if i % 45 == 0)
+    acceleration = sum(1 for i in range(train_size) if i % 10 == 0)
+    retention = train_size - acceleration
+    real = sum(1 for i in range(acceleration) if i % 5 == 0)
+    if train_size == 10_000_000 and (acceleration, retention, real) != (1_000_000, 9_000_000, 200_000):
+        raise AssertionError("10M supervision allocation changed")
     manifest = {
         "format_version": FORMAT_VERSION,
         "source": str(root),
@@ -233,6 +236,12 @@ def prepare(
         "retention_records": retention,
         "acceleration_records": acceleration,
         "real_transition_records": real,
+        "trajectory_policy": {
+            "complete_trajectories": False,
+            "states_per_acceleration_example": 1,
+            "teacher_forward_examples": acceleration,
+            "second_teacher_forward_examples": real,
+        },
         "shards": shards,
         "gsm8k_decontamination": {"exact": True, "word_5gram_jaccard": 0.8},
         "seed": SEED,

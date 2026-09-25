@@ -15,10 +15,11 @@ The complete pipeline is:
 1. `prepare` deterministically selects and decontaminates 10,000,000 unique
    Nemotron SFT rows and 20,000 validation rows. The exact domain quotas and data
    hashes are written to `manifest.json`.
-2. `collect` creates aligned supervision shards. Nine million rows use two
-   teacher-correct release targets, one million use response-only LLaDA SFT
-   masking, and 200,000 of the acceleration rows use an actual second teacher
-   forward.
+2. `collect` creates aligned supervision shards. Teacher computation is sparse:
+   1,000,000 rows use one sampled partial state with two teacher-correct release
+   targets, 9,000,000 rows use response-only LLaDA SFT masking without a teacher
+   forward, and 200,000 of the acceleration rows use an actual second teacher
+   forward. No record stores a complete 512-token denoising trajectory.
 3. `smoke` runs real optimizer updates, checkpoint save, and resume with the
    requested DDP topology. It does not silently reduce the rank or sequence
    length after OOM.
@@ -55,4 +56,3 @@ normalization layers, and backbone parameters remain frozen. Multi-GPU training
 uses DDP plus `ZeroRedundancyOptimizer`; checkpoints retain one optimizer shard
 and RNG state per rank and therefore require the same world size for exact
 resume.
-

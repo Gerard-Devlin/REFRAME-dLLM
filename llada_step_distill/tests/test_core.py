@@ -6,7 +6,8 @@ import torch
 from torch import nn
 
 from llada_step_distill.core import (
-    BLOCK_LENGTH, Decontaminator, TRAIN_QUOTAS, normalize_text, validation_quotas,
+    ACCELERATION_RECORDS, BLOCK_LENGTH, Decontaminator, REAL_TRANSITION_RECORDS,
+    RETENTION_RECORDS, TRAIN_QUOTAS, normalize_text, validation_quotas,
 )
 from llada_step_distill.data import (
     build_acceleration_state, build_retention_state, deterministic_state, proportional_quotas,
@@ -23,6 +24,9 @@ def row(length=96):
 def test_exact_10m_quotas():
     assert proportional_quotas(10_000_000) == TRAIN_QUOTAS
     assert sum(TRAIN_QUOTAS.values()) == 10_000_000
+    assert ACCELERATION_RECORDS == 1_000_000
+    assert RETENTION_RECORDS == 9_000_000
+    assert REAL_TRANSITION_RECORDS == 200_000
     assert sum(validation_quotas().values()) == 20_000
 
 
