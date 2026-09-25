@@ -44,7 +44,7 @@ case "$MODE" in
   smoke) default_limit=2; default_tokens=256; default_ratio=0.5 ;;
   evaluate) default_limit=256; default_tokens=256; default_ratio=0.5 ;;
 esac
-args=(--stage "$MODE" --dataset "$DATASET" --output "$RUN_DIR/output"
+args=(--stage "$MODE" --task "${TASK:-gsm8k}" --dataset "$DATASET" --output "$RUN_DIR/output"
       --limit "${LIMIT:-$default_limit}" --gen-length "${GEN_LENGTH:-$default_tokens}"
       --block-length "${BLOCK_LENGTH:-32}"
       --threshold "${THRESHOLD:-0.90}" --prune-after-layer "${PRUNE_AFTER_LAYER:-4}"
@@ -54,4 +54,8 @@ if [[ ${#physical[@]} -gt 1 ]]; then
         -m fastv_dllm.llada_evaluate "${args[@]}"
 else
     python -u -m fastv_dllm.llada_evaluate "${args[@]}"
+fi
+if [[ ${TASK:-gsm8k} == humaneval ]]; then
+    python -u -m fastv_dllm.score_humaneval --dataset "$DATASET" --results "$RUN_DIR/output" \
+      --output "$RUN_DIR/output/humaneval_pass_at_1.json"
 fi

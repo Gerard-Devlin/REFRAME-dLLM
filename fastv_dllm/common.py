@@ -14,9 +14,11 @@ def sha256(path):
     return h.hexdigest()
 
 
-def prompt_ids(tokenizer, question):
+def prompt_ids(tokenizer, question, task="gsm8k"):
+    if task == "gsm8k":
+        question = question + "\nExplain your reasoning and end with #### followed by the final number."
     return tokenizer.apply_chat_template(
-        [{"role": "user", "content": question + "\nExplain your reasoning and end with #### followed by the final number."}],
+        [{"role": "user", "content": question}],
         tokenize=True,
         add_generation_prompt=True,
     )
@@ -38,11 +40,12 @@ def extract_answer(text, gold=False):
         return None
 
 
-def load_samples(path, limit):
+def load_samples(path, limit, task="gsm8k"):
     rows = json.loads(Path(path).read_text(encoding="utf-8"))
     if not 0 < limit <= len(rows):
         raise ValueError(f"Requested {limit} samples; dataset has {len(rows)}")
-    required = {"id", "question", "answer"}
+    required = ({"id", "question", "answer"} if task == "gsm8k" else
+                {"task_id", "prompt", "canonical_solution", "test", "entry_point"})
     if any(not required.issubset(row) for row in rows[:limit]):
         raise ValueError("Dataset rows must contain id/question/answer")
     return rows[:limit]

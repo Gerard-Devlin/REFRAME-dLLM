@@ -50,8 +50,9 @@ def aggregate(records):
     output = {}
     for method in METHODS:
         rows = [row[method] for row in records]
+        scored = [row["correct"] for row in rows if row["correct"] is not None]
         output[method] = dict(
-            examples=len(rows), accuracy=sum(row["correct"] for row in rows) / len(rows),
+            examples=len(rows), accuracy=(sum(scored) / len(scored) if scored else None),
             mean_seconds=sum(row["seconds"] for row in rows) / len(rows),
             total_seconds=sum(row["seconds"] for row in rows),
             mean_nfe=sum(row["nfe"] for row in rows) / len(rows),
@@ -69,7 +70,8 @@ def aggregate(records):
         flash_engineering_speedup=output["torch_native"]["total_seconds"] / output["flash_native"]["total_seconds"],
         fastv_speedup_same_torch=output["torch_native"]["total_seconds"] / output["torch_fastv"]["total_seconds"],
         fastv_speedup_same_flash=output["flash_native"]["total_seconds"] / output["flash_fastv"]["total_seconds"],
-        fastv_accuracy_delta_same_flash=output["flash_fastv"]["accuracy"] - output["flash_native"]["accuracy"],
+        fastv_accuracy_delta_same_flash=(output["flash_fastv"]["accuracy"] - output["flash_native"]["accuracy"]
+                                         if output["flash_fastv"]["accuracy"] is not None else None),
     )
     return output
 
@@ -77,6 +79,7 @@ def aggregate(records):
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--stage", choices=("audit", "probe", "smoke", "evaluate"), required=True)
+    p.add_argument("--task", choices=("gsm8k", "humaneval"), default="gsm8k")
     p.add_argument("--dataset", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--limit", type=int, default=32)
@@ -92,7 +95,7 @@ def main():
     args = parse_args()
     if args.stage == "audit": args.limit, args.gen_length = 1, min(args.gen_length, 64)
     if args.stage == "smoke": args.limit = min(args.limit, 2)
-    samples = load_samples(args.dataset, args.limit)
+    samples = load_samples(args.dataset, args.limit, args.task)
     rank, world, local = (int(os.environ.get(k, d)) for k, d in (("RANK", 0), ("WORLD_SIZE", 1), ("LOCAL_RANK", 0)))
     if world > len(samples): raise ValueError("More GPUs than prompts")
     torch.cuda.set_device(local)
@@ -109,7 +112,8 @@ def main():
         llada_dir = Path(__file__).resolve().parents[1] / "v1" / "llada"
         sys.path.insert(0, str(llada_dir))
         from generate import generate as official_generate
-        ids = prompt_ids(tokenizer, samples[0]["question"])
+        if args.task != "gsm8k": raise ValueError("Audit uses the deterministic GSM8K fixture")
+        ids = prompt_ids(tokenizer, samples[0]["question"], args.task)
         source = torch.tensor([ids], device=model.device)
         with LLaDAAttentionBackend(model, "torch"):
             official, official_nfe = official_generate(
@@ -122,7 +126,7 @@ def main():
             raise AssertionError("Copied decoder differs from original LLaDA generate()")
         official_parity = dict(tokens=len(native["token_ids"]), nfe=official_nfe, exact=True)
 
-    warmup = prompt_ids(tokenizer, "What is one plus one?")
+    warmup = prompt_ids(tokenizer, "What is one plus one?", "gsm8k")
     if args.stage != "audit":
         for method in METHODS:
             run_method(model, warmup, args, method)
@@ -130,19 +134,20 @@ def main():
     path = args.output / f"rank_{rank}.jsonl"
     for index in range(rank, len(samples), world):
         sample = samples[index]
-        ids = prompt_ids(tokenizer, sample["question"])
-        target = extract_answer(sample["answer"], gold=True)
-        record = dict(index=index, id=sample["id"], target=target)
+        source_text = sample["question"] if args.task == "gsm8k" else sample["prompt"]
+        ids = prompt_ids(tokenizer, source_text, args.task)
+        target = extract_answer(sample["answer"], gold=True) if args.task == "gsm8k" else sample["task_id"]
+        record = dict(index=index, id=sample.get("id", sample.get("task_id")), target=target)
         methods = METHODS if args.stage != "probe" else ("torch_native",)
         if args.stage == "audit": methods = ("torch_native", "flash_native", "torch_fastv", "flash_fastv")
         for method in methods:
             outcome = run_method(model, ids, args, method, probe=args.stage == "probe")
             text = tokenizer.decode(outcome.pop("token_ids"), skip_special_tokens=True)
             rows = [r for r in outcome.pop("records") if r is not None]
-            prediction = extract_answer(text)
+            prediction = extract_answer(text) if args.task == "gsm8k" else None
             record[method] = dict(
                 **outcome, text=text, prediction=prediction,
-                correct=prediction is not None and prediction == target,
+                correct=(prediction is not None and prediction == target) if args.task == "gsm8k" else None,
                 tokens=args.gen_length,
                 deep_tokens=[r["deep_tokens"] for r in rows],
                 retained_mass=[r["retained_support_mass"] for r in rows],
@@ -171,7 +176,7 @@ def main():
         else:
             results=aggregate(records)
         report=dict(stage=args.stage, model=MODEL_ID, revision=REVISION, dataset=str(args.dataset),
-            dataset_sha256=sha256(args.dataset), ids=[x["id"] for x in samples], world_size=world,
+            dataset_sha256=sha256(args.dataset), ids=[x.get("id", x.get("task_id")) for x in samples], world_size=world,
             configuration=vars(args) | {"dataset":str(args.dataset),"output":str(args.output)}, results=results,
             official_parity=official_parity,
             scope="Original LLaDA-8B-Instruct weights; training-free support-token pruning; paired backend attribution.")

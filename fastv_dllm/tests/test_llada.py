@@ -1,5 +1,6 @@
 import torch
 
+from fastv_dllm.common import prompt_ids
 from fastv_dllm.llada_pruning import Config, choose_support
 
 
@@ -24,3 +25,15 @@ def test_config_rejects_invalid_ratio():
             pass
         else:
             raise AssertionError("Invalid ratio accepted")
+
+
+class FakeTokenizer:
+    def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+        assert tokenize and add_generation_prompt
+        return messages[0]["content"]
+
+
+def test_task_specific_prompt_does_not_leak_gsm_instruction():
+    tokenizer = FakeTokenizer()
+    assert "####" in prompt_ids(tokenizer, "2+2?", "gsm8k")
+    assert prompt_ids(tokenizer, "def f():", "humaneval") == "def f():"
