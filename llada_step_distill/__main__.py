@@ -103,6 +103,8 @@ def main() -> None:
     rank = int(os.environ.get("RANK", 0))
     if rank == 0 and result is not None:
         print(json.dumps(result, ensure_ascii=False, indent=2), flush=True)
+    if torch.distributed.is_available() and torch.distributed.is_initialized():
+        torch.distributed.destroy_process_group()
 
 
 if __name__ == "__main__":

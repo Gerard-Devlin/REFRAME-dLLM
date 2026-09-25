@@ -37,7 +37,7 @@ def export(checkpoint: Path, output: Path, device: str = "cuda:0") -> dict:
     from transformers import AutoConfig
     from v1.llada.model.modeling_llada import LLaDAModelLM
     config = AutoConfig.from_pretrained(output, local_files_only=True)
-    reloaded = LLaDAModelLM.from_pretrained(output, config=config, local_files_only=True, torch_dtype=torch.bfloat16).to(device).eval()
+    reloaded = LLaDAModelLM.from_pretrained(output, config=config, local_files_only=True, dtype=torch.bfloat16).to(device).eval()
     reload_logits = reloaded(probe).logits[:, -32:].float().cpu()
     reload_rms = float((merged_logits - reload_logits).pow(2).mean().sqrt() / merged_logits.pow(2).mean().sqrt().clamp_min(1e-12))
     reload_top1 = float((merged_logits.argmax(-1) == reload_logits.argmax(-1)).float().mean())

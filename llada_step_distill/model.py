@@ -44,7 +44,7 @@ def load_model(device: torch.device | str, *, training: bool = False):
     config = AutoConfig.from_pretrained(root, local_files_only=True)
     config.flash_attention = True
     model = LLaDAModelLM.from_pretrained(
-        root, config=config, local_files_only=True, torch_dtype=torch.bfloat16
+        root, config=config, local_files_only=True, dtype=torch.bfloat16
     ).to(device)
     model.requires_grad_(False)
     if training:

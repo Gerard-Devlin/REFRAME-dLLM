@@ -278,6 +278,9 @@ def train(
         torch.set_rng_state(rank_state["torch_rng"])
         if rank_state["cuda_rng"] is not None:
             torch.cuda.set_rng_state(rank_state["cuda_rng"])
+        # A smoke resume may deliberately extend the requested update count.
+        # Formal runs recompute the same full-epoch value here.
+        state["total_updates"] = total_updates
     output = Path(output)
     if rank == 0:
         output.mkdir(parents=True, exist_ok=True)
