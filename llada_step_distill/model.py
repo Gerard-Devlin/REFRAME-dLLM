@@ -36,11 +36,11 @@ def load_tokenizer():
     return AutoTokenizer.from_pretrained(snapshot(), local_files_only=True)
 
 
-def load_model(device: torch.device | str, *, training: bool = False):
+def load_model(device: torch.device | str, *, training: bool = False, model_path: Path | None = None):
     from transformers import AutoConfig
     from v1.llada.model.modeling_llada import ActivationCheckpointingStrategy, LLaDAModelLM
 
-    root = snapshot()
+    root = Path(model_path) if model_path is not None else snapshot()
     config = AutoConfig.from_pretrained(root, local_files_only=True)
     config.flash_attention = True
     model = LLaDAModelLM.from_pretrained(

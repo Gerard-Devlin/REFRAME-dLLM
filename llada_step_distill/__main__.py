@@ -58,6 +58,7 @@ def parser() -> argparse.ArgumentParser:
     command.add_argument("--split", choices=("dev", "holdout", "full"), default="dev")
     command.add_argument("--steps", type=int, nargs="+", default=(8, 16, 32))
     command.add_argument("--adapter", type=Path)
+    command.add_argument("--merged-model", type=Path)
     command.add_argument("--limit", type=int)
 
     command = sub.add_parser("export")
@@ -101,7 +102,8 @@ def main() -> None:
                        overfit_records=args.overfit_records,
                        config=ExperimentConfig())
     elif args.command == "evaluate":
-        result = evaluate(args.dataset, args.output, split=args.split, steps=tuple(args.steps), adapter=args.adapter, limit=args.limit)
+        result = evaluate(args.dataset, args.output, split=args.split, steps=tuple(args.steps),
+                          adapter=args.adapter, merged_model=args.merged_model, limit=args.limit)
     elif args.command == "export":
         result = export(args.checkpoint, args.output)
     else:

@@ -49,17 +49,22 @@ def evaluate(
     split: str = "dev",
     steps: tuple[int, ...] = (8, 16, 32),
     adapter: Path | None = None,
+    merged_model: Path | None = None,
     limit: int | None = None,
 ):
     rank, world, local = distributed()
     device = torch.device("cuda", local)
-    model = load_model(device)
+    if adapter and merged_model:
+        raise ValueError("Choose adapter or merged_model, not both")
+    model = load_model(device, model_path=merged_model)
     tokenizer = load_tokenizer()
     model_name = "teacher"
     if adapter:
         inject_lora(model)
         load_adapter(model, Path(adapter) / "adapter.pt" if Path(adapter).is_dir() else adapter)
         model_name = Path(adapter).name
+    elif merged_model:
+        model_name = Path(merged_model).name
     rows = fixed_split(load_gsm8k(dataset), split)
     if limit:
         rows = rows[:limit]

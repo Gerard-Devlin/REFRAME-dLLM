@@ -58,6 +58,7 @@ case "$MODE" in
   evaluate)
     EVAL_ARGS=()
     [[ -n "${ADAPTER:-}" ]] && EVAL_ARGS+=(--adapter "$ADAPTER")
+    [[ -n "${MERGED_MODEL:-}" ]] && EVAL_ARGS+=(--merged-model "$MERGED_MODEL")
     [[ -n "${LIMIT:-}" ]] && EVAL_ARGS+=(--limit "$LIMIT")
     read -r -a STEP_ARGS <<< "${STEPS:-8 16 32}"
     distributed evaluate --dataset "${DATASET:?set DATASET}" --output "$RUN_DIR" \
