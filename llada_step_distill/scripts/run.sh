@@ -38,7 +38,7 @@ case "$MODE" in
       --output "${SUPERVISION:?set SUPERVISION}" --split "${SPLIT:-all}" --attempts "${ATTEMPTS:-8}"
     ;;
   audit)
-    python -u -m llada_step_distill audit --dataset "${DATASET:?set DATASET}" \
+    distributed audit --dataset "${DATASET:?set DATASET}" \
       --output "$RUN_DIR/audit" --limit "${LIMIT:-256}"
     ;;
   smoke-a|smoke-b)

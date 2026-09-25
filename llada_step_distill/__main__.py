@@ -8,7 +8,7 @@ from pathlib import Path
 import torch
 
 from .audit import audit
-from .collect import collect
+from .collect import collect, distributed
 from .core import ExperimentConfig
 from .data import prepare
 from .evaluate import compare_runs, evaluate
@@ -79,11 +79,17 @@ def main() -> None:
     elif args.command == "collect":
         result = collect(args.prepared, args.output, args.split, args.attempts)
     elif args.command == "audit":
-        args.output.mkdir(parents=True, exist_ok=True)
-        engineering = audit(args.output / "engineering.json", "cuda:0")
+        rank, world, local = distributed()
+        if rank == 0:
+            args.output.mkdir(parents=True, exist_ok=True)
+            engineering = audit(args.output / "engineering.json", f"cuda:{local}")
+        else:
+            engineering = None
+        if world > 1:
+            torch.distributed.barrier()
         quality = evaluate(args.dataset, args.output / "teacher_quality", split="dev", steps=(16, 32), limit=args.limit)
-        result = {"engineering": engineering, "quality": quality}
-        if quality:
+        result = {"engineering": engineering, "quality": quality} if rank == 0 else None
+        if rank == 0 and quality:
             same = quality["summary"]["16"]["accuracy"] == quality["summary"]["32"]["accuracy"]
             result["teacher_16_equals_32_on_audit"] = same
             result["recommendation"] = "stop_distillation_directly_reduce_steps" if same else "continue_collection"
