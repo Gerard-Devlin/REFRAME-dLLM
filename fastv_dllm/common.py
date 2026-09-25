@@ -1,4 +1,4 @@
-"""Pinned-model contracts and evaluation helpers."""
+"""Dataset and reporting helpers shared by the original-LLaDA experiment."""
 
 from decimal import Decimal, InvalidOperation
 import hashlib
@@ -6,29 +6,12 @@ import json
 from pathlib import Path
 import re
 
-MODEL_ID = "Efficient-Large-Model/Fast_dLLM_v2_1.5B"
-REVISION = "da5608172d2b74380e4e780baa19c71645e4f981"
-CODE_HASH = "d363ee4a4d4bf52958645d5c715712c5b027525bb90611a52178e58695e09b50"
-MASK_ID = 151665
-EOS_ID = 151645
-
-
 def sha256(path):
     h = hashlib.sha256()
     with Path(path).open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             h.update(chunk)
     return h.hexdigest()
-
-
-def snapshot():
-    from huggingface_hub import snapshot_download
-
-    path = Path(snapshot_download(MODEL_ID, revision=REVISION, local_files_only=True))
-    actual = sha256(path / "modeling.py")
-    if actual != CODE_HASH:
-        raise RuntimeError(f"Pinned modeling.py mismatch: {actual}; expected {CODE_HASH}")
-    return path
 
 
 def prompt_ids(tokenizer, question):

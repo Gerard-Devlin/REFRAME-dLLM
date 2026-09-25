@@ -1,5 +1,5 @@
-"""Training-free intra-block token pruning for the pinned Fast-dLLM v2 model."""
+"""Training-free support-token pruning for the pinned original LLaDA model."""
 
-from .common import MODEL_ID, REVISION
+from .llada_common import MODEL_ID, REVISION
 
 __all__ = ["MODEL_ID", "REVISION"]

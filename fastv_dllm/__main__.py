@@ -1,3 +1,3 @@
-from .evaluate import main
+from .llada_evaluate import main
 
 main()
