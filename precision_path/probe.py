@@ -207,6 +207,7 @@ def main():
         backend=convert(low)
         low.requires_grad_(False)
         semantics=dict(model=MODEL_ID,revision=REVISION,backend=backend,
+            prompt_manifest_sha256=sha256(args.data/'manifest.json'),
             block_size=32,small_block_size=8,batch_size=1,use_block_cache=False,
             mask_id=151665,stop_token=151645,
             threshold=args.threshold,max_new_tokens=args.max_new_tokens,temperature=0,
