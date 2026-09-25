@@ -117,7 +117,8 @@ class LLaDABlockForward:
         for number, block in enumerate(core.transformer.blocks, start=1):
             if number == self.config.prune_after_layer:
                 hidden, capture = self._captured_block(block, hidden)
-                if hidden.is_cuda:
+                measure_score = not prune
+                if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
                 relevance = self._relevance(capture, target_positions)
@@ -131,7 +132,7 @@ class LLaDABlockForward:
                     candidates=future_masks, protected=protected,
                 )
                 keep = candidate_keep if prune else positions
-                if hidden.is_cuda:
+                if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 support = future_masks
                 kept_support = [i for i in candidate_keep if i in set(future_masks)]
@@ -141,7 +142,7 @@ class LLaDABlockForward:
                     support=len(support), protected=len(protected), kept_support=len(kept_support),
                     deep_tokens=len(candidate_keep),
                     retained_support_mass=(float(relevance[kept_support].sum().item()) / denominator if denominator else 1.0),
-                    score_seconds=time.perf_counter() - started,
+                    score_seconds=(time.perf_counter() - started if measure_score else 0.0),
                 )
                 if prune:
                     index = torch.tensor(keep, device=hidden.device)
