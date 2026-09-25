@@ -23,7 +23,7 @@ def row(length=96):
 def test_exact_10m_quotas():
     assert proportional_quotas(10_000_000) == TRAIN_QUOTAS
     assert sum(TRAIN_QUOTAS.values()) == 10_000_000
-    assert sum(validation_quotas()) == 20_000
+    assert sum(validation_quotas().values()) == 20_000
 
 
 def test_decontamination_exact_and_near_duplicate():
