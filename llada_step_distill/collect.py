@@ -166,10 +166,17 @@ def collect(prepared: Path, output: Path, split: str = "all", attempts: int = 8)
         missing = [str(path) for path in expected if not path.is_file()]
         if missing:
             raise RuntimeError(f"Missing collected shards: {missing[:3]}")
+        shard_hashes = {}
+        for path in expected:
+            records = torch.load(path, map_location="cpu", weights_only=False)["records"]
+            shard_hashes[str(path.relative_to(output))] = digest(records)
         output_manifest = {
             "format_version": 1, "prepared_hash": manifest["data_hash"], "split": split,
             "shards": {name: manifest["shards"][name] for name in splits}, "stats": stats, "world_size": world,
+            "shard_hashes": shard_hashes,
         }
-        output_manifest["collection_hash"] = digest(output_manifest)
+        output_manifest["collection_hash"] = digest({
+            "prepared_hash": manifest["data_hash"], "split": split, "shard_hashes": shard_hashes,
+        })
         atomic_json(output / "manifest.json", output_manifest)
     return stats

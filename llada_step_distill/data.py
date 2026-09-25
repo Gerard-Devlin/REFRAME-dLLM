@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import random
@@ -160,6 +161,7 @@ def prepare(
     database.execute("PRAGMA synchronous=NORMAL")
     database.execute("CREATE TABLE IF NOT EXISTS seen (sample_id TEXT PRIMARY KEY)")
     counters = {split: {key: 0 for key in DATA_FILES} for split in writers}
+    selection_hashers = {split: hashlib.sha256() for split in writers}
     train_index = acceleration_index = 0
     for domain, relatives in DATA_FILES.items():
         needed = train_quota[domain] + validation_quota[domain]
@@ -198,6 +200,8 @@ def prepare(
                         item["kind"] = "acceleration"
                         item["real_transition"] = True
                     item["domain"] = domain
+                    selection_hashers[split].update(item["sample_id"].encode("ascii"))
+                    selection_hashers[split].update(b"\n")
                     writers[split].append(item)
                     counters[split][domain] += 1
                     accepted += 1
@@ -225,6 +229,7 @@ def prepare(
         "train_quotas": train_quota,
         "validation_quotas": validation_quota,
         "actual": counters,
+        "selection_sha256": {split: value.hexdigest() for split, value in selection_hashers.items()},
         "retention_records": retention,
         "acceleration_records": acceleration,
         "real_transition_records": real,

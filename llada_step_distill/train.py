@@ -191,29 +191,36 @@ def development_evaluation(raw_model, head, dataset: Path, rank: int, world: int
     raw_model.model.transformer.ff_out = head
     raw_model.model.set_activation_checkpointing(None)
     raw_model.eval()
-    correct = total = truncated = 0
-    elapsed = nfe = 0.0
+    totals = {steps: {"correct": 0, "total": 0, "truncated": 0, "elapsed": 0.0, "nfe": 0.0} for steps in (8, 16, 32)}
     try:
         for index in range(rank, len(rows), world):
             row = rows[index]
             ids = prompt_ids(tokenizer, row["question"], "gsm8k")
-            result = generate_fixed_quota(raw_model, torch.tensor([ids], device=device), steps_per_block=16)
-            generated = result.output[0, len(ids):].tolist()
-            eos = generated.index(126081) if 126081 in generated else None
-            text = tokenizer.decode(generated[:eos] if eos is not None else generated, skip_special_tokens=True)
-            correct += int(extract_answer(text) == extract_answer(row["answer"], gold=True))
-            truncated += int(eos is None)
-            elapsed += result.seconds
-            nfe += result.nfe
-            total += 1
-        values = torch.tensor([correct, total, truncated, elapsed, nfe], dtype=torch.float64, device=device)
+            for steps in (8, 16, 32):
+                result = generate_fixed_quota(raw_model, torch.tensor([ids], device=device), steps_per_block=steps)
+                generated = result.output[0, len(ids):].tolist()
+                eos = generated.index(126081) if 126081 in generated else None
+                text = tokenizer.decode(generated[:eos] if eos is not None else generated, skip_special_tokens=True)
+                totals[steps]["correct"] += int(extract_answer(text) == extract_answer(row["answer"], gold=True))
+                totals[steps]["truncated"] += int(eos is None)
+                totals[steps]["elapsed"] += result.seconds
+                totals[steps]["nfe"] += result.nfe
+                totals[steps]["total"] += 1
+        values = torch.tensor(
+            [totals[steps][key] for steps in (8, 16, 32) for key in ("correct", "total", "truncated", "elapsed", "nfe")],
+            dtype=torch.float64, device=device,
+        )
         if world > 1:
             torch.distributed.all_reduce(values)
-        return {
-            "accuracy": float(values[0] / values[1]), "examples": int(values[1]),
-            "truncation_rate": float(values[2] / values[1]), "mean_seconds": float(values[3] / values[1]),
-            "mean_nfe": float(values[4] / values[1]),
-        }
+        result = {}
+        for index, steps in enumerate((8, 16, 32)):
+            correct, total, truncated, elapsed, nfe = values[index * 5 : index * 5 + 5]
+            result[str(steps)] = {
+                "accuracy": float(correct / total), "examples": int(total),
+                "truncation_rate": float(truncated / total), "mean_seconds": float(elapsed / total),
+                "mean_nfe": float(nfe / total),
+            }
+        return result
     finally:
         raw_model.model.transformer.ff_out = torch.nn.Identity()
         raw_model.model.set_activation_checkpointing(ActivationCheckpointingStrategy.whole_layer)
@@ -287,6 +294,9 @@ def train(
         atomic_json(output / "config.json", {**config.to_dict(), "targets": names, "trainable": sum(p.numel() for p in raw_model.parameters() if p.requires_grad)})
         from torch.utils.tensorboard import SummaryWriter
         writer = SummaryWriter(output / "tensorboard")
+        total_parameters = sum(parameter.numel() for parameter in raw_model.parameters())
+        trainable_parameters = sum(parameter.numel() for parameter in raw_model.parameters() if parameter.requires_grad)
+        print(f"parameters total={total_parameters:,} trainable={trainable_parameters:,}", flush=True)
     else:
         writer = None
     if world > 1:
@@ -298,6 +308,7 @@ def train(
     for _ in range(local_skip):
         last = next(iterator)
     started = time.perf_counter()
+    start_update = state["update"]
     best_accuracy = float(state.get("best_accuracy", -1.0))
     optimizer.zero_grad(set_to_none=True)
     for update in range(state["update"], total_updates):
@@ -341,20 +352,33 @@ def train(
         optimizer.step()
         optimizer.zero_grad(set_to_none=True)
         state["update"] = update + 1
+        state["scheduler_step"] = update + 1
         elapsed = time.perf_counter() - started
         if world > 1:
             packed = torch.tensor([sums[key] for key in METRIC_KEYS] + [supervised], dtype=torch.float64, device=device)
             torch.distributed.all_reduce(packed)
             sums = {key: float(packed[index]) for index, key in enumerate(METRIC_KEYS)}
             supervised = int(packed[-1])
-        if writer and (update < 10 or (update + 1) % 10 == 0):
+        log_now = update < 10 or (update + 1) % 10 == 0
+        peaks = None
+        if log_now:
+            local_peak = torch.tensor([torch.cuda.max_memory_allocated(device) / 2**30], device=device)
+            peaks = [torch.zeros(1, device=device) for _ in range(world)]
+            if world > 1:
+                torch.distributed.all_gather(peaks, local_peak)
+            else:
+                peaks = [local_peak]
+        if writer and log_now:
             for key, value in sums.items():
                 writer.add_scalar(f"loss/{key}", value / max(1, supervised), update + 1)
             writer.add_scalar("train/grad_norm", float(grad_norm), update + 1)
             writer.add_scalar("train/lr", lr * factor, update + 1)
-            writer.add_scalar("train/examples_per_second", (update + 1 - state.get("resume_update", 0)) * global_batch / elapsed, update + 1)
-            writer.add_scalar("train/peak_gib", torch.cuda.max_memory_allocated(device) / 2**30, update + 1)
-            writer.add_scalar("train/eta_hours", elapsed / (update + 1) * (total_updates - update - 1) / 3600, update + 1)
+            completed = update + 1 - start_update
+            writer.add_scalar("train/examples_per_second", completed * global_batch / elapsed, update + 1)
+            writer.add_scalar("train/step_seconds_avg", elapsed / completed, update + 1)
+            for gpu_rank, peak in enumerate(peaks):
+                writer.add_scalar(f"memory/peak_gib_rank_{gpu_rank}", float(peak), update + 1)
+            writer.add_scalar("train/eta_hours", elapsed / completed * (total_updates - update - 1) / 3600, update + 1)
             writer.flush()
         interval = 25_000 if stage == "a" else 5_000
         if smoke_updates is not None:
@@ -366,11 +390,12 @@ def train(
             development = development_evaluation(raw_model, head, dev_dataset, rank, world, device)
             if rank == 0:
                 atomic_json(output / f"dev_{update+1:08d}.json", development)
-                writer.add_scalar("dev/accuracy_16", development["accuracy"], update + 1)
-                writer.add_scalar("dev/truncation_rate_16", development["truncation_rate"], update + 1)
-        is_best = development is not None and development["accuracy"] > best_accuracy
+                for steps, values in development.items():
+                    writer.add_scalar(f"dev/accuracy_{steps}", values["accuracy"], update + 1)
+                    writer.add_scalar(f"dev/truncation_rate_{steps}", values["truncation_rate"], update + 1)
+        is_best = development is not None and development["16"]["accuracy"] > best_accuracy
         if development is not None:
-            best_accuracy = max(best_accuracy, development["accuracy"])
+            best_accuracy = max(best_accuracy, development["16"]["accuracy"])
             state["best_accuracy"] = best_accuracy
         if (update + 1) % interval == 0 or update + 1 == total_updates or evaluate_now:
             save_checkpoint(output, model, optimizer, state, rank, world, best=is_best)
