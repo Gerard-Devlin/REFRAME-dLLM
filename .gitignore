@@ -33,3 +33,4 @@ fast_dvlm/data/ALLaVA-4V/
 /relation_update/
 /denoising_dag/runs/
 /precision_path/runs/
+/step_distill/runs/

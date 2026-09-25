@@ -1,8 +1,9 @@
 # Fast-dLLM
 
-Experimental extensions in this fork: [competitor-budget decoding](competitor_budget/README.md)
-and [precision-path diagnostics](precision_path/README.md). The original upstream
-project documentation follows.
+Experimental extensions in this fork: [competitor-budget decoding](competitor_budget/README.md),
+[precision-path diagnostics](precision_path/README.md), and
+[two-to-one v2 distillation](step_distill/README.md). The original upstream project
+documentation follows.
 
 [![Project](https://img.shields.io/static/v1?label=Project&message=Github&color=blue&logo=github-pages)](https://nvlabs.github.io/Fast-dLLM)
 [![arXiv v1](https://img.shields.io/badge/Paper-v1-red.svg)](https://arxiv.org/abs/2505.22618)
