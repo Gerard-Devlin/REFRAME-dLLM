@@ -26,7 +26,10 @@ output_models/
 # Downloaded ALLaVA-4V (HF) + full-download logs (see fast_dvlm/data/download_example_dataset.sh)
 fast_dvlm/data/ALLaVA-4V/
 
-# Frozen relation-adapter experiment outputs
-/relation_adapter/runs/
+# Retired experiment artifacts on existing checkouts (source removed)
+/relation_adapter/
+/relation_block/
+/relation_diffusion/
+/relation_update/
 /denoising_dag/runs/
-/relation_update/runs/
+/precision_path/runs/

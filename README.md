@@ -1,7 +1,7 @@
 # Fast-dLLM
 
 Experimental extensions in this fork: [competitor-budget decoding](competitor_budget/README.md)
-and [relation-space diffusion](relation_block/README.md). The original upstream
+and [precision-path diagnostics](precision_path/README.md). The original upstream
 project documentation follows.
 
 [![Project](https://img.shields.io/static/v1?label=Project&message=Github&color=blue&logo=github-pages)](https://nvlabs.github.io/Fast-dLLM)

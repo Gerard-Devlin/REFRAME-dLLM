@@ -24,7 +24,7 @@ local decoder matches the pinned official method in output, model-forward count
 and model-forward inputs on a short generation.
 
 Input is a prepared GSM8K JSON list with `id`, `question`, and `answer`. The
-prompts and numeric extraction match `relation_block.evaluate`, but this remains
+prompts and numeric extraction retain the previous experiment's format, but this remains
 an exploratory 0-shot evaluation rather than official lm-eval reproduction.
 
 The launcher requires explicit physical `GPU_IDS` and an unused `RUN_DIR`:
