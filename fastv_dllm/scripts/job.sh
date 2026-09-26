@@ -52,6 +52,7 @@ args=(--stage "$MODE" --task "${TASK:-gsm8k}" --dataset "$DATASET" --output "$RU
       --support-keep-ratio "${SUPPORT_KEEP_RATIO:-$default_ratio}"
       --context-dominant-ratio "${CONTEXT_DOMINANT_RATIO:-1.0}"
       --contextual-ratio "${CONTEXTUAL_RATIO:-0.0}"
+      --support-contextual-ratio "${SUPPORT_CONTEXTUAL_RATIO:-0.0}"
       --context-merge-weight "${CONTEXT_MERGE_WEIGHT:-0.5}"
       --cache-mode "${CACHE_MODE:-none}")
 if [[ -n ${METHODS:-} ]]; then

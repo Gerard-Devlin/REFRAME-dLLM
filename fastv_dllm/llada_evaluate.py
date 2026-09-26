@@ -56,6 +56,7 @@ def run_method(model, ids, args, method, probe=False):
             support_keep_ratio=args.support_keep_ratio,
             context_dominant_ratio=args.context_dominant_ratio,
             contextual_ratio=args.contextual_ratio,
+            support_contextual_ratio=args.support_contextual_ratio,
             context_merge_weight=args.context_merge_weight,
         ))
     source = torch.tensor([ids], device=model.device)
@@ -196,6 +197,7 @@ def parse_args():
     p.add_argument("--support-keep-ratio", type=float, default=0.5)
     p.add_argument("--context-dominant-ratio", type=float, default=1.0)
     p.add_argument("--contextual-ratio", type=float, default=0.0)
+    p.add_argument("--support-contextual-ratio", type=float, default=0.0)
     p.add_argument("--context-merge-weight", type=float, default=0.5)
     p.add_argument("--cache-mode", choices=("none", "prefix", "dual"), default="none")
     p.add_argument("--methods", nargs="+", choices=METHODS, default=None,

@@ -59,7 +59,8 @@ def test_context_compression_exact_configuration():
 
 
 def test_config_rejects_invalid_context_parameters():
-    for field in ("context_dominant_ratio", "contextual_ratio", "context_merge_weight"):
+    for field in ("context_dominant_ratio", "contextual_ratio",
+                  "support_contextual_ratio", "context_merge_weight"):
         for value in (-0.1, 1.1):
             kwargs = {field: value}
             try:

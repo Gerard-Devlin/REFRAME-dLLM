@@ -121,6 +121,7 @@ class Config:
     support_keep_ratio: float = 0.5
     context_dominant_ratio: float = 1.0
     contextual_ratio: float = 0.0
+    support_contextual_ratio: float = 0.0
     context_merge_weight: float = 0.5
 
     def validate(self, layers):
@@ -132,6 +133,8 @@ class Config:
             raise ValueError("context_dominant_ratio must be in [0,1]")
         if not 0 <= self.contextual_ratio <= 1:
             raise ValueError("contextual_ratio must be in [0,1]")
+        if not 0 <= self.support_contextual_ratio <= 1:
+            raise ValueError("support_contextual_ratio must be in [0,1]")
         if not 0 <= self.context_merge_weight <= 1:
             raise ValueError("context_merge_weight must be in [0,1]")
 
@@ -233,10 +236,22 @@ class LLaDABlockForward:
                     )
                 else:
                     kept_context = context
-                candidate_keep = choose_support(
-                    relevance, target_positions, self.config.support_keep_ratio,
-                    candidates=future_masks, protected=kept_context,
-                )
+                dominant_support = 0
+                contextual_support = 0
+                if mode == "zip":
+                    kept_future, support_states, dominant_support, contextual_support = compress_context(
+                        hidden, relevance, future_masks,
+                        self.config.support_keep_ratio,
+                        self.config.support_contextual_ratio,
+                        self.config.context_merge_weight,
+                    )
+                    merged_states.update(support_states)
+                    candidate_keep = sorted(set(target_positions + kept_context + kept_future))
+                else:
+                    candidate_keep = choose_support(
+                        relevance, target_positions, self.config.support_keep_ratio,
+                        candidates=future_masks, protected=kept_context,
+                    )
                 keep = candidate_keep if mode else positions
                 if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
@@ -248,6 +263,8 @@ class LLaDABlockForward:
                     support=len(support), protected=len(context), kept_support=len(kept_support),
                     kept_context=len(kept_context), dominant_context=dominant_context,
                     contextual_context=contextual_context,
+                    dominant_support=dominant_support,
+                    contextual_support=contextual_support,
                     deep_tokens=len(candidate_keep),
                     retained_support_mass=(float(relevance[kept_support].sum().item()) / denominator if denominator else 1.0),
                     score_seconds=(time.perf_counter() - started if measure_score else 0.0),
