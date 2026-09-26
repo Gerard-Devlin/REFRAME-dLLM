@@ -188,7 +188,12 @@ def main():
         }[args.cache_mode]
         with LLaDAAttentionBackend(model, "torch"):
             official, official_nfe = official_fn(
-                model, source, steps=args.gen_length // args.block_length,
+                # The official DualCache implementation uses a bounded
+                # ``for`` loop and therefore needs the original one-step-per-
+                # token budget even when threshold decoding is enabled.  The
+                # uncached and prefix implementations use a completion loop.
+                model, source, steps=(args.gen_length if args.cache_mode == "dual"
+                                      else args.gen_length // args.block_length),
                 gen_length=args.gen_length, block_length=args.block_length,
                 temperature=0, remasking="low_confidence", threshold=args.threshold,
             )
