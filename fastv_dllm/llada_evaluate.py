@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import random
 
 import torch
 
@@ -13,6 +14,17 @@ from .llada_decode import generate
 from .llada_pruning import Config, LLaDABlockForward
 
 METHODS = ("torch_native", "flash_native", "torch_fastv", "flash_fastv")
+
+
+def percentile(values, fraction):
+    ordered = sorted(values)
+    if not ordered:
+        return None
+    position = (len(ordered) - 1) * fraction
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    weight = position - lower
+    return ordered[lower] * (1 - weight) + ordered[upper] * weight
 
 
 def load_model(device):
@@ -60,8 +72,12 @@ def aggregate(records, methods):
         output[method] = dict(
             examples=len(rows), accuracy=(sum(scored) / len(scored) if scored else None),
             mean_seconds=sum(row["seconds"] for row in rows) / len(rows),
+            p50_seconds=percentile([row["seconds"] for row in rows], 0.50),
+            p95_seconds=percentile([row["seconds"] for row in rows], 0.95),
             total_seconds=sum(row["seconds"] for row in rows),
             mean_nfe=sum(row["nfe"] for row in rows) / len(rows),
+            seconds_per_nfe=(sum(row["seconds"] for row in rows) /
+                             sum(row["nfe"] for row in rows)),
             mean_tokens=sum(row["tokens"] for row in rows) / len(rows),
             flash_calls=sum(row["backend"]["flash_calls"] for row in rows),
             torch_sdpa_calls=sum(row["backend"]["torch_sdpa_calls"] for row in rows),
@@ -94,6 +110,32 @@ def aggregate(records, methods):
             output["flash_fastv"]["accuracy"] - output["flash_native"]["accuracy"]
             if output["flash_fastv"]["accuracy"] is not None else None
         )
+        attribution["fastv_per_nfe_speedup_same_flash"] = (
+            output["flash_native"]["seconds_per_nfe"] /
+            output["flash_fastv"]["seconds_per_nfe"]
+        )
+        attribution["fastv_nfe_reduction_same_flash"] = (
+            output["flash_native"]["mean_nfe"] / output["flash_fastv"]["mean_nfe"]
+        )
+        paired = [
+            int(row["flash_fastv"]["correct"]) - int(row["flash_native"]["correct"])
+            for row in records
+            if row["flash_native"]["correct"] is not None
+            and row["flash_fastv"]["correct"] is not None
+        ]
+        if paired:
+            rng = random.Random(1234)
+            bootstrap = sorted(
+                sum(paired[rng.randrange(len(paired))] for _ in paired) / len(paired)
+                for _ in range(10000)
+            )
+            attribution["paired_accuracy"] = dict(
+                method_better=sum(value == 1 for value in paired),
+                native_better=sum(value == -1 for value in paired),
+                same=sum(value == 0 for value in paired),
+                delta=sum(paired) / len(paired),
+                bootstrap_95=[bootstrap[249], bootstrap[9749]],
+            )
     output["attribution"] = attribution
     return output
 
