@@ -57,19 +57,12 @@ class PositionedRotary(nn.Module):
 class Config:
     prune_after_layer: int = 4
     support_keep_ratio: float = 0.5
-    context_keep_ratio: float = 1.0
-    anchor_prefix: int = 8
-    recent_context: int = 32
 
     def validate(self, layers):
         if not 1 <= self.prune_after_layer < layers:
             raise ValueError("Prune point must leave at least one deep layer")
         if not 0 <= self.support_keep_ratio <= 1:
             raise ValueError("support_keep_ratio must be in [0,1]")
-        if not 0 <= self.context_keep_ratio <= 1:
-            raise ValueError("context_keep_ratio must be in [0,1]")
-        if self.anchor_prefix < 0 or self.recent_context < 0:
-            raise ValueError("anchor sizes must be non-negative")
 
 
 class LLaDABlockForward:
@@ -113,7 +106,7 @@ class LLaDABlockForward:
         # No candidate can be removed in the final block (or when all support
         # is requested).  Use the exact upstream forward and avoid paying the
         # attention-capture/ranking overhead.
-        if prune and self.config.support_keep_ratio == 1 and self.config.context_keep_ratio == 1:
+        if prune and (not future_masks or self.config.support_keep_ratio == 1):
             target = torch.tensor(target_positions, device=input_ids.device)
             return self.model(input_ids).logits.index_select(1, target)
         core = self.model.model
@@ -132,42 +125,27 @@ class LLaDABlockForward:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
                 relevance = self._relevance(capture, target_positions)
-                # Use separate budgets for untouched future MASKs and real text.
-                # The previous unprotected variant let hundreds of identical
-                # MASKs compete with prompt tokens and destroyed accuracy.  Here
-                # prompt/generated context competes only with context, while a
-                # small prefix and the most recent real tokens are hard anchors.
+                # FastV protects every text token and prunes only its redundant
+                # modality. For LLaDA the corresponding redundant class is the
+                # untouched future MASK canvas. Prompt and already revealed
+                # language tokens must never compete with those masks.
                 future_set = set(future_masks)
                 context = [i for i in positions if i not in target_set and i not in future_set]
-                anchors = set(context[:self.config.anchor_prefix])
-                if self.config.recent_context:
-                    anchors.update(context[-self.config.recent_context:])
-                context_candidates = [i for i in context if i not in anchors]
-                future_keep = set(choose_support(
+                candidate_keep = choose_support(
                     relevance, target_positions, self.config.support_keep_ratio,
-                    candidates=future_masks,
-                )) - target_set
-                context_keep = set(choose_support(
-                    relevance, target_positions, self.config.context_keep_ratio,
-                    candidates=context_candidates,
-                )) - target_set
-                candidate_keep = sorted(target_set | anchors | future_keep | context_keep)
+                    candidates=future_masks, protected=context,
+                )
                 keep = candidate_keep if prune else positions
                 if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 support = future_masks
                 kept_support = [i for i in candidate_keep if i in future_set]
                 denominator = float(relevance[support].sum().item()) if support else 0.0
-                context_denominator = float(relevance[context].sum().item()) if context else 0.0
-                kept_context = [i for i in candidate_keep if i in set(context)]
                 layer_record = dict(
                     layer=number, original_tokens=len(positions), targets=len(set(target_positions)),
-                    support=len(support), context=len(context), anchors=len(anchors),
-                    kept_support=len(kept_support), kept_context=len(kept_context),
+                    support=len(support), protected=len(context), kept_support=len(kept_support),
                     deep_tokens=len(candidate_keep),
                     retained_support_mass=(float(relevance[kept_support].sum().item()) / denominator if denominator else 1.0),
-                    retained_context_mass=(float(relevance[kept_context].sum().item()) / context_denominator
-                                           if context_denominator else 1.0),
                     score_seconds=(time.perf_counter() - started if measure_score else 0.0),
                 )
                 if prune:
