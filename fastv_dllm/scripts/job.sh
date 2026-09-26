@@ -50,6 +50,9 @@ args=(--stage "$MODE" --task "${TASK:-gsm8k}" --dataset "$DATASET" --output "$RU
       --threshold "${THRESHOLD:-0.90}" --decoding-mode "${DECODING_MODE:-threshold}"
       --prune-after-layer "${PRUNE_AFTER_LAYER:-4}"
       --support-keep-ratio "${SUPPORT_KEEP_RATIO:-$default_ratio}"
+      --context-dominant-ratio "${CONTEXT_DOMINANT_RATIO:-1.0}"
+      --contextual-ratio "${CONTEXTUAL_RATIO:-0.0}"
+      --context-merge-weight "${CONTEXT_MERGE_WEIGHT:-0.5}"
       --cache-mode "${CACHE_MODE:-none}")
 if [[ -n ${METHODS:-} ]]; then
     read -ra selected_methods <<< "$METHODS"

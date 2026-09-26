@@ -13,7 +13,11 @@ from .llada_common import MODEL_ID, REVISION, extract_answer, load_samples, prom
 from .llada_decode import generate, generate_dual_cache, generate_prefix_cache
 from .llada_pruning import Config, LLaDABlockForward
 
-METHODS = ("torch_native", "flash_native", "torch_fastv", "flash_fastv")
+METHODS = (
+    "torch_native", "flash_native",
+    "torch_fastv", "flash_fastv",
+    "torch_zip", "flash_zip",
+)
 
 
 def percentile(values, fraction):
@@ -44,9 +48,16 @@ def load_model(device):
 def run_method(model, ids, args, method, probe=False):
     backend_name = "flash" if method.startswith("flash") else "torch"
     use_fastv = method.endswith("fastv")
+    use_zip = method.endswith("zip")
     forward = None
-    if use_fastv or probe:
-        forward = LLaDABlockForward(model, Config(args.prune_after_layer, args.support_keep_ratio))
+    if use_fastv or use_zip or probe:
+        forward = LLaDABlockForward(model, Config(
+            prune_after_layer=args.prune_after_layer,
+            support_keep_ratio=args.support_keep_ratio,
+            context_dominant_ratio=args.context_dominant_ratio,
+            contextual_ratio=args.contextual_ratio,
+            context_merge_weight=args.context_merge_weight,
+        ))
     source = torch.tensor([ids], device=model.device)
     with LLaDAAttentionBackend(model, backend_name) as backend:
         decode = {
@@ -57,7 +68,7 @@ def run_method(model, ids, args, method, probe=False):
         result = decode(
             model, source, gen_length=args.gen_length, block_length=args.block_length,
             threshold=(None if args.decoding_mode == "single" else args.threshold),
-            block_forward=forward, prune=use_fastv,
+            block_forward=forward, prune=("zip" if use_zip else use_fastv),
         )
     tokens = result.output[0, len(ids):].tolist()
     return dict(token_ids=tokens, nfe=result.nfe, seconds=result.seconds, peak_gib=result.peak_gib,
@@ -87,6 +98,9 @@ def aggregate(records, methods):
             mean_retained_mass=(sum(v for row in rows for v in row.get("retained_mass", [])) /
                                 sum(len(row.get("retained_mass", [])) for row in rows)
                                 if any(row.get("retained_mass") for row in rows) else None),
+            mean_context_tokens=(sum(v for row in rows for v in row.get("context_tokens", [])) /
+                                 sum(len(row.get("context_tokens", [])) for row in rows)
+                                 if any(row.get("context_tokens") for row in rows) else None),
         )
     attribution = {}
     if {"torch_native", "flash_native"} <= output.keys():
@@ -131,6 +145,37 @@ def aggregate(records, methods):
                 delta=sum(paired) / len(paired),
                 bootstrap_95=[bootstrap[249], bootstrap[9749]],
             )
+    if {"flash_native", "flash_zip"} <= output.keys():
+        attribution["zip_speedup_same_flash"] = (
+            output["flash_native"]["total_seconds"] / output["flash_zip"]["total_seconds"]
+        )
+        attribution["zip_accuracy_delta_same_flash"] = (
+            output["flash_zip"]["accuracy"] - output["flash_native"]["accuracy"]
+            if output["flash_zip"]["accuracy"] is not None else None
+        )
+        attribution["zip_per_nfe_speedup_same_flash"] = (
+            output["flash_native"]["seconds_per_nfe"] /
+            output["flash_zip"]["seconds_per_nfe"]
+        )
+        paired = [
+            int(row["flash_zip"]["correct"]) - int(row["flash_native"]["correct"])
+            for row in records
+            if row["flash_native"]["correct"] is not None
+            and row["flash_zip"]["correct"] is not None
+        ]
+        if paired:
+            rng = random.Random(1234)
+            bootstrap = sorted(
+                sum(paired[rng.randrange(len(paired))] for _ in paired) / len(paired)
+                for _ in range(10000)
+            )
+            attribution["zip_paired_accuracy"] = dict(
+                method_better=sum(value == 1 for value in paired),
+                native_better=sum(value == -1 for value in paired),
+                same=sum(value == 0 for value in paired),
+                delta=sum(paired) / len(paired),
+                bootstrap_95=[bootstrap[249], bootstrap[9749]],
+            )
     output["attribution"] = attribution
     return output
 
@@ -149,9 +194,12 @@ def parse_args():
                    help="single reproduces the one-token-per-step LLaDA/cache controls")
     p.add_argument("--prune-after-layer", type=int, default=4)
     p.add_argument("--support-keep-ratio", type=float, default=0.5)
+    p.add_argument("--context-dominant-ratio", type=float, default=1.0)
+    p.add_argument("--contextual-ratio", type=float, default=0.0)
+    p.add_argument("--context-merge-weight", type=float, default=0.5)
     p.add_argument("--cache-mode", choices=("none", "prefix", "dual"), default="none")
     p.add_argument("--methods", nargs="+", choices=METHODS, default=None,
-                   help="Subset to run. Use flash_native flash_fastv for fast sweeps.")
+                   help="Subset to run. Use flash_native flash_fastv flash_zip for fast sweeps.")
     return p.parse_args()
 
 
@@ -233,11 +281,17 @@ def main():
                 tokens=args.gen_length,
                 deep_tokens=[r["deep_tokens"] for r in rows],
                 retained_mass=[r["retained_support_mass"] for r in rows],
+                context_tokens=[r["kept_context"] for r in rows],
                 score_seconds=[r["score_seconds"] for r in rows],
             )
         if args.stage == "audit":
             if record["torch_native"]["text"] != record["torch_fastv"]["text"] and args.support_keep_ratio == 1:
                 raise AssertionError("All-support LLaDA path changes output")
+            if (record["torch_native"]["text"] != record["torch_zip"]["text"]
+                    and args.support_keep_ratio == 1
+                    and args.context_dominant_ratio == 1
+                    and args.contextual_ratio == 0):
+                raise AssertionError("All-support VisionZip path changes output")
             if record["flash_native"]["backend"]["flash_calls"] <= 0:
                 raise AssertionError("Explicit flash-attn did not execute")
         with path.open("a", encoding="utf-8") as f: f.write(json.dumps(record, ensure_ascii=False) + "\n")
@@ -261,7 +315,8 @@ def main():
             dataset_sha256=sha256(args.dataset), ids=[x.get("id", x.get("task_id")) for x in samples], world_size=world,
             configuration=vars(args) | {"dataset":str(args.dataset),"output":str(args.output)}, results=results,
             official_parity=official_parity,
-            scope="Original LLaDA-8B-Instruct weights; training-free support-token pruning; paired backend attribution.")
+            scope=("Original LLaDA-8B-Instruct weights; training-free support and context-token "
+                   "compression; paired backend attribution."))
         write_json(args.output/"summary.json",report); print(json.dumps(results,indent=2),flush=True)
     if world > 1: torch.distributed.destroy_process_group()
 

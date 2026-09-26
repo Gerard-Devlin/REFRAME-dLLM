@@ -1,7 +1,7 @@
 import torch
 
 from fastv_dllm.common import prompt_ids
-from fastv_dllm.llada_pruning import Config, choose_support
+from fastv_dllm.llada_pruning import Config, choose_support, compress_context
 
 
 def test_targets_are_never_pruned():
@@ -32,6 +32,42 @@ def test_config_rejects_invalid_ratio():
             pass
         else:
             raise AssertionError("Invalid ratio accepted")
+
+
+def test_context_compression_keeps_dominant_and_contextual_tokens():
+    hidden = torch.tensor([[
+        [1.0, 0.0], [0.9, 0.1], [0.0, 1.0], [0.1, 0.9], [1.0, 1.0],
+    ]])
+    relevance = torch.tensor([0.9, 0.8, 0.1, 0.2, 0.7])
+    kept, merged, dominant, contextual = compress_context(
+        hidden, relevance, context=[0, 1, 2, 3, 4],
+        dominant_ratio=0.4, contextual_ratio=0.2, merge_weight=0.5,
+    )
+    assert dominant == 2 and contextual == 1
+    assert {0, 1}.issubset(kept)
+    assert len(kept) == 3 and set(merged).issubset(kept)
+    assert all(value.shape == (2,) for value in merged.values())
+
+
+def test_context_compression_exact_configuration():
+    hidden = torch.randn(1, 6, 4)
+    kept, merged, dominant, contextual = compress_context(
+        hidden, torch.randn(6), range(6), 1.0, 0.0, 0.5,
+    )
+    assert kept == list(range(6)) and not merged
+    assert dominant == 6 and contextual == 0
+
+
+def test_config_rejects_invalid_context_parameters():
+    for field in ("context_dominant_ratio", "contextual_ratio", "context_merge_weight"):
+        for value in (-0.1, 1.1):
+            kwargs = {field: value}
+            try:
+                Config(**kwargs).validate(32)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f"Invalid {field} accepted")
 
 
 class FakeTokenizer:

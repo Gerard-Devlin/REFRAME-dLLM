@@ -30,6 +30,60 @@ def choose_support(relevance, targets, keep_ratio, candidates=None, protected=No
     return sorted(targets + protected + selected)
 
 
+def compress_context(hidden, relevance, context, dominant_ratio, contextual_ratio,
+                     merge_weight):
+    """VisionZip-style dominant retention plus contextual aggregation.
+
+    ``context`` contains real language positions only. Dominant positions are
+    selected by target-to-context attention. The rest are assigned to evenly
+    distributed contextual anchors by hidden-state cosine similarity. Each
+    anchor receives a scale-preserving interpolation with its cluster mean.
+    """
+    context = sorted(set(int(x) for x in context))
+    if not context:
+        return [], {}, 0, 0
+    dominant_count = min(len(context), math.ceil(len(context) * dominant_ratio))
+    context_tensor = torch.tensor(context, device=hidden.device)
+    if dominant_count:
+        dominant = context_tensor[
+            torch.topk(relevance.index_select(0, context_tensor), dominant_count,
+                       sorted=False).indices
+        ].tolist()
+    else:
+        dominant = []
+    dominant_set = set(dominant)
+    remaining = [position for position in context if position not in dominant_set]
+    contextual_count = min(len(remaining), math.ceil(len(context) * contextual_ratio))
+    if not contextual_count:
+        return sorted(dominant), {}, len(dominant), 0
+
+    # Spatially distributed anchors preserve coverage of the ordered language
+    # sequence; similarity assignment then collects semantically redundant
+    # states around those anchors, following VisionZip's two-part design.
+    if contextual_count == 1:
+        anchor_offsets = [len(remaining) // 2]
+    else:
+        anchor_offsets = torch.linspace(
+            0, len(remaining) - 1, contextual_count, device=hidden.device
+        ).round().long().tolist()
+    anchors = [remaining[offset] for offset in anchor_offsets]
+    remaining_tensor = torch.tensor(remaining, device=hidden.device)
+    anchor_tensor = torch.tensor(anchors, device=hidden.device)
+    states = hidden[0].index_select(0, remaining_tensor).float()
+    anchor_states = hidden[0].index_select(0, anchor_tensor).float()
+    similarity = torch.nn.functional.normalize(states, dim=-1) @ torch.nn.functional.normalize(
+        anchor_states, dim=-1
+    ).transpose(0, 1)
+    assignment = similarity.argmax(dim=-1)
+    merged = {}
+    for number, anchor in enumerate(anchors):
+        members = states[assignment == number]
+        mean = members.mean(dim=0) if members.numel() else anchor_states[number]
+        value = (1.0 - merge_weight) * anchor_states[number] + merge_weight * mean
+        merged[anchor] = value.to(hidden.dtype)
+    return sorted(dominant + anchors), merged, len(dominant), len(anchors)
+
+
 class PositionedRotary(nn.Module):
     """Apply the original RoPE phases after non-contiguous physical pruning."""
     def __init__(self, base, positions, original_length, past_length=0):
@@ -65,12 +119,21 @@ class PositionedRotary(nn.Module):
 class Config:
     prune_after_layer: int = 4
     support_keep_ratio: float = 0.5
+    context_dominant_ratio: float = 1.0
+    contextual_ratio: float = 0.0
+    context_merge_weight: float = 0.5
 
     def validate(self, layers):
         if not 1 <= self.prune_after_layer < layers:
             raise ValueError("Prune point must leave at least one deep layer")
         if not 0 <= self.support_keep_ratio <= 1:
             raise ValueError("support_keep_ratio must be in [0,1]")
+        if not 0 <= self.context_dominant_ratio <= 1:
+            raise ValueError("context_dominant_ratio must be in [0,1]")
+        if not 0 <= self.contextual_ratio <= 1:
+            raise ValueError("contextual_ratio must be in [0,1]")
+        if not 0 <= self.context_merge_weight <= 1:
+            raise ValueError("context_merge_weight must be in [0,1]")
 
 
 class LLaDABlockForward:
@@ -114,10 +177,19 @@ class LLaDABlockForward:
         target_set = set(target_positions)
         future_masks = [i for i, token in enumerate(input_ids[0].tolist())
                         if token == MASK_ID and i not in target_set]
+        mode = "mask" if prune is True else prune
+        exact_zip = (mode == "zip" and self.config.context_dominant_ratio == 1
+                     and self.config.contextual_ratio == 0)
         # No candidate can be removed in the final block (or when all support
         # is requested).  Use the exact upstream forward and avoid paying the
         # attention-capture/ranking overhead.
-        if prune and (not future_masks or self.config.support_keep_ratio == 1):
+        if mode == "mask" and (not future_masks or self.config.support_keep_ratio == 1):
+            target = torch.tensor(target_positions, device=input_ids.device)
+            return self.model(
+                input_ids, past_key_values=past_key_values, use_cache=use_cache,
+                replace_position=replace_position,
+            ).logits.index_select(1, target)
+        if exact_zip and (not future_masks or self.config.support_keep_ratio == 1):
             target = torch.tensor(target_positions, device=input_ids.device)
             return self.model(
                 input_ids, past_key_values=past_key_values, use_cache=use_cache,
@@ -138,7 +210,7 @@ class LLaDABlockForward:
                 hidden, capture, _ = self._captured_block(
                     block, hidden, layer_past=layer_past, use_cache=use_cache
                 )
-                measure_score = not prune
+                measure_score = not mode
                 if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
@@ -149,11 +221,23 @@ class LLaDABlockForward:
                 # language tokens must never compete with those masks.
                 future_set = set(future_masks)
                 context = [i for i in positions if i not in target_set and i not in future_set]
+                merged_states = {}
+                dominant_context = len(context)
+                contextual_context = 0
+                if mode == "zip":
+                    kept_context, merged_states, dominant_context, contextual_context = compress_context(
+                        hidden, relevance, context,
+                        self.config.context_dominant_ratio,
+                        self.config.contextual_ratio,
+                        self.config.context_merge_weight,
+                    )
+                else:
+                    kept_context = context
                 candidate_keep = choose_support(
                     relevance, target_positions, self.config.support_keep_ratio,
-                    candidates=future_masks, protected=context,
+                    candidates=future_masks, protected=kept_context,
                 )
-                keep = candidate_keep if prune else positions
+                keep = candidate_keep if mode else positions
                 if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 support = future_masks
@@ -162,13 +246,19 @@ class LLaDABlockForward:
                 layer_record = dict(
                     layer=number, original_tokens=len(positions), targets=len(set(target_positions)),
                     support=len(support), protected=len(context), kept_support=len(kept_support),
+                    kept_context=len(kept_context), dominant_context=dominant_context,
+                    contextual_context=contextual_context,
                     deep_tokens=len(candidate_keep),
                     retained_support_mass=(float(relevance[kept_support].sum().item()) / denominator if denominator else 1.0),
                     score_seconds=(time.perf_counter() - started if measure_score else 0.0),
                 )
-                if prune:
+                if mode:
                     index = torch.tensor(keep, device=hidden.device)
                     hidden = hidden.index_select(1, index)
+                    if merged_states:
+                        compact = {position: offset for offset, position in enumerate(keep)}
+                        for position, state in merged_states.items():
+                            hidden[0, compact[position]] = state
                     positions = keep
                     compact_positions = index
             else:
