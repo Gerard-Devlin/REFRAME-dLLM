@@ -141,6 +141,7 @@ class Config:
     context_merge_weight: float = 0.5
     secondary_prune_after_layer: int = 0
     secondary_support_ratio: float = 1.0
+    target_only_head: bool = False
 
     def validate(self, layers):
         if not 1 <= self.prune_after_layer < layers:
@@ -353,14 +354,16 @@ class LLaDABlockForward:
         hidden = core.transformer.ln_f(hidden)
         compact = {position: index for index, position in enumerate(positions)}
         gather = torch.tensor([compact[int(position)] for position in target_positions], device=hidden.device)
+        head_hidden = hidden.index_select(1, gather) if self.config.target_only_head else hidden
         if core.config.weight_tying:
-            logits = torch.nn.functional.linear(hidden, core.transformer.wte.weight)
+            logits = torch.nn.functional.linear(head_hidden, core.transformer.wte.weight)
         else:
-            logits = core.transformer.ff_out(hidden)
+            logits = core.transformer.ff_out(head_hidden)
         if core.config.scale_logits:
             logits.mul_(1 / math.sqrt(core.config.d_model))
-        # Compute the head for every physically retained state. This avoids
-        # crediting a separate target-only LM-head optimization to FastV.
-        logits = logits.index_select(1, gather)
+        # Keep the all-retained head as the attribution control.  The optional
+        # active-token head projects only positions consumed by the decoder.
+        if not self.config.target_only_head:
+            logits = logits.index_select(1, gather)
         self.records.append(layer_record)
         return logits

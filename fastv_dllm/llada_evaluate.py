@@ -17,6 +17,7 @@ METHODS = (
     "torch_native", "flash_native",
     "torch_fastv", "flash_fastv",
     "torch_zip", "flash_zip",
+    "flash_zip_head",
 )
 
 
@@ -47,8 +48,9 @@ def load_model(device):
 
 def run_method(model, ids, args, method, probe=False):
     backend_name = "flash" if method.startswith("flash") else "torch"
-    use_fastv = method.endswith("fastv")
-    use_zip = method.endswith("zip")
+    use_fastv = "_fastv" in method
+    use_zip = "_zip" in method
+    target_only_head = method.endswith("_head")
     forward = None
     if use_fastv or use_zip or probe:
         forward = LLaDABlockForward(model, Config(
@@ -60,6 +62,7 @@ def run_method(model, ids, args, method, probe=False):
             context_merge_weight=args.context_merge_weight,
             secondary_prune_after_layer=args.secondary_prune_after_layer,
             secondary_support_ratio=args.secondary_support_ratio,
+            target_only_head=target_only_head,
         ))
     source = torch.tensor([ids], device=model.device)
     with LLaDAAttentionBackend(model, backend_name) as backend:
@@ -179,6 +182,15 @@ def aggregate(records, methods):
                 delta=sum(paired) / len(paired),
                 bootstrap_95=[bootstrap[249], bootstrap[9749]],
             )
+    if {"flash_zip", "flash_zip_head"} <= output.keys():
+        attribution["active_head_speedup"] = (
+            output["flash_zip"]["total_seconds"] /
+            output["flash_zip_head"]["total_seconds"]
+        )
+        attribution["active_head_accuracy_delta"] = (
+            output["flash_zip_head"]["accuracy"] - output["flash_zip"]["accuracy"]
+            if output["flash_zip"]["accuracy"] is not None else None
+        )
     output["attribution"] = attribution
     return output
 
