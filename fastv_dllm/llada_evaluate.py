@@ -21,6 +21,7 @@ METHODS = (
     "flash_zip_head",
     "flash_memory",
 )
+EOS_ID = 126081
 
 
 def percentile(values, fraction):
@@ -32,6 +33,23 @@ def percentile(values, fraction):
     upper = min(lower + 1, len(ordered) - 1)
     weight = position - lower
     return ordered[lower] * (1 - weight) + ordered[upper] * weight
+
+
+def postprocess_output(tokenizer, token_ids, sample, task):
+    """Mirror Fast-dLLM v1's lm-eval text truncation and speed token count."""
+    if task == "humaneval":
+        output_tokens = sum(token != EOS_ID for token in token_ids)
+        return tokenizer.decode(token_ids, skip_special_tokens=True), output_tokens
+    generation_kwargs = sample.get("generation_kwargs")
+    if not generation_kwargs:
+        return tokenizer.decode(token_ids, skip_special_tokens=True), len(token_ids)
+    text = tokenizer.decode(token_ids, skip_special_tokens=False)
+    for stop in generation_kwargs.get("until", []):
+        if stop in text:
+            text = text.split(stop, 1)[0]
+    processed_ids = tokenizer(text)["input_ids"]
+    output_tokens = sum(token != EOS_ID for token in processed_ids)
+    return tokenizer.decode(processed_ids, skip_special_tokens=True), output_tokens
 
 
 def load_model(device):
@@ -100,7 +118,10 @@ def aggregate(records, methods):
             mean_nfe=sum(row["nfe"] for row in rows) / len(rows),
             seconds_per_nfe=(sum(row["seconds"] for row in rows) /
                              sum(row["nfe"] for row in rows)),
-            mean_tokens=sum(row["tokens"] for row in rows) / len(rows),
+            mean_canvas_tokens=sum(row["canvas_tokens"] for row in rows) / len(rows),
+            mean_output_tokens=sum(row["output_tokens"] for row in rows) / len(rows),
+            throughput=(sum(row["output_tokens"] for row in rows) /
+                        sum(row["seconds"] for row in rows)),
             flash_calls=sum(row["backend"]["flash_calls"] for row in rows),
             torch_sdpa_calls=sum(row["backend"]["torch_sdpa_calls"] for row in rows),
             mean_deep_tokens=(sum(v for row in rows for v in row.get("deep_tokens", [])) /
@@ -308,13 +329,15 @@ def main():
         if args.stage == "audit": record_methods = METHODS
         for method in record_methods:
             outcome = run_method(model, ids, args, method, probe=args.stage == "probe")
-            text = tokenizer.decode(outcome.pop("token_ids"), skip_special_tokens=True)
+            text, output_tokens = postprocess_output(
+                tokenizer, outcome.pop("token_ids"), sample, args.task
+            )
             rows = [r for r in outcome.pop("records") if r is not None]
             prediction = extract_answer(text) if args.task == "gsm8k" else None
             record[method] = dict(
                 **outcome, text=text, prediction=prediction,
                 correct=(prediction is not None and prediction == target) if args.task == "gsm8k" else None,
-                tokens=args.gen_length,
+                canvas_tokens=args.gen_length, output_tokens=output_tokens,
                 deep_tokens=[r.get("final_deep_tokens", r["deep_tokens"]) for r in rows],
                 retained_mass=[r["retained_support_mass"] for r in rows],
                 context_tokens=[r["kept_context"] for r in rows],

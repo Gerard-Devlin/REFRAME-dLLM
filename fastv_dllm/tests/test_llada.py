@@ -1,6 +1,7 @@
 import torch
 
 from fastv_dllm.common import prompt_ids
+from fastv_dllm.llada_evaluate import EOS_ID, postprocess_output
 from fastv_dllm.llada_pruning import Config, choose_support, compress_context
 
 
@@ -109,3 +110,23 @@ def test_preformatted_gsm_prompt_is_not_modified():
     tokenizer = FakeTokenizer()
     prompt = "Question: demo\nAnswer: 1\n\nQuestion: target\nAnswer:"
     assert prompt_ids(tokenizer, prompt, "gsm8k", preformatted=True) == prompt
+
+
+class FakeOutputTokenizer:
+    def decode(self, ids, skip_special_tokens):
+        values = {1: "answer ", 2: "18", 3: "Question:", 4: "junk", EOS_ID: "<eos>"}
+        text = "".join(values[x] for x in ids)
+        return text.replace("<eos>", "") if skip_special_tokens else text
+
+    def __call__(self, text):
+        mapping = {"answer 18": [1, 2]}
+        return {"input_ids": mapping[text]}
+
+
+def test_paper_output_uses_lm_eval_stop_and_token_count():
+    sample = {"generation_kwargs": {"until": ["Question:", "</s>"]}}
+    text, count = postprocess_output(
+        FakeOutputTokenizer(), [1, 2, 3, 4, EOS_ID], sample, "gsm8k"
+    )
+    assert text == "answer 18"
+    assert count == 2
