@@ -31,7 +31,7 @@ def choose_support(relevance, targets, keep_ratio, candidates=None, protected=No
 
 
 def compress_context(hidden, relevance, context, dominant_ratio, contextual_ratio,
-                     merge_weight):
+                     merge_weight, assignment="cosine"):
     """VisionZip-style dominant retention plus contextual aggregation.
 
     ``context`` contains real language positions only. Dominant positions are
@@ -57,9 +57,27 @@ def compress_context(hidden, relevance, context, dominant_ratio, contextual_rati
     if not contextual_count:
         return sorted(dominant), {}, len(dominant), 0
 
+    if assignment not in {"cosine", "spatial"}:
+        raise ValueError("assignment must be cosine or spatial")
     # Spatially distributed anchors preserve coverage of the ordered language
-    # sequence; similarity assignment then collects semantically redundant
-    # states around those anchors, following VisionZip's two-part design.
+    # sequence. Real text can use semantic assignment; homogeneous future MASK
+    # support uses much cheaper contiguous pooling.
+    states = hidden[0].index_select(
+        0, torch.tensor(remaining, device=hidden.device)
+    ).float()
+    if assignment == "spatial":
+        groups = torch.tensor_split(torch.arange(len(remaining), device=hidden.device),
+                                    contextual_count)
+        anchors = [remaining[int(group[len(group) // 2].item())] for group in groups]
+        merged = {}
+        for anchor, group in zip(anchors, groups):
+            anchor_state = hidden[0, anchor].float()
+            mean = states.index_select(0, group).mean(dim=0)
+            merged[anchor] = (
+                (1.0 - merge_weight) * anchor_state + merge_weight * mean
+            ).to(hidden.dtype)
+        return sorted(dominant + anchors), merged, len(dominant), len(anchors)
+
     if contextual_count == 1:
         anchor_offsets = [len(remaining) // 2]
     else:
@@ -67,9 +85,7 @@ def compress_context(hidden, relevance, context, dominant_ratio, contextual_rati
             0, len(remaining) - 1, contextual_count, device=hidden.device
         ).round().long().tolist()
     anchors = [remaining[offset] for offset in anchor_offsets]
-    remaining_tensor = torch.tensor(remaining, device=hidden.device)
     anchor_tensor = torch.tensor(anchors, device=hidden.device)
-    states = hidden[0].index_select(0, remaining_tensor).float()
     anchor_states = hidden[0].index_select(0, anchor_tensor).float()
     similarity = torch.nn.functional.normalize(states, dim=-1) @ torch.nn.functional.normalize(
         anchor_states, dim=-1
@@ -244,6 +260,7 @@ class LLaDABlockForward:
                         self.config.support_keep_ratio,
                         self.config.support_contextual_ratio,
                         self.config.context_merge_weight,
+                        assignment="spatial",
                     )
                     merged_states.update(support_states)
                     candidate_keep = sorted(set(target_positions + kept_context + kept_future))

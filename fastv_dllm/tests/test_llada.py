@@ -58,6 +58,18 @@ def test_context_compression_exact_configuration():
     assert dominant == 6 and contextual == 0
 
 
+def test_spatial_support_compression_uses_contiguous_pooling():
+    hidden = torch.tensor([[[float(i), 0.0] for i in range(8)]])
+    kept, merged, dominant, contextual = compress_context(
+        hidden, torch.arange(8, dtype=torch.float32), range(8),
+        dominant_ratio=0.0, contextual_ratio=0.25, merge_weight=1.0,
+        assignment="spatial",
+    )
+    assert dominant == 0 and contextual == 2 and len(kept) == 2
+    assert torch.allclose(merged[2], torch.tensor([1.5, 0.0]))
+    assert torch.allclose(merged[6], torch.tensor([5.5, 0.0]))
+
+
 def test_config_rejects_invalid_context_parameters():
     for field in ("context_dominant_ratio", "contextual_ratio",
                   "support_contextual_ratio", "context_merge_weight"):
