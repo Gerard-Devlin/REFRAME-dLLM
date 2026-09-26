@@ -58,17 +58,24 @@ run_stage() {
 
 prepared_complete() {
   [[ -f "$PREPARED/manifest.json" ]] || return 1
-  python - "$PREPARED/manifest.json" <<'PY'
+  python - "$PREPARED/manifest.json" "$TRAIN_SIZE" "$VALIDATION_SIZE" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1], encoding="utf-8"))
-assert d["train_size"] == 10_000_000
-assert d["validation_size"] == 20_000
-assert d["acceleration_records"] == 1_000_000
-assert d["retention_records"] == 9_000_000
-assert d["real_transition_records"] == 200_000
+train_size = int(sys.argv[2])
+validation_size = int(sys.argv[3])
+acceleration = (train_size + 9) // 10
+retention = train_size - acceleration
+real = (acceleration + 4) // 5
+assert d["train_size"] == train_size
+assert d["validation_size"] == validation_size
+assert d["acceleration_records"] == acceleration
+assert d["retention_records"] == retention
+assert d["real_transition_records"] == real
 p = d["trajectory_policy"]
 assert p["complete_trajectories"] is False
 assert p["states_per_acceleration_example"] == 1
+assert p["teacher_forward_examples"] == acceleration
+assert p["second_teacher_forward_examples"] == real
 PY
 }
 
