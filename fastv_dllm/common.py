@@ -14,8 +14,14 @@ def sha256(path):
     return h.hexdigest()
 
 
-def prompt_ids(tokenizer, question, task="gsm8k"):
-    if task == "gsm8k":
+def prompt_ids(tokenizer, question, task="gsm8k", *, preformatted=False):
+    """Apply the LLaDA chat template to a task prompt.
+
+    ``preformatted`` is used for prompts produced by lm-eval.  Those strings
+    already contain the paper's few-shot demonstrations and task formatting;
+    appending the local zero-shot instruction would change the benchmark.
+    """
+    if task == "gsm8k" and not preformatted:
         question = question + "\nExplain your reasoning and end with #### followed by the final number."
     return tokenizer.apply_chat_template(
         [{"role": "user", "content": question}],

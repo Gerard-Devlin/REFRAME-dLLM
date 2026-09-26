@@ -103,3 +103,9 @@ def test_task_specific_prompt_does_not_leak_gsm_instruction():
     tokenizer = FakeTokenizer()
     assert "####" in prompt_ids(tokenizer, "2+2?", "gsm8k")
     assert prompt_ids(tokenizer, "def f():", "humaneval") == "def f():"
+
+
+def test_preformatted_gsm_prompt_is_not_modified():
+    tokenizer = FakeTokenizer()
+    prompt = "Question: demo\nAnswer: 1\n\nQuestion: target\nAnswer:"
+    assert prompt_ids(tokenizer, prompt, "gsm8k", preformatted=True) == prompt

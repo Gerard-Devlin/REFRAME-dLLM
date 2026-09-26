@@ -262,7 +262,9 @@ def main():
             generate_with_prefix_cache,
         )
         if args.task != "gsm8k": raise ValueError("Audit uses the deterministic GSM8K fixture")
-        ids = prompt_ids(tokenizer, samples[0]["question"], args.task)
+        paper_prompt = samples[0].get("paper_prompt")
+        ids = prompt_ids(tokenizer, paper_prompt or samples[0]["question"], args.task,
+                         preformatted=paper_prompt is not None)
         source = torch.tensor([ids], device=model.device)
         official_fn = {
             "none": official_generate,
@@ -296,8 +298,10 @@ def main():
     path = args.output / f"rank_{rank}.jsonl"
     for index in range(rank, len(samples), world):
         sample = samples[index]
-        source_text = sample["question"] if args.task == "gsm8k" else sample["prompt"]
-        ids = prompt_ids(tokenizer, source_text, args.task)
+        paper_prompt = sample.get("paper_prompt") if args.task == "gsm8k" else None
+        source_text = (paper_prompt or sample["question"]) if args.task == "gsm8k" else sample["prompt"]
+        ids = prompt_ids(tokenizer, source_text, args.task,
+                         preformatted=paper_prompt is not None)
         target = extract_answer(sample["answer"], gold=True) if args.task == "gsm8k" else sample["task_id"]
         record = dict(index=index, id=sample.get("id", sample.get("task_id")), target=target)
         record_methods = methods if args.stage != "probe" else ("torch_native",)
