@@ -95,17 +95,28 @@ def acceleration_loss(model, head, prepared: dict, supervision: dict, config: Ex
     }
 
 
-def retention_loss(model, head, prepared: dict, supervision: dict):
-    ids, reference, masked, p_mask = build_retention_state(prepared, int(supervision["mask_seed"]))
+def retention_loss(model, head, prepared: dict, supervision: dict, config: ExperimentConfig):
+    mask_seed = int(supervision["mask_seed"])
+    ids, reference, masked, p_mask = build_retention_state(prepared, mask_seed)
     hidden = _student_hidden(model, ids)
     prompt = len(prepared["prompt_ids"])
     positions = [prompt + index for index, selected in enumerate(masked) if selected]
     tokens = [reference[index] for index, selected in enumerate(masked) if selected]
+    population = len(positions)
+    if population > config.retention_max_targets:
+        chosen = sorted(random.Random(mask_seed ^ 0x5F3759DF).sample(
+            range(population), config.retention_max_targets
+        ))
+        positions = [positions[index] for index in chosen]
+        tokens = [tokens[index] for index in chosen]
     selected = hidden.index_select(0, torch.tensor(positions, device=hidden.device))
     labels = torch.tensor(tokens, device=hidden.device)
     log_probs = selected_log_probs(selected, labels, head)
     answer_length = min(len(prepared["response_ids"]), len(reference))
-    loss = -log_probs.sum() / (p_mask * answer_length)
+    # Correct for uniform target subsampling so this retains the original loss
+    # in expectation while bounding the expensive vocabulary projection.
+    expansion = population / len(positions)
+    loss = -log_probs.sum() * expansion / (p_mask * answer_length)
     return loss, {"sft": float(loss.detach()), "supervised_tokens": len(tokens)}
 
 
@@ -135,12 +146,12 @@ def _iter_rank(dataset: AlignedShardDataset, stage: str, rank: int, world: int, 
 def _optimizer(model, lr: float, weight_decay: float, world: int):
     params = [parameter for parameter in model.parameters() if parameter.requires_grad]
     if world == 1:
-        return torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay)
+        return torch.optim.AdamW(params, lr=lr, weight_decay=weight_decay, fused=torch.cuda.is_available())
     from torch.distributed.optim import ZeroRedundancyOptimizer
 
     return ZeroRedundancyOptimizer(
         params, optimizer_class=torch.optim.AdamW, lr=lr, weight_decay=weight_decay,
-        parameters_as_bucket_view=True, overlap_with_ddp=False,
+        parameters_as_bucket_view=True, overlap_with_ddp=False, fused=torch.cuda.is_available(),
     )
 
 
@@ -254,7 +265,8 @@ def train(
         load_adapter(model, init_adapter / "adapter.pt" if init_adapter.is_dir() else init_adapter)
     head = detach_output_head(model)
     model = torch.nn.parallel.DistributedDataParallel(
-        model, device_ids=[local], output_device=local, broadcast_buffers=False, find_unused_parameters=False
+        model, device_ids=[local], output_device=local, broadcast_buffers=False,
+        find_unused_parameters=False, gradient_as_bucket_view=True,
     ) if world > 1 else model
     raw_model = model.module if hasattr(model, "module") else model
     lr = config.stage_a_lr if stage == "a" else config.stage_b_lr
@@ -333,7 +345,7 @@ def train(
             sync = contextlib.nullcontext() if micro == config.grad_accumulation - 1 or world == 1 else model.no_sync()
             with sync, torch.autocast("cuda", dtype=torch.bfloat16):
                 if prepared_row["kind"] == "retention" and stage == "a":
-                    loss, metrics = retention_loss(model, head, prepared_row, supervision_row)
+                    loss, metrics = retention_loss(model, head, prepared_row, supervision_row, config)
                 else:
                     loss, metrics = acceleration_loss(model, head, prepared_row, supervision_row, config)
                 if not active:

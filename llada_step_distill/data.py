@@ -334,11 +334,13 @@ def deterministic_state(row: dict, attempt: int = 0) -> tuple[int, int]:
 
 
 def build_retention_state(row: dict, seed: int) -> tuple[list[int], list[int], list[bool], float]:
-    reference = padded_response(row["response_ids"])
+    # Retention is response-only LLaDA SFT, not a generation rollout. Avoid
+    # running the transformer over EOS padding up to the 512-token canvas.
+    # Acceleration examples keep that fixed canvas because they model inference.
+    reference = list(row["response_ids"][:GEN_LENGTH])
     rng = random.Random(seed)
     p_mask = (1.0 - 1e-3) * rng.random() + 1e-3
-    response_length = min(len(row["response_ids"]), GEN_LENGTH)
-    masked = [rng.random() < p_mask if index < response_length else False for index, _ in enumerate(reference)]
+    masked = [rng.random() < p_mask for _ in reference]
     if not any(masked):
         masked[rng.randrange(len(masked))] = True
     noisy = [MASK_ID if use_mask else token for token, use_mask in zip(reference, masked)]

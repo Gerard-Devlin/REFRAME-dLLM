@@ -68,7 +68,13 @@ class ExperimentConfig:
     warmup_ratio: float = 0.03
     weight_decay: float = 0.01
     grad_clip: float = 1.0
-    grad_accumulation: int = 2
+    # Accumulate locally before synchronizing the unusually large rank-256
+    # adapter. This keeps the per-GPU microbatch at one while cutting DDP
+    # gradient all-reduces and AdamW updates by 8x versus accumulation=2.
+    grad_accumulation: int = 16
+    # Use an unbiased sampled-token retention loss instead of repeatedly
+    # scanning the 126k-word vocabulary for hundreds of positions.
+    retention_max_targets: int = 64
 
     def to_dict(self) -> dict:
         return asdict(self)

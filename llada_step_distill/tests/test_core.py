@@ -56,7 +56,7 @@ def test_retention_masks_only_real_response():
     assert 0 < p <= 1
     assert any(masked[:40])
     assert not any(masked[40:])
-    assert len(ids) == len(item["prompt_ids"]) + 512
+    assert len(ids) == len(item["prompt_ids"]) + 40
 
 
 def test_transfer_schedule_is_exact():
