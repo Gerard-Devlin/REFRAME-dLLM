@@ -34,7 +34,13 @@ def run_method(model, ids, args, method, probe=False):
     use_fastv = method.endswith("fastv")
     forward = None
     if use_fastv or probe:
-        forward = LLaDABlockForward(model, Config(args.prune_after_layer, args.support_keep_ratio))
+        forward = LLaDABlockForward(model, Config(
+            prune_after_layer=args.prune_after_layer,
+            support_keep_ratio=args.support_keep_ratio,
+            context_keep_ratio=args.context_keep_ratio,
+            anchor_prefix=args.anchor_prefix,
+            recent_context=args.recent_context,
+        ))
     source = torch.tensor([ids], device=model.device)
     with LLaDAAttentionBackend(model, backend_name) as backend:
         result = generate(
@@ -65,6 +71,11 @@ def aggregate(records, methods):
             mean_retained_mass=(sum(v for row in rows for v in row.get("retained_mass", [])) /
                                 sum(len(row.get("retained_mass", [])) for row in rows)
                                 if any(row.get("retained_mass") for row in rows) else None),
+            mean_retained_context_mass=(
+                sum(v for row in rows for v in row.get("retained_context_mass", [])) /
+                sum(len(row.get("retained_context_mass", [])) for row in rows)
+                if any(row.get("retained_context_mass") for row in rows) else None
+            ),
         )
     attribution = {}
     if {"torch_native", "flash_native"} <= output.keys():
@@ -99,6 +110,9 @@ def parse_args():
     p.add_argument("--threshold", type=float, default=0.90)
     p.add_argument("--prune-after-layer", type=int, default=4)
     p.add_argument("--support-keep-ratio", type=float, default=0.5)
+    p.add_argument("--context-keep-ratio", type=float, default=1.0)
+    p.add_argument("--anchor-prefix", type=int, default=8)
+    p.add_argument("--recent-context", type=int, default=32)
     p.add_argument("--methods", nargs="+", choices=METHODS, default=None,
                    help="Subset to run. Use flash_native flash_fastv for fast sweeps.")
     return p.parse_args()
@@ -165,6 +179,7 @@ def main():
                 tokens=args.gen_length,
                 deep_tokens=[r["deep_tokens"] for r in rows],
                 retained_mass=[r["retained_support_mass"] for r in rows],
+                retained_context_mass=[r["retained_context_mass"] for r in rows],
                 score_seconds=[r["score_seconds"] for r in rows],
             )
         if args.stage == "audit":
