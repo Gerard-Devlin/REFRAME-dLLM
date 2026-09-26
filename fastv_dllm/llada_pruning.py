@@ -238,14 +238,25 @@ class LLaDABlockForward:
         for number, block in enumerate(core.transformer.blocks, start=1):
             layer_past = None if past_key_values is None else past_key_values[number - 1]
             if number == self.config.prune_after_layer:
-                hidden, capture, _ = self._captured_block(
-                    block, hidden, layer_past=layer_past, use_cache=use_cache
+                needs_relevance = not (
+                    mode == "zip"
+                    and self.config.support_keep_ratio == 0
+                    and self.config.context_dominant_ratio == 1
                 )
+                if needs_relevance:
+                    hidden, capture, _ = self._captured_block(
+                        block, hidden, layer_past=layer_past, use_cache=use_cache
+                    )
+                    relevance = self._relevance(capture, target_positions)[past_length:]
+                else:
+                    hidden, _ = block(
+                        hidden, attention_bias=None, layer_past=layer_past, use_cache=use_cache
+                    )
+                    relevance = torch.zeros(input_ids.shape[1], device=hidden.device)
                 measure_score = not mode
                 if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
-                relevance = self._relevance(capture, target_positions)[past_length:]
                 # FastV protects every text token and prunes only its redundant
                 # modality. For LLaDA the corresponding redundant class is the
                 # untouched future MASK canvas. Prompt and already revealed
