@@ -52,6 +52,32 @@ def postprocess_output(tokenizer, token_ids, sample, task):
     return tokenizer.decode(processed_ids, skip_special_tokens=True), output_tokens
 
 
+def math_answer(text):
+    """Minerva-MATH's light-weight exact-match normalization.
+
+    The full symbolic metric is applied after generation by ``score_math``.
+    This value lets the generation summary remain useful even when the optional
+    math verification dependencies are not installed.
+    """
+    import re
+    match = re.search(
+        r"Final Answer: The final answer is(.*?)(?:\. I hope it is correct\.|$)",
+        text + " I hope it is correct.", re.DOTALL,
+    )
+    value = match.group(1).strip() if match else "[invalidanswer]"
+    value = value.split("=")[-1]
+    for old, new in (("an ", ""), ("a ", ""), (".$", "$"), (r"\$", ""),
+                     (r"\ ", ""), (" ", ""), ("mbox", "text")):
+        value = value.replace(old, new)
+    value = re.sub(r"(.*?)(\$)(.*?)(\$)(.*)", r"$\3$", value)
+    value = re.sub(r"(\\text\{|\\textbf\{|\\overline\{)(.*?)(\})", r"\2", value)
+    value = re.sub(r"(\\boxed\{)(.*)(\})", r"\2", value)
+    value = value.replace("$", "")
+    if value.replace(",", "").isdigit():
+        value = value.replace(",", "")
+    return value
+
+
 def load_model(device):
     from transformers import AutoConfig, AutoTokenizer
     from v1.llada.model.modeling_llada import LLaDAModelLM
@@ -233,7 +259,7 @@ def aggregate(records, methods):
 def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument("--stage", choices=("audit", "probe", "smoke", "evaluate"), required=True)
-    p.add_argument("--task", choices=("gsm8k", "humaneval"), default="gsm8k")
+    p.add_argument("--task", choices=("gsm8k", "math", "humaneval", "mbpp"), default="gsm8k")
     p.add_argument("--dataset", type=Path, required=True)
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--limit", type=int, default=32)
@@ -319,11 +345,21 @@ def main():
     path = args.output / f"rank_{rank}.jsonl"
     for index in range(rank, len(samples), world):
         sample = samples[index]
-        paper_prompt = sample.get("paper_prompt") if args.task == "gsm8k" else None
-        source_text = (paper_prompt or sample["question"]) if args.task == "gsm8k" else sample["prompt"]
+        paper_prompt = sample.get("paper_prompt")
+        if args.task == "gsm8k":
+            source_text = paper_prompt or sample["question"]
+        elif paper_prompt is not None:
+            source_text = paper_prompt
+        else:
+            source_text = sample["prompt"]
         ids = prompt_ids(tokenizer, source_text, args.task,
                          preformatted=paper_prompt is not None)
-        target = extract_answer(sample["answer"], gold=True) if args.task == "gsm8k" else sample["task_id"]
+        if args.task == "gsm8k":
+            target = extract_answer(sample["answer"], gold=True)
+        elif args.task == "math":
+            target = sample["answer"]
+        else:
+            target = sample["task_id"]
         record = dict(index=index, id=sample.get("id", sample.get("task_id")), target=target)
         record_methods = methods if args.stage != "probe" else ("torch_native",)
         if args.stage == "audit": record_methods = METHODS
@@ -333,10 +369,13 @@ def main():
                 tokenizer, outcome.pop("token_ids"), sample, args.task
             )
             rows = [r for r in outcome.pop("records") if r is not None]
-            prediction = extract_answer(text) if args.task == "gsm8k" else None
+            prediction = (extract_answer(text) if args.task == "gsm8k" else
+                          math_answer(text) if args.task == "math" else None)
+            correct = ((prediction is not None and prediction == target)
+                       if args.task in ("gsm8k", "math") else None)
             record[method] = dict(
                 **outcome, text=text, prediction=prediction,
-                correct=(prediction is not None and prediction == target) if args.task == "gsm8k" else None,
+                correct=correct,
                 canvas_tokens=args.gen_length, output_tokens=output_tokens,
                 deep_tokens=[r.get("final_deep_tokens", r["deep_tokens"]) for r in rows],
                 retained_mass=[r["retained_support_mass"] for r in rows],

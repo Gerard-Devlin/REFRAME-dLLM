@@ -36,7 +36,9 @@ for i in range(len(selected)):
     free,total=torch.cuda.mem_get_info(i)
     print('logical',i,torch.cuda.get_device_name(i),'free GiB',free/2**30,flush=True)
 PY
-python -m pytest fastv_dllm/tests -q
+if [[ ${SKIP_TESTS:-0} != 1 ]]; then
+    python -m pytest fastv_dllm/tests -q
+fi
 
 case "$MODE" in
   audit) default_limit=1; default_tokens=64; default_ratio=1.0 ;;
@@ -70,4 +72,8 @@ fi
 if [[ ${TASK:-gsm8k} == humaneval ]]; then
     python -u -m fastv_dllm.score_humaneval --dataset "$DATASET" --results "$RUN_DIR/output" \
       --output "$RUN_DIR/output/humaneval_pass_at_1.json"
+fi
+if [[ ${TASK:-gsm8k} == mbpp ]]; then
+    python -u -m fastv_dllm.score_mbpp --dataset "$DATASET" --results "$RUN_DIR/output" \
+      --output "$RUN_DIR/output/mbpp_pass_at_1.json"
 fi

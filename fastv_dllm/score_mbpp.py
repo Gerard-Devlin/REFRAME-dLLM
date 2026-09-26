@@ -1,4 +1,4 @@
-"""Execute official HumanEval tests for already-generated completions."""
+"""Run the MBPP tests locally for generated programs."""
 
 import argparse
 import json
@@ -8,20 +8,21 @@ import subprocess
 import sys
 import tempfile
 
-def clean_completion(prompt, generated, entry_point):
-    root = Path(__file__).resolve().parents[1] / "v1" / "llada"
-    sys.path.insert(0, str(root))
-    from sanitize import sanitize
-    body = generated.split("```python\n", 1)[-1].split("```", 1)[0]
-    return sanitize(prompt + "\n" + body, entry_point)
+
+def clean_completion(text):
+    if "```python" in text:
+        text = text.split("```python", 1)[1]
+    elif "```" in text:
+        text = text.split("```", 1)[1]
+    return text.split("```", 1)[0].split("[DONE]", 1)[0].strip()
 
 
-def check(program, test, entry_point, timeout):
+def check(code, tests, timeout):
     wrapper = ("import resource\n"
                "resource.setrlimit(resource.RLIMIT_CPU, (4, 4))\n"
                "resource.setrlimit(resource.RLIMIT_AS, (2147483648, 2147483648))\n" +
-               program + "\n" + test + f"\ncheck({entry_point})\n")
-    with tempfile.TemporaryDirectory(prefix="fastv-humaneval-") as directory:
+               code + "\n" + "\n".join(tests) + "\n")
+    with tempfile.TemporaryDirectory(prefix="fastv-mbpp-") as directory:
         path = Path(directory) / "candidate.py"
         path.write_text(wrapper, encoding="utf-8")
         env = {"PATH": os.environ.get("PATH", ""), "PYTHONHASHSEED": "0"}
@@ -41,28 +42,32 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--timeout", type=float, default=6.0)
     args = parser.parse_args()
-    samples = {x["task_id"]: x for x in json.loads(args.dataset.read_text(encoding="utf-8"))}
+    samples = {str(row["task_id"]): row for row in
+               json.loads(args.dataset.read_text(encoding="utf-8"))}
     records = []
     for path in sorted(args.results.glob("rank_*.jsonl")):
-        records += [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
-    records.sort(key=lambda x: x["index"])
+        records.extend(json.loads(line) for line in
+                       path.read_text(encoding="utf-8").splitlines())
+    records.sort(key=lambda row: row["index"])
     metadata = {"index", "id", "target"}
     methods = [key for key, value in records[0].items()
                if key not in metadata and isinstance(value, dict) and "text" in value]
-    details, scores = [], {method: 0 for method in methods}
+    scores = {method: 0 for method in methods}
+    details = []
     for record in records:
-        sample = samples[record["id"]]
+        sample = samples[str(record["id"])]
         row = {"task_id": record["id"]}
         for method in methods:
-            code = clean_completion(sample["prompt"], record[method]["text"], sample["entry_point"])
-            passed = check(code, sample["test"], sample["entry_point"], args.timeout)
+            passed = check(clean_completion(record[method]["text"]),
+                           sample["test_list"], args.timeout)
             row[method] = passed
             scores[method] += int(passed)
         details.append(row)
-    output = {"examples": len(records), "pass@1": {k: v / len(records) for k, v in scores.items()},
+    output = {"examples": len(records),
+              "pass@1": {key: value / len(records) for key, value in scores.items()},
               "details": details}
     args.output.write_text(json.dumps(output, indent=2), encoding="utf-8")
-    print(json.dumps({"examples": output["examples"], "pass@1": output["pass@1"]}, indent=2))
+    print(json.dumps({"examples": len(records), "pass@1": output["pass@1"]}, indent=2))
 
 
 if __name__ == "__main__":

@@ -50,10 +50,14 @@ def load_samples(path, limit, task="gsm8k"):
     rows = json.loads(Path(path).read_text(encoding="utf-8"))
     if not 0 < limit <= len(rows):
         raise ValueError(f"Requested {limit} samples; dataset has {len(rows)}")
-    required = ({"id", "question", "answer"} if task == "gsm8k" else
-                {"task_id", "prompt", "canonical_solution", "test", "entry_point"})
+    required = {
+        "gsm8k": {"id", "question", "answer"},
+        "math": {"id", "paper_prompt", "answer", "generation_kwargs"},
+        "humaneval": {"task_id", "prompt", "canonical_solution", "test", "entry_point"},
+        "mbpp": {"task_id", "paper_prompt", "test_list", "generation_kwargs"},
+    }[task]
     if any(not required.issubset(row) for row in rows[:limit]):
-        raise ValueError("Dataset rows must contain id/question/answer")
+        raise ValueError(f"Dataset rows do not contain the required {task} fields")
     return rows[:limit]
 
 
