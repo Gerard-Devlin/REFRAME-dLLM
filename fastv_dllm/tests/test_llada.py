@@ -83,6 +83,16 @@ def test_config_rejects_invalid_context_parameters():
                 raise AssertionError(f"Invalid {field} accepted")
 
 
+def test_config_rejects_invalid_secondary_prune_point():
+    for value in (1, 4, 32):
+        try:
+            Config(prune_after_layer=4, secondary_prune_after_layer=value).validate(32)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError("Invalid secondary prune point accepted")
+
+
 class FakeTokenizer:
     def apply_chat_template(self, messages, tokenize, add_generation_prompt):
         assert tokenize and add_generation_prompt

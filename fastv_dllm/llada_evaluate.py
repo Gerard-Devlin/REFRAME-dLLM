@@ -58,6 +58,8 @@ def run_method(model, ids, args, method, probe=False):
             contextual_ratio=args.contextual_ratio,
             support_contextual_ratio=args.support_contextual_ratio,
             context_merge_weight=args.context_merge_weight,
+            secondary_prune_after_layer=args.secondary_prune_after_layer,
+            secondary_support_ratio=args.secondary_support_ratio,
         ))
     source = torch.tensor([ids], device=model.device)
     with LLaDAAttentionBackend(model, backend_name) as backend:
@@ -199,6 +201,8 @@ def parse_args():
     p.add_argument("--contextual-ratio", type=float, default=0.0)
     p.add_argument("--support-contextual-ratio", type=float, default=0.0)
     p.add_argument("--context-merge-weight", type=float, default=0.5)
+    p.add_argument("--secondary-prune-after-layer", type=int, default=0)
+    p.add_argument("--secondary-support-ratio", type=float, default=1.0)
     p.add_argument("--cache-mode", choices=("none", "prefix", "dual"), default="none")
     p.add_argument("--methods", nargs="+", choices=METHODS, default=None,
                    help="Subset to run. Use flash_native flash_fastv flash_zip for fast sweeps.")
@@ -281,7 +285,7 @@ def main():
                 **outcome, text=text, prediction=prediction,
                 correct=(prediction is not None and prediction == target) if args.task == "gsm8k" else None,
                 tokens=args.gen_length,
-                deep_tokens=[r["deep_tokens"] for r in rows],
+                deep_tokens=[r.get("final_deep_tokens", r["deep_tokens"]) for r in rows],
                 retained_mass=[r["retained_support_mass"] for r in rows],
                 context_tokens=[r["kept_context"] for r in rows],
                 score_seconds=[r["score_seconds"] for r in rows],

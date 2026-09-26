@@ -139,6 +139,8 @@ class Config:
     contextual_ratio: float = 0.0
     support_contextual_ratio: float = 0.0
     context_merge_weight: float = 0.5
+    secondary_prune_after_layer: int = 0
+    secondary_support_ratio: float = 1.0
 
     def validate(self, layers):
         if not 1 <= self.prune_after_layer < layers:
@@ -153,6 +155,11 @@ class Config:
             raise ValueError("support_contextual_ratio must be in [0,1]")
         if not 0 <= self.context_merge_weight <= 1:
             raise ValueError("context_merge_weight must be in [0,1]")
+        if self.secondary_prune_after_layer:
+            if not self.prune_after_layer < self.secondary_prune_after_layer < layers:
+                raise ValueError("secondary prune point must follow the primary point")
+        if not 0 <= self.secondary_support_ratio <= 1:
+            raise ValueError("secondary_support_ratio must be in [0,1]")
 
 
 class LLaDABlockForward:
@@ -199,7 +206,10 @@ class LLaDABlockForward:
                         if token == MASK_ID and i not in target_set]
         mode = "mask" if prune is True else prune
         exact_zip = (mode == "zip" and self.config.context_dominant_ratio == 1
-                     and self.config.contextual_ratio == 0)
+                     and self.config.contextual_ratio == 0
+                     and self.config.support_keep_ratio == 1
+                     and (not self.config.secondary_prune_after_layer
+                          or self.config.secondary_support_ratio == 1))
         # No candidate can be removed in the final block (or when all support
         # is requested).  Use the exact upstream forward and avoid paying the
         # attention-capture/ranking overhead.
@@ -209,7 +219,7 @@ class LLaDABlockForward:
                 input_ids, past_key_values=past_key_values, use_cache=use_cache,
                 replace_position=replace_position,
             ).logits.index_select(1, target)
-        if exact_zip and (not future_masks or self.config.support_keep_ratio == 1):
+        if mode == "zip" and (not future_masks or exact_zip):
             target = torch.tensor(target_positions, device=input_ids.device)
             return self.model(
                 input_ids, past_key_values=past_key_values, use_cache=use_cache,
@@ -288,6 +298,7 @@ class LLaDABlockForward:
                     dominant_support=dominant_support,
                     contextual_support=contextual_support,
                     deep_tokens=len(candidate_keep),
+                    final_deep_tokens=len(candidate_keep),
                     retained_support_mass=(float(relevance[kept_support].sum().item()) / denominator if denominator else 1.0),
                     score_seconds=(time.perf_counter() - started if measure_score else 0.0),
                 )
@@ -312,6 +323,33 @@ class LLaDABlockForward:
                     )
                 finally:
                     block.rotary_emb = rotary
+                if (mode == "zip" and self.config.secondary_prune_after_layer
+                        and number == self.config.secondary_prune_after_layer):
+                    target_compact = [i for i, position in enumerate(positions)
+                                      if position in target_set]
+                    future_compact = [i for i, position in enumerate(positions)
+                                      if position in future_set]
+                    context_compact = [i for i, position in enumerate(positions)
+                                       if position not in target_set and position not in future_set]
+                    kept_future, secondary_states, _, _ = compress_context(
+                        hidden, torch.zeros(len(positions), device=hidden.device),
+                        future_compact, 0.0, self.config.secondary_support_ratio,
+                        self.config.context_merge_weight, assignment="spatial",
+                    )
+                    keep_compact = sorted(set(target_compact + context_compact + kept_future))
+                    compact_index = torch.tensor(keep_compact, device=hidden.device)
+                    hidden = hidden.index_select(1, compact_index)
+                    if secondary_states:
+                        new_compact = {position: offset for offset, position in enumerate(keep_compact)}
+                        for position, state in secondary_states.items():
+                            hidden[0, new_compact[position]] = state
+                    positions = [positions[index] for index in keep_compact]
+                    compact_positions = torch.tensor(positions, device=hidden.device)
+                    layer_record["secondary_layer"] = number
+                    layer_record["secondary_original_tokens"] = len(keep_compact) + (
+                        len(future_compact) - len(kept_future)
+                    )
+                    layer_record["final_deep_tokens"] = len(keep_compact)
         hidden = core.transformer.ln_f(hidden)
         compact = {position: index for index, position in enumerate(positions)}
         gather = torch.tensor([compact[int(position)] for position in target_positions], device=hidden.device)
