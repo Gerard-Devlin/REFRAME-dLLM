@@ -32,24 +32,32 @@ def choose_support(relevance, targets, keep_ratio, candidates=None, protected=No
 
 class PositionedRotary(nn.Module):
     """Apply the original RoPE phases after non-contiguous physical pruning."""
-    def __init__(self, base, positions, original_length):
+    def __init__(self, base, positions, original_length, past_length=0):
         super().__init__()
         object.__setattr__(self, "base", base)
-        self.length = original_length
+        self.length = past_length + original_length
         # The same compact-to-original mapping is reused by every remaining
         # layer.  Keep it on the GPU instead of rebuilding and transferring a
         # new tensor for each layer and denoising call.
-        self.register_buffer("positions", torch.as_tensor(positions, dtype=torch.long), persistent=False)
+        current = torch.as_tensor(positions, dtype=torch.long) + past_length
+        keys = current
+        if past_length:
+            prefix = torch.arange(past_length, device=current.device, dtype=torch.long)
+            keys = torch.cat((prefix, current))
+        self.register_buffer("query_positions", current, persistent=False)
+        self.register_buffer("key_positions", keys, persistent=False)
 
     def forward(self, q, k, block_end_index=None):
         base = object.__getattribute__(self, "base")
         qf, kf = (q.float(), k.float()) if base.config.rope_full_precision else (q, k)
         with torch.autocast(q.device.type, enabled=False):
             sin, cos = base.get_rotary_embedding(self.length, q.device)
-            sin = sin.index_select(2, self.positions).type_as(qf)
-            cos = cos.index_select(2, self.positions).type_as(qf)
-            qf = base.apply_rotary_pos_emb(sin, cos, qf)
-            kf = base.apply_rotary_pos_emb(sin, cos, kf)
+            qsin = sin.index_select(2, self.query_positions).type_as(qf)
+            qcos = cos.index_select(2, self.query_positions).type_as(qf)
+            ksin = sin.index_select(2, self.key_positions).type_as(kf)
+            kcos = cos.index_select(2, self.key_positions).type_as(kf)
+            qf = base.apply_rotary_pos_emb(qsin, qcos, qf)
+            kf = base.apply_rotary_pos_emb(ksin, kcos, kf)
         return qf.type_as(q), kf.type_as(k)
 
 
@@ -72,7 +80,7 @@ class LLaDABlockForward:
         self.records = []
 
     @staticmethod
-    def _captured_block(block, hidden):
+    def _captured_block(block, hidden, layer_past=None, use_cache=False):
         capture = {}
         original = block._scaled_dot_product_attention
 
@@ -82,12 +90,14 @@ class LLaDABlockForward:
 
         block._scaled_dot_product_attention = wrapped
         try:
-            output, _ = block(hidden, attention_bias=None, layer_past=None, use_cache=False)
+            output, present = block(
+                hidden, attention_bias=None, layer_past=layer_past, use_cache=use_cache
+            )
         finally:
             block._scaled_dot_product_attention = original
         if set(capture) != {"q", "k"}:
             raise RuntimeError("Could not observe LLaDA attention projections")
-        return output, capture
+        return output, capture, present
 
     @staticmethod
     def _relevance(capture, targets):
@@ -97,7 +107,8 @@ class LLaDABlockForward:
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(q.shape[-1])
         return scores.float().softmax(-1).mean(dim=(0, 1, 2))
 
-    def __call__(self, input_ids, target_positions, prune=True):
+    def __call__(self, input_ids, target_positions, prune=True,
+                 past_key_values=None, use_cache=False):
         if input_ids.shape[0] != 1 or not target_positions:
             raise ValueError("LLaDA FastV pilot requires batch=1 and active target positions")
         target_set = set(target_positions)
@@ -108,7 +119,9 @@ class LLaDABlockForward:
         # attention-capture/ranking overhead.
         if prune and (not future_masks or self.config.support_keep_ratio == 1):
             target = torch.tensor(target_positions, device=input_ids.device)
-            return self.model(input_ids).logits.index_select(1, target)
+            return self.model(
+                input_ids, past_key_values=past_key_values, use_cache=use_cache
+            ).logits.index_select(1, target)
         core = self.model.model
         hidden = core.transformer.wte(input_ids)
         if core.config.input_emb_norm:
@@ -116,15 +129,19 @@ class LLaDABlockForward:
         hidden = core.transformer.emb_drop(hidden)
         positions = list(range(input_ids.shape[1]))
         compact_positions = None
+        past_length = 0 if past_key_values is None else past_key_values[0][0].shape[-2]
         layer_record = None
         for number, block in enumerate(core.transformer.blocks, start=1):
+            layer_past = None if past_key_values is None else past_key_values[number - 1]
             if number == self.config.prune_after_layer:
-                hidden, capture = self._captured_block(block, hidden)
+                hidden, capture, _ = self._captured_block(
+                    block, hidden, layer_past=layer_past, use_cache=use_cache
+                )
                 measure_score = not prune
                 if measure_score and hidden.is_cuda:
                     torch.cuda.synchronize(hidden.device)
                 started = time.perf_counter()
-                relevance = self._relevance(capture, target_positions)
+                relevance = self._relevance(capture, target_positions)[past_length:]
                 # FastV protects every text token and prunes only its redundant
                 # modality. For LLaDA the corresponding redundant class is the
                 # untouched future MASK canvas. Prompt and already revealed
@@ -156,9 +173,13 @@ class LLaDABlockForward:
             else:
                 rotary = block.rotary_emb
                 if len(positions) != input_ids.shape[1]:
-                    block.rotary_emb = PositionedRotary(rotary, compact_positions, input_ids.shape[1])
+                    block.rotary_emb = PositionedRotary(
+                        rotary, compact_positions, input_ids.shape[1], past_length=past_length
+                    )
                 try:
-                    hidden, _ = block(hidden, attention_bias=None, layer_past=None, use_cache=False)
+                    hidden, _ = block(
+                        hidden, attention_bias=None, layer_past=layer_past, use_cache=use_cache
+                    )
                 finally:
                     block.rotary_emb = rotary
         hidden = core.transformer.ln_f(hidden)

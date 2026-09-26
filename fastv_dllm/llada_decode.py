@@ -54,3 +54,69 @@ def generate(model, prompt, gen_length=256, block_length=32, threshold=0.9,
     _sync(); elapsed = time.perf_counter() - started
     peak = torch.cuda.max_memory_allocated() / 2**30 if torch.cuda.is_available() else 0.0
     return Result(x, nfe, elapsed, peak)
+
+
+@torch.no_grad()
+def generate_prefix_cache(model, prompt, gen_length=256, block_length=32, threshold=0.9,
+                          mask_id=MASK_ID, block_forward=None, prune=False):
+    """Fast-dLLM prefix cache with an optional FastV suffix forward.
+
+    The once-per-block warm-up remains the unmodified model so every layer gets
+    an exact prefix cache.  Only ordinary refinement calls physically prune
+    untouched future MASK positions; the cached prefix and current block are
+    always retained.
+    """
+    if gen_length % block_length:
+        raise ValueError("block_length must divide gen_length")
+    x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id,
+                   dtype=torch.long, device=prompt.device)
+    x[:, :prompt.shape[1]] = prompt
+    nfe = 0
+    if torch.cuda.is_available():
+        torch.cuda.reset_peak_memory_stats()
+    _sync(); started = time.perf_counter()
+    for block in range(gen_length // block_length):
+        start = prompt.shape[1] + block * block_length
+        end = start + block_length
+
+        # Exact Fast-dLLM warm-up and formal prefix-cache construction.
+        output = model(x, use_cache=True)
+        nfe += 1
+        target = (x[0, start:end] == mask_id).nonzero().flatten() + start
+        logits = output.logits.index_select(1, target)
+        tokens = logits.argmax(-1)
+        probs = F.softmax(logits.to(torch.float64), dim=-1).gather(
+            -1, tokens.unsqueeze(-1)
+        ).squeeze(-1)
+        selected = probs[0] >= threshold
+        selected[probs[0].argmax()] = True
+        x[0, target[selected]] = tokens[0, selected]
+
+        past_key_values = [
+            tuple(value[:, :, :start] for value in layer)
+            for layer in output.past_key_values
+        ]
+        while (x[:, start:end] == mask_id).any():
+            suffix = x[:, start:]
+            target = (suffix[0, :block_length] == mask_id).nonzero().flatten()
+            positions = target.tolist()
+            if block_forward is None:
+                logits = model(
+                    suffix, past_key_values=past_key_values, use_cache=True
+                ).logits.index_select(1, target)
+            else:
+                logits = block_forward(
+                    suffix, positions, prune=prune,
+                    past_key_values=past_key_values, use_cache=True,
+                )
+            nfe += 1
+            tokens = logits.argmax(-1)
+            probs = F.softmax(logits.to(torch.float64), dim=-1).gather(
+                -1, tokens.unsqueeze(-1)
+            ).squeeze(-1)
+            selected = probs[0] >= threshold
+            selected[probs[0].argmax()] = True
+            x[0, start + target[selected]] = tokens[0, selected]
+    _sync(); elapsed = time.perf_counter() - started
+    peak = torch.cuda.max_memory_allocated() / 2**30 if torch.cuda.is_available() else 0.0
+    return Result(x, nfe, elapsed, peak)

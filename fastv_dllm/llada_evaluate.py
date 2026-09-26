@@ -10,7 +10,7 @@ import torch
 
 from .llada_backend import LLaDAAttentionBackend
 from .llada_common import MODEL_ID, REVISION, extract_answer, load_samples, prompt_ids, sha256, snapshot, write_json
-from .llada_decode import generate
+from .llada_decode import generate, generate_prefix_cache
 from .llada_pruning import Config, LLaDABlockForward
 
 METHODS = ("torch_native", "flash_native", "torch_fastv", "flash_fastv")
@@ -49,7 +49,8 @@ def run_method(model, ids, args, method, probe=False):
         forward = LLaDABlockForward(model, Config(args.prune_after_layer, args.support_keep_ratio))
     source = torch.tensor([ids], device=model.device)
     with LLaDAAttentionBackend(model, backend_name) as backend:
-        result = generate(
+        decode = generate_prefix_cache if args.cache_mode == "prefix" else generate
+        result = decode(
             model, source, gen_length=args.gen_length, block_length=args.block_length,
             threshold=args.threshold, block_forward=forward, prune=use_fastv,
         )
@@ -141,6 +142,7 @@ def parse_args():
     p.add_argument("--threshold", type=float, default=0.90)
     p.add_argument("--prune-after-layer", type=int, default=4)
     p.add_argument("--support-keep-ratio", type=float, default=0.5)
+    p.add_argument("--cache-mode", choices=("none", "prefix"), default="none")
     p.add_argument("--methods", nargs="+", choices=METHODS, default=None,
                    help="Subset to run. Use flash_native flash_fastv for fast sweeps.")
     return p.parse_args()
@@ -167,12 +169,13 @@ def main():
         import sys
         llada_dir = Path(__file__).resolve().parents[1] / "v1" / "llada"
         sys.path.insert(0, str(llada_dir))
-        from generate import generate as official_generate
+        from generate import generate as official_generate, generate_with_prefix_cache
         if args.task != "gsm8k": raise ValueError("Audit uses the deterministic GSM8K fixture")
         ids = prompt_ids(tokenizer, samples[0]["question"], args.task)
         source = torch.tensor([ids], device=model.device)
+        official_fn = generate_with_prefix_cache if args.cache_mode == "prefix" else official_generate
         with LLaDAAttentionBackend(model, "torch"):
-            official, official_nfe = official_generate(
+            official, official_nfe = official_fn(
                 model, source, steps=args.gen_length // args.block_length,
                 gen_length=args.gen_length, block_length=args.block_length,
                 temperature=0, remasking="low_confidence", threshold=args.threshold,

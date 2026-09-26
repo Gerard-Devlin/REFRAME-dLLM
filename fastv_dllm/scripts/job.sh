@@ -48,7 +48,8 @@ args=(--stage "$MODE" --task "${TASK:-gsm8k}" --dataset "$DATASET" --output "$RU
       --limit "${LIMIT:-$default_limit}" --gen-length "${GEN_LENGTH:-$default_tokens}"
       --block-length "${BLOCK_LENGTH:-32}"
       --threshold "${THRESHOLD:-0.90}" --prune-after-layer "${PRUNE_AFTER_LAYER:-4}"
-      --support-keep-ratio "${SUPPORT_KEEP_RATIO:-$default_ratio}")
+      --support-keep-ratio "${SUPPORT_KEEP_RATIO:-$default_ratio}"
+      --cache-mode "${CACHE_MODE:-none}")
 if [[ -n ${METHODS:-} ]]; then
     read -ra selected_methods <<< "$METHODS"
     args+=(--methods "${selected_methods[@]}")
