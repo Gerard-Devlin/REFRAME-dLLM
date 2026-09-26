@@ -46,9 +46,9 @@ def run_method(model, ids, args, method, probe=False):
                 backend=backend.report(), records=[] if forward is None else forward.records)
 
 
-def aggregate(records):
+def aggregate(records, methods):
     output = {}
-    for method in METHODS:
+    for method in methods:
         rows = [row[method] for row in records]
         scored = [row["correct"] for row in rows if row["correct"] is not None]
         output[method] = dict(
@@ -66,13 +66,24 @@ def aggregate(records):
                                 sum(len(row.get("retained_mass", [])) for row in rows)
                                 if any(row.get("retained_mass") for row in rows) else None),
         )
-    output["attribution"] = dict(
-        flash_engineering_speedup=output["torch_native"]["total_seconds"] / output["flash_native"]["total_seconds"],
-        fastv_speedup_same_torch=output["torch_native"]["total_seconds"] / output["torch_fastv"]["total_seconds"],
-        fastv_speedup_same_flash=output["flash_native"]["total_seconds"] / output["flash_fastv"]["total_seconds"],
-        fastv_accuracy_delta_same_flash=(output["flash_fastv"]["accuracy"] - output["flash_native"]["accuracy"]
-                                         if output["flash_fastv"]["accuracy"] is not None else None),
-    )
+    attribution = {}
+    if {"torch_native", "flash_native"} <= output.keys():
+        attribution["flash_engineering_speedup"] = (
+            output["torch_native"]["total_seconds"] / output["flash_native"]["total_seconds"]
+        )
+    if {"torch_native", "torch_fastv"} <= output.keys():
+        attribution["fastv_speedup_same_torch"] = (
+            output["torch_native"]["total_seconds"] / output["torch_fastv"]["total_seconds"]
+        )
+    if {"flash_native", "flash_fastv"} <= output.keys():
+        attribution["fastv_speedup_same_flash"] = (
+            output["flash_native"]["total_seconds"] / output["flash_fastv"]["total_seconds"]
+        )
+        attribution["fastv_accuracy_delta_same_flash"] = (
+            output["flash_fastv"]["accuracy"] - output["flash_native"]["accuracy"]
+            if output["flash_fastv"]["accuracy"] is not None else None
+        )
+    output["attribution"] = attribution
     return output
 
 
@@ -88,11 +99,14 @@ def parse_args():
     p.add_argument("--threshold", type=float, default=0.90)
     p.add_argument("--prune-after-layer", type=int, default=4)
     p.add_argument("--support-keep-ratio", type=float, default=0.5)
+    p.add_argument("--methods", nargs="+", choices=METHODS, default=None,
+                   help="Subset to run. Use flash_native flash_fastv for fast sweeps.")
     return p.parse_args()
 
 
 def main():
     args = parse_args()
+    methods = tuple(args.methods or METHODS)
     if args.stage == "audit": args.limit, args.gen_length = 1, min(args.gen_length, 64)
     if args.stage == "smoke": args.limit = min(args.limit, 2)
     samples = load_samples(args.dataset, args.limit, args.task)
@@ -128,7 +142,7 @@ def main():
 
     warmup = prompt_ids(tokenizer, "What is one plus one?", "gsm8k")
     if args.stage != "audit":
-        for method in METHODS:
+        for method in methods:
             run_method(model, warmup, args, method)
 
     path = args.output / f"rank_{rank}.jsonl"
@@ -138,9 +152,9 @@ def main():
         ids = prompt_ids(tokenizer, source_text, args.task)
         target = extract_answer(sample["answer"], gold=True) if args.task == "gsm8k" else sample["task_id"]
         record = dict(index=index, id=sample.get("id", sample.get("task_id")), target=target)
-        methods = METHODS if args.stage != "probe" else ("torch_native",)
-        if args.stage == "audit": methods = ("torch_native", "flash_native", "torch_fastv", "flash_fastv")
-        for method in methods:
+        record_methods = methods if args.stage != "probe" else ("torch_native",)
+        if args.stage == "audit": record_methods = METHODS
+        for method in record_methods:
             outcome = run_method(model, ids, args, method, probe=args.stage == "probe")
             text = tokenizer.decode(outcome.pop("token_ids"), skip_special_tokens=True)
             rows = [r for r in outcome.pop("records") if r is not None]
@@ -174,7 +188,7 @@ def main():
             results=dict(probe=dict(calls=len(rows), mean_deep_tokens=sum(rows)/len(rows),
                 mean_retained_support_mass=sum(masses)/len(masses), mean_score_seconds=sum(scores)/len(scores)))
         else:
-            results=aggregate(records)
+            results=aggregate(records, record_methods)
         report=dict(stage=args.stage, model=MODEL_ID, revision=REVISION, dataset=str(args.dataset),
             dataset_sha256=sha256(args.dataset), ids=[x.get("id", x.get("task_id")) for x in samples], world_size=world,
             configuration=vars(args) | {"dataset":str(args.dataset),"output":str(args.output)}, results=results,

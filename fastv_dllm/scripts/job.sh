@@ -49,6 +49,10 @@ args=(--stage "$MODE" --task "${TASK:-gsm8k}" --dataset "$DATASET" --output "$RU
       --block-length "${BLOCK_LENGTH:-32}"
       --threshold "${THRESHOLD:-0.90}" --prune-after-layer "${PRUNE_AFTER_LAYER:-4}"
       --support-keep-ratio "${SUPPORT_KEEP_RATIO:-$default_ratio}")
+if [[ -n ${METHODS:-} ]]; then
+    read -ra selected_methods <<< "$METHODS"
+    args+=(--methods "${selected_methods[@]}")
+fi
 if [[ ${#physical[@]} -gt 1 ]]; then
     python -u -m torch.distributed.run --standalone --nnodes=1 --nproc_per_node="${#physical[@]}" \
         -m fastv_dllm.llada_evaluate "${args[@]}"
