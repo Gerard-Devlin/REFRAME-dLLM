@@ -108,7 +108,7 @@ class LLaDABlockForward:
         return scores.float().softmax(-1).mean(dim=(0, 1, 2))
 
     def __call__(self, input_ids, target_positions, prune=True,
-                 past_key_values=None, use_cache=False):
+                 past_key_values=None, use_cache=False, replace_position=None):
         if input_ids.shape[0] != 1 or not target_positions:
             raise ValueError("LLaDA FastV pilot requires batch=1 and active target positions")
         target_set = set(target_positions)
@@ -120,7 +120,8 @@ class LLaDABlockForward:
         if prune and (not future_masks or self.config.support_keep_ratio == 1):
             target = torch.tensor(target_positions, device=input_ids.device)
             return self.model(
-                input_ids, past_key_values=past_key_values, use_cache=use_cache
+                input_ids, past_key_values=past_key_values, use_cache=use_cache,
+                replace_position=replace_position,
             ).logits.index_select(1, target)
         core = self.model.model
         hidden = core.transformer.wte(input_ids)
