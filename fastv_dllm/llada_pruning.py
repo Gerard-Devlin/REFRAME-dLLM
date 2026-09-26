@@ -32,20 +32,22 @@ def choose_support(relevance, targets, keep_ratio, candidates=None, protected=No
 
 class PositionedRotary(nn.Module):
     """Apply the original RoPE phases after non-contiguous physical pruning."""
-    def __init__(self, base, positions):
+    def __init__(self, base, positions, original_length):
         super().__init__()
         object.__setattr__(self, "base", base)
-        self.length = max(positions) + 1
-        self.register_buffer("positions", torch.tensor(positions, dtype=torch.long), persistent=False)
+        self.length = original_length
+        # The same compact-to-original mapping is reused by every remaining
+        # layer.  Keep it on the GPU instead of rebuilding and transferring a
+        # new tensor for each layer and denoising call.
+        self.register_buffer("positions", torch.as_tensor(positions, dtype=torch.long), persistent=False)
 
     def forward(self, q, k, block_end_index=None):
         base = object.__getattribute__(self, "base")
         qf, kf = (q.float(), k.float()) if base.config.rope_full_precision else (q, k)
         with torch.autocast(q.device.type, enabled=False):
             sin, cos = base.get_rotary_embedding(self.length, q.device)
-            positions = self.positions.to(q.device)
-            sin = sin.index_select(2, positions).type_as(qf)
-            cos = cos.index_select(2, positions).type_as(qf)
+            sin = sin.index_select(2, self.positions).type_as(qf)
+            cos = cos.index_select(2, self.positions).type_as(qf)
             qf = base.apply_rotary_pos_emb(sin, cos, qf)
             kf = base.apply_rotary_pos_emb(sin, cos, kf)
         return qf.type_as(q), kf.type_as(k)
@@ -120,6 +122,7 @@ class LLaDABlockForward:
             hidden = hidden * (core.config.d_model ** 0.5)
         hidden = core.transformer.emb_drop(hidden)
         positions = list(range(input_ids.shape[1]))
+        compact_positions = None
         layer_record = None
         for number, block in enumerate(core.transformer.blocks, start=1):
             if number == self.config.prune_after_layer:
@@ -171,10 +174,11 @@ class LLaDABlockForward:
                     index = torch.tensor(keep, device=hidden.device)
                     hidden = hidden.index_select(1, index)
                     positions = keep
+                    compact_positions = index
             else:
                 rotary = block.rotary_emb
                 if len(positions) != input_ids.shape[1]:
-                    block.rotary_emb = PositionedRotary(rotary, positions).to(hidden.device)
+                    block.rotary_emb = PositionedRotary(rotary, compact_positions, input_ids.shape[1])
                 try:
                     hidden, _ = block(hidden, attention_bias=None, layer_past=None, use_cache=False)
                 finally:
