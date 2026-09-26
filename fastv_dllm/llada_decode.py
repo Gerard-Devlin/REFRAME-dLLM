@@ -53,7 +53,10 @@ def generate(model, prompt, gen_length=256, block_length=32, threshold=0.9,
             if block_forward is None:
                 logits = model(x).logits.index_select(1, target)
             else:
-                logits = block_forward(x, positions, prune=prune)
+                logits = block_forward(
+                    x, positions, prune=prune,
+                    protected_prefix_length=prompt.shape[1],
+                )
             nfe += 1
             tokens = logits.argmax(-1)
             probs = F.softmax(logits.to(torch.float64), dim=-1).gather(-1, tokens.unsqueeze(-1)).squeeze(-1)

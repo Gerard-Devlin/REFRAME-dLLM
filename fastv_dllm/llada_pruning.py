@@ -190,7 +190,8 @@ class LLaDABlockForward:
         return scores.float().softmax(-1).mean(dim=(0, 1, 2))
 
     def __call__(self, input_ids, target_positions, prune=True,
-                 past_key_values=None, use_cache=False, replace_position=None):
+                 past_key_values=None, use_cache=False, replace_position=None,
+                 protected_prefix_length=0):
         if input_ids.shape[0] != 1 or not target_positions:
             raise ValueError("LLaDA FastV pilot requires batch=1 and active target positions")
         target_set = set(target_positions)
@@ -244,12 +245,16 @@ class LLaDABlockForward:
                 dominant_context = len(context)
                 contextual_context = 0
                 if mode == "zip":
-                    kept_context, merged_states, dominant_context, contextual_context = compress_context(
-                        hidden, relevance, context,
+                    prompt_context = [i for i in context if i < protected_prefix_length]
+                    generated_context = [i for i in context if i >= protected_prefix_length]
+                    kept_generated, merged_states, dominant_context, contextual_context = compress_context(
+                        hidden, relevance, generated_context,
                         self.config.context_dominant_ratio,
                         self.config.contextual_ratio,
                         self.config.context_merge_weight,
                     )
+                    kept_context = sorted(prompt_context + kept_generated)
+                    dominant_context += len(prompt_context)
                 else:
                     kept_context = context
                 dominant_support = 0
