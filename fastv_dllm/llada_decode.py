@@ -22,6 +22,16 @@ def _sync():
         torch.cuda.synchronize()
 
 
+def _selected_positions(probs, threshold):
+    """Official confidence decoding, including the one-token control."""
+    if threshold is None:
+        selected = torch.zeros_like(probs[0], dtype=torch.bool)
+    else:
+        selected = probs[0] >= threshold
+    selected[probs[0].argmax()] = True
+    return selected
+
+
 @torch.no_grad()
 def generate(model, prompt, gen_length=256, block_length=32, threshold=0.9,
              mask_id=MASK_ID, block_forward=None, prune=False):
@@ -47,8 +57,7 @@ def generate(model, prompt, gen_length=256, block_length=32, threshold=0.9,
             nfe += 1
             tokens = logits.argmax(-1)
             probs = F.softmax(logits.to(torch.float64), dim=-1).gather(-1, tokens.unsqueeze(-1)).squeeze(-1)
-            selected = probs[0] >= threshold
-            selected[probs[0].argmax()] = True
+            selected = _selected_positions(probs, threshold)
             chosen_positions = target[selected]
             x[0, chosen_positions] = tokens[0, selected]
     _sync(); elapsed = time.perf_counter() - started
@@ -88,8 +97,7 @@ def generate_prefix_cache(model, prompt, gen_length=256, block_length=32, thresh
         probs = F.softmax(logits.to(torch.float64), dim=-1).gather(
             -1, tokens.unsqueeze(-1)
         ).squeeze(-1)
-        selected = probs[0] >= threshold
-        selected[probs[0].argmax()] = True
+        selected = _selected_positions(probs, threshold)
         x[0, target[selected]] = tokens[0, selected]
 
         past_key_values = [
@@ -114,8 +122,7 @@ def generate_prefix_cache(model, prompt, gen_length=256, block_length=32, thresh
             probs = F.softmax(logits.to(torch.float64), dim=-1).gather(
                 -1, tokens.unsqueeze(-1)
             ).squeeze(-1)
-            selected = probs[0] >= threshold
-            selected[probs[0].argmax()] = True
+            selected = _selected_positions(probs, threshold)
             x[0, start + target[selected]] = tokens[0, selected]
     _sync(); elapsed = time.perf_counter() - started
     peak = torch.cuda.max_memory_allocated() / 2**30 if torch.cuda.is_available() else 0.0
@@ -157,8 +164,7 @@ def generate_dual_cache(model, prompt, gen_length=256, block_length=32, threshol
         probs = F.softmax(logits.to(torch.float64), dim=-1).gather(
             -1, tokens.unsqueeze(-1)
         ).squeeze(-1)
-        selected = probs[0] >= threshold
-        selected[probs[0].argmax()] = True
+        selected = _selected_positions(probs, threshold)
         x[0, target[selected]] = tokens[0, selected]
 
         past_key_values = output.past_key_values
@@ -182,8 +188,7 @@ def generate_dual_cache(model, prompt, gen_length=256, block_length=32, threshol
             probs = F.softmax(logits.to(torch.float64), dim=-1).gather(
                 -1, tokens.unsqueeze(-1)
             ).squeeze(-1)
-            selected = probs[0] >= threshold
-            selected[probs[0].argmax()] = True
+            selected = _selected_positions(probs, threshold)
             x[0, start + target[selected]] = tokens[0, selected]
     _sync(); elapsed = time.perf_counter() - started
     peak = torch.cuda.max_memory_allocated() / 2**30 if torch.cuda.is_available() else 0.0

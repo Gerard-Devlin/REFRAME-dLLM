@@ -56,7 +56,8 @@ def run_method(model, ids, args, method, probe=False):
         }[args.cache_mode]
         result = decode(
             model, source, gen_length=args.gen_length, block_length=args.block_length,
-            threshold=args.threshold, block_forward=forward, prune=use_fastv,
+            threshold=(None if args.decoding_mode == "single" else args.threshold),
+            block_forward=forward, prune=use_fastv,
         )
     tokens = result.output[0, len(ids):].tolist()
     return dict(token_ids=tokens, nfe=result.nfe, seconds=result.seconds, peak_gib=result.peak_gib,
@@ -144,6 +145,8 @@ def parse_args():
     p.add_argument("--gen-length", type=int, default=256)
     p.add_argument("--block-length", type=int, default=32)
     p.add_argument("--threshold", type=float, default=0.90)
+    p.add_argument("--decoding-mode", choices=("threshold", "single"), default="threshold",
+                   help="single reproduces the one-token-per-step LLaDA/cache controls")
     p.add_argument("--prune-after-layer", type=int, default=4)
     p.add_argument("--support-keep-ratio", type=float, default=0.5)
     p.add_argument("--cache-mode", choices=("none", "prefix", "dual"), default="none")
@@ -192,10 +195,13 @@ def main():
                 # ``for`` loop and therefore needs the original one-step-per-
                 # token budget even when threshold decoding is enabled.  The
                 # uncached and prefix implementations use a completion loop.
-                model, source, steps=(args.gen_length if args.cache_mode == "dual"
-                                      else args.gen_length // args.block_length),
+                model, source,
+                steps=(args.gen_length if (args.cache_mode == "dual" or
+                                           args.decoding_mode == "single")
+                       else args.gen_length // args.block_length),
                 gen_length=args.gen_length, block_length=args.block_length,
-                temperature=0, remasking="low_confidence", threshold=args.threshold,
+                temperature=0, remasking="low_confidence",
+                threshold=(None if args.decoding_mode == "single" else args.threshold),
             )
         native = run_method(model, ids, args, "torch_native")
         if official[0].tolist() != [*ids, *native["token_ids"]] or official_nfe != native["nfe"]:

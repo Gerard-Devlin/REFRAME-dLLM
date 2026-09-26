@@ -32,6 +32,11 @@ The workflow is deliberately gated:
   pruning in ordinary suffix-refinement calls;
 - `dual`: the official Fast-dLLM DualCache execution path.
 
+`--decoding-mode single` supplies the paper's one-token-per-step LLaDA and
+cache-only controls. The default `threshold` mode uses the confidence-aware
+parallel decoder at the configured threshold. Together these switches cover
+the paper's `LLaDA / +Cache / +Parallel / +Cache+Parallel` component matrix.
+
 DualCache already evaluates only the active block after its warm-up. Under the
 safe pruning policy there is therefore no untouched future MASK canvas left to
 remove; `dual + FastV` intentionally takes the exact DualCache forward path.
