@@ -142,6 +142,7 @@ class Config:
     secondary_prune_after_layer: int = 0
     secondary_support_ratio: float = 1.0
     target_only_head: bool = False
+    memory_only_context: bool = False
 
     def validate(self, layers):
         if not 1 <= self.prune_after_layer < layers:
@@ -197,6 +198,52 @@ class LLaDABlockForward:
         scores = torch.matmul(q, k.transpose(-2, -1)) / math.sqrt(q.shape[-1])
         return scores.float().softmax(-1).mean(dim=(0, 1, 2))
 
+    @staticmethod
+    def _asymmetric_block(block, active, memory, active_positions, memory_positions):
+        """Update active queries while retaining frozen context as per-layer K/V."""
+        active_norm = block.attn_norm(active)
+        memory_norm = block.attn_norm(memory)
+        kv_input = torch.cat((memory_norm, active_norm), dim=1)
+        q = block.q_proj(active_norm)
+        k = block.k_proj(kv_input)
+        v = block.v_proj(kv_input)
+        batch, query_len, width = q.shape
+        key_len = k.shape[1]
+        head_dim = width // block.config.n_heads
+        q = q.view(batch, query_len, block.config.n_heads, head_dim).transpose(1, 2)
+        k = k.view(batch, key_len, block.config.effective_n_kv_heads, head_dim).transpose(1, 2)
+        v = v.view(batch, key_len, block.config.effective_n_kv_heads, head_dim).transpose(1, 2)
+        if block.q_norm is not None and block.k_norm is not None:
+            dtype = k.dtype
+            q = block.q_norm(q).to(dtype=dtype)
+            k = block.k_norm(k).to(dtype=dtype)
+        if block.config.rope:
+            rotary = block.rotary_emb
+            qf, kf = ((q.float(), k.float()) if rotary.config.rope_full_precision
+                      else (q, k))
+            length = int(torch.cat((active_positions, memory_positions)).max().item()) + 1
+            with torch.autocast(q.device.type, enabled=False):
+                sin, cos = rotary.get_rotary_embedding(length, q.device)
+                query_positions = active_positions.to(q.device)
+                key_positions = torch.cat((memory_positions, active_positions)).to(q.device)
+                qf = rotary.apply_rotary_pos_emb(
+                    sin.index_select(2, query_positions).type_as(qf),
+                    cos.index_select(2, query_positions).type_as(qf), qf,
+                )
+                kf = rotary.apply_rotary_pos_emb(
+                    sin.index_select(2, key_positions).type_as(kf),
+                    cos.index_select(2, key_positions).type_as(kf), kf,
+                )
+            q, k = qf.type_as(q), kf.type_as(k)
+        att = block._scaled_dot_product_attention(q, k, v, dropout_p=0.0, is_causal=False)
+        att = att.transpose(1, 2).contiguous().view(batch, query_len, width)
+        x = active + block.dropout(block.attn_out(att))
+        residual = x
+        normalized = block.ff_norm(x)
+        gate, up = block.ff_proj(normalized), block.up_proj(normalized)
+        x = block.act(gate) * up
+        return residual + block.dropout(block.ff_out(x))
+
     def __call__(self, input_ids, target_positions, prune=True,
                  past_key_values=None, use_cache=False, replace_position=None,
                  protected_prefix_length=0):
@@ -233,13 +280,15 @@ class LLaDABlockForward:
         hidden = core.transformer.emb_drop(hidden)
         positions = list(range(input_ids.shape[1]))
         compact_positions = None
+        memory_hidden = None
+        memory_positions = None
         past_length = 0 if past_key_values is None else past_key_values[0][0].shape[-2]
         layer_record = None
         for number, block in enumerate(core.transformer.blocks, start=1):
             layer_past = None if past_key_values is None else past_key_values[number - 1]
             if number == self.config.prune_after_layer:
                 needs_relevance = not (
-                    mode == "zip"
+                    mode in {"zip", "memory"}
                     and self.config.support_keep_ratio == 0
                     and self.config.context_dominant_ratio == 1
                 )
@@ -266,7 +315,7 @@ class LLaDABlockForward:
                 merged_states = {}
                 dominant_context = len(context)
                 contextual_context = 0
-                if mode == "zip":
+                if mode in {"zip", "memory"}:
                     prompt_context = [i for i in context if i < protected_prefix_length]
                     generated_context = [i for i in context if i >= protected_prefix_length]
                     kept_generated, merged_states, dominant_context, contextual_context = compress_context(
@@ -281,7 +330,7 @@ class LLaDABlockForward:
                     kept_context = context
                 dominant_support = 0
                 contextual_support = 0
-                if mode == "zip":
+                if mode in {"zip", "memory"}:
                     kept_future, support_states, dominant_support, contextual_support = compress_context(
                         hidden, relevance, future_masks,
                         self.config.support_keep_ratio,
@@ -315,6 +364,12 @@ class LLaDABlockForward:
                     score_seconds=(time.perf_counter() - started if measure_score else 0.0),
                 )
                 if mode:
+                    if mode == "memory":
+                        if past_key_values is not None:
+                            raise ValueError("Asymmetric memory pilot currently requires cache_mode=none")
+                        memory_positions = torch.tensor(kept_context, device=hidden.device)
+                        memory_hidden = hidden.index_select(1, memory_positions)
+                        keep = sorted(set(target_positions + kept_future))
                     index = torch.tensor(keep, device=hidden.device)
                     hidden = hidden.index_select(1, index)
                     if merged_states:
@@ -324,6 +379,11 @@ class LLaDABlockForward:
                     positions = keep
                     compact_positions = index
             else:
+                if mode == "memory" and memory_hidden is not None:
+                    hidden = self._asymmetric_block(
+                        block, hidden, memory_hidden, compact_positions, memory_positions
+                    )
+                    continue
                 rotary = block.rotary_emb
                 if len(positions) != input_ids.shape[1]:
                     block.rotary_emb = PositionedRotary(

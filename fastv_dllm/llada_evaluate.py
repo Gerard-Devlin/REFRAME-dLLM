@@ -18,6 +18,7 @@ METHODS = (
     "torch_fastv", "flash_fastv",
     "torch_zip", "flash_zip",
     "flash_zip_head",
+    "flash_memory",
 )
 
 
@@ -50,9 +51,10 @@ def run_method(model, ids, args, method, probe=False):
     backend_name = "flash" if method.startswith("flash") else "torch"
     use_fastv = "_fastv" in method
     use_zip = "_zip" in method
+    use_memory = method.endswith("_memory")
     target_only_head = method.endswith("_head")
     forward = None
-    if use_fastv or use_zip or probe:
+    if use_fastv or use_zip or use_memory or probe:
         forward = LLaDABlockForward(model, Config(
             prune_after_layer=args.prune_after_layer,
             support_keep_ratio=args.support_keep_ratio,
@@ -62,7 +64,8 @@ def run_method(model, ids, args, method, probe=False):
             context_merge_weight=args.context_merge_weight,
             secondary_prune_after_layer=args.secondary_prune_after_layer,
             secondary_support_ratio=args.secondary_support_ratio,
-            target_only_head=target_only_head,
+            target_only_head=(target_only_head or use_memory),
+            memory_only_context=use_memory,
         ))
     source = torch.tensor([ids], device=model.device)
     with LLaDAAttentionBackend(model, backend_name) as backend:
@@ -74,7 +77,8 @@ def run_method(model, ids, args, method, probe=False):
         result = decode(
             model, source, gen_length=args.gen_length, block_length=args.block_length,
             threshold=(None if args.decoding_mode == "single" else args.threshold),
-            block_forward=forward, prune=("zip" if use_zip else use_fastv),
+            block_forward=forward,
+            prune=("memory" if use_memory else ("zip" if use_zip else use_fastv)),
         )
     tokens = result.output[0, len(ids):].tolist()
     return dict(token_ids=tokens, nfe=result.nfe, seconds=result.seconds, peak_gib=result.peak_gib,
