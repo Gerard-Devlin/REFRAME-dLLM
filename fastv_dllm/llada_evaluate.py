@@ -16,6 +16,7 @@ from .llada_pruning import Config, LLaDABlockForward
 METHODS = (
     "torch_native", "flash_native",
     "torch_fastv", "flash_fastv",
+    "flash_fastv_head",
     "torch_zip", "flash_zip",
     "flash_zip_head",
     "flash_memory",
@@ -194,6 +195,15 @@ def aggregate(records, methods):
         attribution["active_head_accuracy_delta"] = (
             output["flash_zip_head"]["accuracy"] - output["flash_zip"]["accuracy"]
             if output["flash_zip"]["accuracy"] is not None else None
+        )
+    if {"flash_fastv", "flash_fastv_head"} <= output.keys():
+        attribution["fastv_active_head_speedup"] = (
+            output["flash_fastv"]["total_seconds"] /
+            output["flash_fastv_head"]["total_seconds"]
+        )
+        attribution["fastv_active_head_accuracy_delta"] = (
+            output["flash_fastv_head"]["accuracy"] - output["flash_fastv"]["accuracy"]
+            if output["flash_fastv"]["accuracy"] is not None else None
         )
     output["attribution"] = attribution
     return output
