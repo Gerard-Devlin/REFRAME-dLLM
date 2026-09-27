@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$REPO"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:-}"
+source "${CONDA_ROOT:-/opt/miniconda3}/etc/profile.d/conda.sh"
+conda activate "${CONDA_ENV:-fastdllm311}"
 
 wait_for_run() {
     local run="$1"
@@ -40,20 +43,47 @@ run_one() {
         return 0
     fi
     [[ ! -e "$run" ]] || { echo "Incomplete run exists; refusing overwrite: $run"; exit 1; }
-    mkdir -p "$run"
-    echo "[$(date -Is)] START task=$task gen=$gen label=$label" | tee -a "$RUN_ROOT/progress.log"
-    set +e
-    MODE=evaluate RUN_DIR="$run" TASK="$task" DATASET="$dataset" LIMIT="$limit" \
-      GEN_LENGTH="$gen" BLOCK_LENGTH=32 THRESHOLD=0.90 DECODING_MODE="$decoding" \
-      CACHE_MODE="$cache" METHODS="$methods" PRUNE_AFTER_LAYER=4 \
-      SUPPORT_KEEP_RATIO=0.3125 REQUIRE_IDLE=1 SKIP_TESTS=1 \
-      bash "$REPO/fastv_dllm/scripts/job.sh" > "$run/job.log" 2>&1
-    local rc=$?
-    set -e
-    printf '%s\n' "$rc" > "$run/exit_code"
-    date -Is > "$run/finished_at"
-    echo "[$(date -Is)] END rc=$rc task=$task gen=$gen label=$label" | tee -a "$RUN_ROOT/progress.log"
-    [[ $rc == 0 ]] || exit "$rc"
+    while true; do
+        if [[ -n ${DYNAMIC_GPU_COUNT:-} ]]; then
+            GPU_IDS=$(python -u -m fastv_dllm.wait_for_idle_gpus \
+              --count "$DYNAMIC_GPU_COUNT" \
+              --candidates "${GPU_CANDIDATES:-0,1,2,3,4,5,6,7}" \
+              --poll-seconds "${GPU_POLL_SECONDS:-30}" \
+              --stable-checks "${GPU_STABLE_CHECKS:-2}" \
+              --max-memory-mib "${GPU_MAX_MEMORY_MIB:-1024}" \
+              --max-utilization "${GPU_MAX_UTILIZATION:-5}")
+            export GPU_IDS
+            echo "[$(date -Is)] RESERVED GPUs=$GPU_IDS task=$task gen=$gen label=$label" \
+              | tee -a "$RUN_ROOT/progress.log"
+        fi
+        mkdir -p "$run"
+        echo "[$(date -Is)] START task=$task gen=$gen label=$label GPUs=$GPU_IDS" \
+          | tee -a "$RUN_ROOT/progress.log"
+        set +e
+        MODE=evaluate RUN_DIR="$run" TASK="$task" DATASET="$dataset" LIMIT="$limit" \
+          GEN_LENGTH="$gen" BLOCK_LENGTH=32 THRESHOLD=0.90 DECODING_MODE="$decoding" \
+          CACHE_MODE="$cache" METHODS="$methods" PRUNE_AFTER_LAYER=4 \
+          SUPPORT_KEEP_RATIO=0.3125 REQUIRE_IDLE=1 SKIP_TESTS=1 \
+          bash "$REPO/fastv_dllm/scripts/job.sh" > "$run/job.log" 2>&1
+        local rc=$?
+        set -e
+        printf '%s\n' "$rc" > "$run/exit_code"
+        date -Is > "$run/finished_at"
+        echo "[$(date -Is)] END rc=$rc task=$task gen=$gen label=$label GPUs=$GPU_IDS" \
+          | tee -a "$RUN_ROOT/progress.log"
+        if [[ $rc == 0 ]]; then
+            break
+        fi
+        if [[ -n ${DYNAMIC_GPU_COUNT:-} ]] && \
+           grep -Eq 'Selected GPU already has compute PID|Visible GPU count mismatch' "$run/job.log"; then
+            raced="${run}.gpu_race_$(date +%Y%m%d_%H%M%S)"
+            mv "$run" "$raced"
+            echo "[$(date -Is)] GPU race; retrying after wait: $raced" \
+              | tee -a "$RUN_ROOT/progress.log"
+            continue
+        fi
+        exit "$rc"
+    done
 }
 
 wait_for_run "${CURRENT_GSM256_RUN:-}"
