@@ -7,7 +7,28 @@ wait_for_run() {
     [[ -n "$run" ]] || return 0
     echo "Waiting for prerequisite run: $run"
     while [[ ! -f "$run/exit_code" ]]; do sleep 30; done
-    [[ $(cat "$run/exit_code") == 0 ]] || { echo "Prerequisite failed: $run"; exit 1; }
+    if [[ $(cat "$run/exit_code") != 0 ]]; then
+        # A benchmark can finish all shards and write the atomic summary before
+        # a later, unrelated shell epilogue fails.  Reuse it only after a
+        # strict completeness check; never infer success from the summary's
+        # mere existence.
+        python - "$run/output" <<'PY'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+summary = json.loads((root / "summary.json").read_text())
+expected = len(summary["ids"])
+records = []
+for path in sorted(root.glob("rank_*.jsonl")):
+    records.extend(json.loads(line) for line in path.read_text().splitlines())
+indices = sorted(row["index"] for row in records)
+if len(records) != expected or indices != list(range(expected)):
+    raise SystemExit(f"Incomplete prerequisite: records={len(records)} expected={expected}")
+methods = [key for key in summary["results"] if key != "attribution"]
+if not methods or any(summary["results"][key]["examples"] != expected for key in methods):
+    raise SystemExit("Prerequisite summary is incomplete")
+print(f"Validated completed prerequisite despite shell exit: {expected} examples")
+PY
+    fi
 }
 
 run_one() {
