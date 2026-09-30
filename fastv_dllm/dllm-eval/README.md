@@ -3,8 +3,8 @@
 The `python -m dllm_eval.worker initialize --matrix main` campaign creates a fresh three-row
 comparison: original LLaDA, Fast-dLLM v1 (PrefixCache + parallel), and FastV on
 that same cached parallel path, each at 256/512 on the four full test sets.
-It rejects historical result directories. `python -m dllm_eval.table` writes `table.md`,
-`table.html`, and `table.json`; a cell is filled only after complete scoring.
+It rejects historical result directories. Each task writes scored `summary.json`,
+individual sample records, and the scoring artifact; no presentation files are generated.
 MATH's primary Minerva metric and secondary `math_verify` remain separate.
 
 The scheduler borrows the document-parallel layout of
@@ -39,10 +39,9 @@ dllm-eval/
     queue.py              # durable sample ownership and recovery
     progress.py           # global tqdm log snapshots
     score_*.py            # task scorers
-    table.py              # horizontal dataset table
   scripts/launch_tmux.sh
   tests/
-  runs/<run-name>/         # ignored; manifest, logs, samples, table
+  runs/<run-name>/         # ignored; manifest, logs, samples, metrics
 ```
 
 Direct module commands require the package directory on `PYTHONPATH`:
@@ -50,7 +49,6 @@ Direct module commands require the package directory on `PYTHONPATH`:
 ```bash
 export PYTHONPATH="$PWD/fastv_dllm/dllm-eval:$PWD${PYTHONPATH:+:$PYTHONPATH}"
 python -m dllm_eval.worker --help
-python -m dllm_eval.table --run-root "$RUN_ROOT"
 python -m pytest fastv_dllm/dllm-eval/tests fastv_dllm/tests -q
 ```
 

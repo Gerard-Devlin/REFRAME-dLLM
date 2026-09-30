@@ -162,9 +162,6 @@ def initialize(args):
         atomic_json(manifest_path, dict(version=1, matrix=matrix,
                                        protocol=main_config() if matrix == "main" else None, created_at=time.time(),
                                        jobs=items, implementation=files))
-        if matrix == "main":
-            from .table import write_table
-            write_table(root)
 
 
 def load_manifest(root):

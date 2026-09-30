@@ -333,9 +333,6 @@ class Scheduler:
             self.fail(f"finalizer {item.job} exit={code}, marker_exists={marker.exists()}")
         else:
             self.event(f"finalized {item.job}")
-            if self.manifest.get("matrix") == "main":
-                from .table import write_table
-                write_table(self.args.run_root)
 
     def dispatch(self, statuses, force=False):
         self.active_job = select_task(self.jobs, statuses, self.active_job)

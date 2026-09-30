@@ -57,5 +57,5 @@ The Flash backend is not assumed to be faster for these short query lengths;
 it is measured. Mask-only pruning is not reported as acceleration: the FastV
 path physically shortens hidden states after the selected layer.
 
-Evaluation orchestration, scorers, progress logs, and the fresh paper table are
+Evaluation orchestration, scorers, and progress logs are
 kept in [`dllm-eval/`](dllm-eval/README.md).
