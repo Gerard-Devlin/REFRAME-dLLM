@@ -15,7 +15,28 @@ import subprocess
 import sys
 import time
 
-from .elastic_work import ElasticQueue, _owner_dead, _process_info
+from .queue import ElasticQueue, _owner_dead, _process_info
+from .progress import ProgressLog
+
+
+def select_task(jobs, statuses, previous=None):
+    """Finish one task across all GPUs, including its last in-flight prompt."""
+    if previous in statuses and not statuses[previous]["complete"]:
+        return previous
+    for job in jobs:
+        if not statuses[job["name"]]["complete"]:
+            return job["name"]
+    return None
+
+
+def shard_indices(indices, worker_pids):
+    """lmms-eval style remaining_ids[rank::world_size]; sizes differ by <=1."""
+    if len(set(indices)) != len(indices):
+        raise ValueError("Duplicate input IDs")
+    members = sorted(worker_pids)
+    return {str(gpu): dict(pid=worker_pids[gpu], rank=rank, world_size=len(members),
+                          indices=indices[rank::len(members)])
+            for rank, gpu in enumerate(members)}
 
 
 def plan_launches(candidates, free_streak, occupied, *, max_total_gpus,
@@ -116,7 +137,8 @@ def find_workers(processes, run_root):
         if _is_python_module(argv, "fastv_dllm.llada_evaluate"):
             unknown.append(pid)
             continue
-        if not _is_python_module(argv, "fastv_dllm.elastic_paper") or "worker" not in argv:
+        if not any(_is_python_module(argv, name) for name in
+                   ("dllm_eval.worker", "fastv_dllm.elastic_paper")) or "worker" not in argv:
             continue
         root, gpu = _argument(argv, "--run-root"), _argument(argv, "--gpu")
         if root is None or gpu is None or Path(root).resolve() != Path(run_root).resolve():
@@ -178,6 +200,12 @@ class Scheduler:
         self.free_streak = {gpu: 0 for gpu in args.candidates}
         self.failed = None
         self.stop = False
+        self.dispatch_path = self.root / "dispatch.json"
+        prior = json.loads(self.dispatch_path.read_text()) if self.dispatch_path.exists() else {}
+        self.active_job = prior.get("job")
+        self.dispatch_signature = None
+        self.assignments = {}
+        self.progress_log = ProgressLog(getattr(args, "progress_seconds", 30))
 
     def event(self, message):
         line = f"[{time.strftime('%Y-%m-%dT%H:%M:%S%z')}] {message}"
@@ -218,7 +246,8 @@ class Scheduler:
         finalizers = []
         for pid, data in processes.items():
             argv = data["argv"]
-            if not _is_python_module(argv, "fastv_dllm.elastic_paper") or "finalize" not in argv:
+            if not any(_is_python_module(argv, name) for name in
+                       ("dllm_eval.worker", "fastv_dllm.elastic_paper")) or "finalize" not in argv:
                 continue
             root, job = _argument(argv, "--run-root"), _argument(argv, "--job")
             if root is not None and Path(root).resolve() == self.args.run_root and job:
@@ -276,7 +305,7 @@ class Scheduler:
         log_path = self.worker_dir / f"gpu{gpu}_{time.time_ns()}.log"
         log = log_path.open("w", encoding="utf-8")
         process = subprocess.Popen([
-            sys.executable, "-u", "-m", "fastv_dllm.elastic_paper", "worker",
+            sys.executable, "-u", "-m", "dllm_eval.worker", "worker",
             "--run-root", str(self.args.run_root), "--gpu", str(gpu)
         ], cwd=self.args.repo, env=env, stdout=log, stderr=subprocess.STDOUT,
             start_new_session=True)
@@ -304,6 +333,26 @@ class Scheduler:
             self.fail(f"finalizer {item.job} exit={code}, marker_exists={marker.exists()}")
         else:
             self.event(f"finalized {item.job}")
+            if self.manifest.get("matrix") == "main":
+                from .table import write_table
+                write_table(self.args.run_root)
+
+    def dispatch(self, statuses, force=False):
+        self.active_job = select_task(self.jobs, statuses, self.active_job)
+        members = {gpu: worker.pid for gpu, worker in self.workers.items()
+                   if not worker.stopping}
+        signature = (self.active_job, tuple(sorted(members.items())), self.stop)
+        if signature == self.dispatch_signature and not force:
+            return
+        indices = self.queues[self.active_job].remaining_indices() if self.active_job else []
+        self.assignments = shard_indices(indices, members) if not self.stop else {}
+        from .worker import atomic_json
+        atomic_json(self.dispatch_path, dict(version=1, job=self.active_job,
+                    assignments=self.assignments, updated_at=time.time(),
+                    all_complete=all(s["complete"] for s in statuses.values())))
+        self.dispatch_signature = signature
+        sizes = {gpu: len(row["indices"]) for gpu, row in self.assignments.items()}
+        self.event(f"dispatch task={self.active_job} remaining-shards={sizes}")
 
     def start_finalizer(self, statuses):
         if self.finalizer is not None or self.failed or self.stop:
@@ -318,7 +367,7 @@ class Scheduler:
             env = os.environ.copy()
             env["CUDA_VISIBLE_DEVICES"] = ""
             process = subprocess.Popen([
-                sys.executable, "-u", "-m", "fastv_dllm.elastic_paper", "finalize",
+                sys.executable, "-u", "-m", "dllm_eval.worker", "finalize",
                 "--run-root", str(self.args.run_root), "--job", name
             ], cwd=self.args.repo, env=env, stdout=log, stderr=subprocess.STDOUT,
                 start_new_session=True)
@@ -331,6 +380,8 @@ class Scheduler:
         state = dict(time=time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                      max_total_gpus=self.args.max_total_gpus,
                      used_gpus=len(self.workers), failed=self.failed, stopping=self.stop,
+                     active_job=self.active_job, scheduling="one_task_round_robin",
+                     shard_sizes={gpu: len(row["indices"]) for gpu, row in self.assignments.items()},
                      workers={gpu: dict(pid=w.pid, stopping=w.stopping)
                               for gpu, w in self.workers.items()},
                      finalizer=(self.finalizer.job if self.finalizer else None),
@@ -342,6 +393,10 @@ class Scheduler:
         temporary = path.with_suffix(".tmp")
         temporary.write_text(json.dumps(state, indent=2), encoding="utf-8")
         temporary.replace(path)
+        for line in self.progress_log.lines(state):
+            print(line, flush=True)
+            with (self.root / "progress.log").open("a", encoding="utf-8") as stream:
+                stream.write(line + "\n")
 
     def run(self):
         self.event(f"elastic scheduler online max_total_gpus={self.args.max_total_gpus}")
@@ -390,6 +445,7 @@ class Scheduler:
                             and check["memory_mib"] <= self.args.max_memory_mib
                             and check["utilization"] <= self.args.max_utilization):
                         self.launch(gpu, check)
+            self.dispatch(statuses, force=bool(recovered))
             self.start_finalizer(statuses)
             self.write_state(rows, statuses)
             finalized = all((self.root / "finalized" / f"{job['name']}.json").exists()
@@ -411,6 +467,7 @@ def parse_args():
     parser.add_argument("--candidates", default="0,1,2,3,4,5,6,7")
     parser.add_argument("--stable-checks", type=int, default=2)
     parser.add_argument("--poll-seconds", type=float, default=10)
+    parser.add_argument("--progress-seconds", type=float, default=30)
     parser.add_argument("--max-memory-mib", type=int, default=1024)
     parser.add_argument("--max-utilization", type=int, default=5)
     args = parser.parse_args()
@@ -418,7 +475,7 @@ def parse_args():
     args.candidates = tuple(int(value) for value in args.candidates.split(","))
     if (len(set(args.candidates)) != len(args.candidates)
             or not 1 <= args.max_total_gpus <= min(6, len(args.candidates))
-            or args.stable_checks < 1 or args.poll_seconds <= 0):
+            or args.stable_checks < 1 or args.poll_seconds <= 0 or args.progress_seconds <= 0):
         parser.error("Invalid candidates, cap (maximum 6), or polling settings")
     return args
 

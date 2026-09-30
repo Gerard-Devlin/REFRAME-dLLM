@@ -70,10 +70,10 @@ else
     python -u -m fastv_dllm.llada_evaluate "${args[@]}"
 fi
 if [[ ${TASK:-gsm8k} == humaneval ]]; then
-    python -u -m fastv_dllm.score_humaneval --dataset "$DATASET" --results "$RUN_DIR/output" \
+    PYTHONPATH="$REPO/fastv_dllm/dllm-eval:$REPO${PYTHONPATH:+:$PYTHONPATH}" python -u -m dllm_eval.score_humaneval --dataset "$DATASET" --results "$RUN_DIR/output" \
       --output "$RUN_DIR/output/humaneval_pass_at_1.json"
 fi
 if [[ ${TASK:-gsm8k} == mbpp ]]; then
-    python -u -m fastv_dllm.score_mbpp --dataset "$DATASET" --results "$RUN_DIR/output" \
+    PYTHONPATH="$REPO/fastv_dllm/dllm-eval:$REPO${PYTHONPATH:+:$PYTHONPATH}" python -u -m dllm_eval.score_mbpp --dataset "$DATASET" --results "$RUN_DIR/output" \
       --output "$RUN_DIR/output/mbpp_pass_at_1.json"
 fi

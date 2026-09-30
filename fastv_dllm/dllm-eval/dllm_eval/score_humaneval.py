@@ -9,7 +9,7 @@ import sys
 import tempfile
 
 def clean_completion(prompt, generated, entry_point):
-    root = Path(__file__).resolve().parents[1] / "v1" / "llada"
+    root = Path(__file__).resolve().parents[3] / "v1" / "llada"
     sys.path.insert(0, str(root))
     from sanitize import sanitize
     body = generated.split("```python\n", 1)[-1].split("```", 1)[0]

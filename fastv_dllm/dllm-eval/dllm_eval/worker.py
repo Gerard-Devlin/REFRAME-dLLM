@@ -2,7 +2,7 @@
 
 Legacy rank shards are immutable. New prompts are atomically committed as one
 file each; a crash after that commit can never force the prompt to run again.
-GPU workers keep one model loaded and steal work from the longest remaining job.
+GPU workers keep one model loaded and consume round-robin shards of one task.
 """
 from __future__ import annotations
 
@@ -18,8 +18,9 @@ import sys
 import time
 from types import SimpleNamespace
 
-from .elastic_work import ElasticQueue, load_completed_records
-from .smart_paper_scheduler import build_jobs
+from .queue import ElasticQueue, load_completed_records
+from fastv_dllm.smart_paper_scheduler import build_jobs
+from .protocol import main_jobs, main_config
 
 
 CODE_FILES = ("llada_evaluate.py", "llada_decode.py", "llada_backend.py",
@@ -99,12 +100,23 @@ def initialize(args):
     manifest_path = root / "elastic" / "manifest.json"
     if manifest_path.exists() and not args.plan_only:
         raise ValueError("Already initialized; run scheduler to resume the existing manifest")
-    files = {name: digest(Path(__file__).parent / name) for name in CODE_FILES}
-    from .llada_common import MODEL_ID, REVISION
+    files = {name: digest(Path(__file__).resolve().parents[2] / name) for name in CODE_FILES}
+    from fastv_dllm.llada_common import MODEL_ID, REVISION
     items = []
-    for job in build_jobs({task: getattr(args, task + "_dataset")
+    matrix = getattr(args, "matrix", "components")
+    if matrix == "main" and any(root.glob("*/output")):
+        raise ValueError("New main table requires a fresh run directory; no historical results imported")
+    builder = main_jobs if matrix == "main" else build_jobs
+    for job in builder({task: getattr(args, task + "_dataset")
                            for task in ("gsm8k", "math", "humaneval", "mbpp")}):
         config = eval_args(job)
+        if matrix == "main":
+            protocol = main_config()
+            if (protocol["model"], protocol["revision"]) != (MODEL_ID, REVISION):
+                raise ValueError("Protocol checkpoint does not match the model adapter")
+            config.update(block_length=protocol["block_length"], threshold=protocol["threshold"],
+                          prune_after_layer=protocol["ours"]["prune_after_layer"],
+                          support_keep_ratio=protocol["ours"]["support_keep_ratio"])
         identity = dict(model=MODEL_ID, revision=REVISION, dataset_sha256=digest(job.dataset),
                         configuration=config, implementation=files)
         item = dict(name=job.name, job=asdict(job), args=config, identity=identity)
@@ -147,22 +159,26 @@ def initialize(args):
     print(f"Estimated remaining GPU-hours={remaining/3600:.2f}; "
           f"six-GPU ideal hours={remaining/3600/6:.2f}", flush=True)
     if not args.plan_only:
-        atomic_json(manifest_path, dict(version=1, created_at=time.time(),
+        atomic_json(manifest_path, dict(version=1, matrix=matrix,
+                                       protocol=main_config() if matrix == "main" else None, created_at=time.time(),
                                        jobs=items, implementation=files))
+        if matrix == "main":
+            from .table import write_table
+            write_table(root)
 
 
 def load_manifest(root):
     manifest = json.loads((Path(root) / "elastic" / "manifest.json").read_text())
     for name, expected in manifest["implementation"].items():
-        if digest(Path(__file__).parent / name) != expected:
+        if digest(Path(__file__).resolve().parents[2] / name) != expected:
             raise ValueError(f"Decoder source changed during campaign: {name}")
     return manifest
 
 
 def make_record(model, tokenizer, sample, index, config):
     # Deliberately use the existing decoder/timer/postprocessor unchanged.
-    from .llada_evaluate import run_method, postprocess_output, math_answer
-    from .llada_common import prompt_ids, extract_answer
+    from fastv_dllm.llada_evaluate import run_method, postprocess_output, math_answer
+    from fastv_dllm.llada_common import prompt_ids, extract_answer
     paper = sample.get("paper_prompt")
     text = paper or sample["question"] if config.task == "gsm8k" else (
         paper if paper is not None else sample["prompt"])
@@ -189,7 +205,7 @@ def make_record(model, tokenizer, sample, index, config):
 
 
 def worker(args):
-    from .wait_for_idle_gpus import snapshot
+    from fastv_dllm.wait_for_idle_gpus import snapshot
     # Check again before CUDA initialization; never use a busy card just because
     # a scheduler saw it idle some seconds earlier.
     rows = snapshot({args.gpu}, 1024, 5)
@@ -202,8 +218,8 @@ def worker(args):
         if digest(item["job"]["dataset"]) != item["identity"]["dataset_sha256"]:
             raise ValueError("Dataset content changed")
     import torch
-    from .llada_evaluate import load_model, run_method
-    from .llada_common import load_samples, prompt_ids
+    from .models.llada import load_model, run_method
+    from fastv_dllm.llada_common import load_samples, prompt_ids
     torch.cuda.set_device(0)
     model, tokenizer = load_model("cuda:0")
     samples, warmed = {}, set()
@@ -218,19 +234,16 @@ def worker(args):
     signal.signal(signal.SIGINT, stop)
     count = 0
     while not stopping and not stop_path.exists():
-        states = {name: queue.status() for name, queue in queues.items()}
-        available = sorted(jobs, key=lambda item: (
-            -states[item["name"]]["pending"]*item["seconds_per_prompt"], item["name"]))
+        dispatch_path = args.run_root / "elastic" / "dispatch.json"
+        dispatch = json.loads(dispatch_path.read_text()) if dispatch_path.exists() else {}
+        if dispatch.get("all_complete"):
+            break
+        assigned = dispatch.get("assignments", {}).get(str(args.gpu))
         chosen, lease = None, None
-        for item in available:
-            if states[item["name"]]["pending"]:
-                lease = queues[item["name"]].claim()
-                if lease is not None:
-                    chosen = item
-                    break
-        if chosen is None:
-            if all(state["complete"] for state in states.values()):
-                break
+        if assigned and assigned["pid"] == os.getpid():
+            chosen = next(item for item in jobs if item["name"] == dispatch["job"])
+            lease = queues[chosen["name"]].claim(assigned["indices"])
+        if lease is None:
             time.sleep(2)
             continue
         item, name = chosen, chosen["name"]
@@ -248,7 +261,8 @@ def worker(args):
         if name not in samples:
             samples[name] = load_samples(Path(config.dataset), config.limit, config.task)
         atomic_json(status_path, dict(pid=os.getpid(), gpu=args.gpu, job=name, status="running",
-                                     index=index, since=time.time(), completed=count))
+                                     index=index, rank=assigned["rank"], world_size=assigned["world_size"],
+                                     since=time.time(), completed=count))
         if name not in warmed:
             warmup = prompt_ids(tokenizer, "What is one plus one?", "gsm8k")
             for method in config.methods:
@@ -261,12 +275,13 @@ def worker(args):
         # A monitor can ask for drain when someone starts on our card. Keep the
         # contested timing separately and put the prompt back; never mix it into
         # the uncontended paper measurements.
-        if stop_path.exists():
+        if stop_path.exists() and any(word in stop_path.read_text() for word in ("collision", "disappeared")):
             atomic_json(path.parent / "contended" / f"{index:06d}.{os.getpid()}.json", record)
             queue.release(lease)
             break
         record["execution"] = dict(pid=os.getpid(), gpu=args.gpu, finished_at=time.time(),
-                                   identity=queue.identity_sha256, scheduling="elastic_batch1")
+                                   identity=queue.identity_sha256, scheduling="one_task_round_robin",
+                                   rank=assigned["rank"], world_size=assigned["world_size"])
         atomic_json(path, record)
         queue.complete(lease)
         count += 1
@@ -277,8 +292,8 @@ def worker(args):
 
 
 def finalize(args):
-    from .llada_evaluate import aggregate
-    from .llada_common import MODEL_ID, REVISION, load_samples
+    from fastv_dllm.llada_evaluate import aggregate
+    from fastv_dllm.llada_common import MODEL_ID, REVISION, load_samples
     manifest = load_manifest(args.run_root)
     item = next(item for item in manifest["jobs"] if item["name"] == args.job)
     rows = records_for(args.run_root, item)
@@ -304,15 +319,16 @@ def finalize(args):
     report = dict(stage="evaluate", model=MODEL_ID, revision=REVISION,
                   dataset=config["dataset"], dataset_sha256=item["identity"]["dataset_sha256"],
                   ids=[s.get("id", s.get("task_id")) for s in samples],
-                  world_size=1, scheduling="independent prompt workers, batch=1",
+                  world_size=max((row.get("execution", {}).get("world_size", 1) for row in records), default=1),
+                  scheduling="one task; remaining_ids[rank::world_size]; batch=1 per GPU",
                   configuration=config | {"output":str(output)},
                   implementation=manifest["implementation"],
                   results=aggregate(records, config["methods"]),
                   scope="Original decoder and timers; elastic prompt assignment only")
     atomic_json(old, report)
     task = config["task"]
-    if task in ("math", "humaneval", "mbpp"):
-        filename = "math_exact_match.json" if task == "math" else f"{task}_pass_at_1.json"
+    if task in ("math", "humaneval", "mbpp") or (task == "gsm8k" and manifest.get("matrix") == "main"):
+        filename = f"{task}_exact_match.json" if task in ("gsm8k", "math") else f"{task}_pass_at_1.json"
         # Existing code scores are reusable only if they cover the full job.
         score = output / filename
         if score.exists():
@@ -323,8 +339,8 @@ def finalize(args):
             scored_ids = {str(row.get("id", row.get("task_id"))) for row in details}
             if scored_ids != {str(row["id"]) for row in records}:
                 raise ValueError(f"Existing score has wrong prompt IDs: {score}")
-            if task == "math" and existing_score["provenance"]["dataset_sha256"] != item["identity"]["dataset_sha256"]:
-                raise ValueError("Existing MATH score has different dataset provenance")
+            if task in ("gsm8k", "math") and existing_score["provenance"]["dataset_sha256"] != item["identity"]["dataset_sha256"]:
+                raise ValueError("Existing score has different dataset provenance")
         if not score.exists():
             # Make a validated view: legacy raw shards may end in a truncated
             # write after interruption, which must not be silently reparsed.
@@ -335,7 +351,7 @@ def finalize(args):
                 for record in records:
                     stream.write(json.dumps(record, ensure_ascii=False) + "\n")
             os.replace(temporary, view / "rank_0.jsonl")
-            command = [sys.executable, "-m", "fastv_dllm.score_"+task,
+            command = [sys.executable, "-m", "dllm_eval.score_"+task,
                        "--dataset", config["dataset"], "--results", str(view),
                        "--output", str(score)]
             if task == "math":
@@ -345,7 +361,11 @@ def finalize(args):
         for method in config["methods"]:
             result = report["results"][method]
             result["provisional_accuracy"] = result["accuracy"]
-            if task == "math":
+            if task == "gsm8k":
+                result["accuracy"] = scored["results"][method]["flexible-extract"]
+                result["strict_match"] = scored["results"][method]["strict-match"]
+                result["accuracy_metric"] = "lm_eval.gsm8k.exact_match,flexible-extract"
+            elif task == "math":
                 result["accuracy"] = scored["results"][method]["exact_match"]
                 result["accuracy_metric"] = "lm_eval.minerva_math.exact_match"
                 result["math_verify"] = scored["results"][method].get("math_verify")
@@ -366,6 +386,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
     init = sub.add_parser("initialize")
     init.add_argument("--plan-only", action="store_true")
+    init.add_argument("--matrix", choices=("main", "components"), default="components")
     for task in ("gsm8k", "math", "humaneval", "mbpp"):
         init.add_argument(f"--{task}-dataset", type=Path, required=True)
     work = sub.add_parser("worker")

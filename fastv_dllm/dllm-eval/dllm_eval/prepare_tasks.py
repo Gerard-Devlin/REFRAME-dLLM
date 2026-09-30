@@ -77,7 +77,8 @@ def export_math(task_root, output):
     from datasets import load_dataset
     fewshots = literal_function_result(task_root / "minerva_math" / "utils.py",
                                        "list_fewshot_samples")
-    prefix = "\n\n".join(math_prompt(row) + row["solution"] for row in fewshots) + "\n\n"
+    # lm-eval joins doc_to_text and doc_to_target with target_delimiter=" ".
+    prefix = "\n\n".join(math_prompt(row) + " " + row["solution"] for row in fewshots) + "\n\n"
     rows = []
     for config in MATH_CONFIGS:
         dataset = load_dataset("EleutherAI/hendrycks_math", config,

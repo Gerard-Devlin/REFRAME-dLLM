@@ -1,0 +1,23 @@
+{
+  "model": "GSAI-ML/LLaDA-8B-Instruct",
+  "revision": "08b83a6feb34df1a6011b80c3c00c7563e963b07",
+  "backend": "flash",
+  "dtype": "bfloat16",
+  "batch_size_per_gpu": 1,
+  "generation_lengths": [256, 512],
+  "block_length": 32,
+  "threshold": 0.9,
+  "ours": {"method": "flash_fastv_head", "prune_after_layer": 4, "support_keep_ratio": 0.3125},
+  "datasets": {
+    "gsm8k": {"examples": 1319, "fewshot": 5},
+    "humaneval": {"examples": 164, "fewshot": 0},
+    "mbpp": {"examples": 500, "fewshot": 3},
+    "math": {"examples": 5000, "fewshot": 4}
+  },
+  "rows": [
+    {"name": "LLaDA-original", "job_label": "llada", "cache": "none", "decoding": "single", "method": "flash_native"},
+    {"name": "Fast-dLLM v1", "job_label": "fastdllm_ours_cache", "cache": "prefix", "decoding": "threshold", "method": "flash_native"},
+    {"name": "Ours", "job_label": "fastdllm_ours_cache", "cache": "prefix", "decoding": "threshold", "method": "flash_fastv_head"}
+  ],
+  "note": "Fixed configuration before fresh evaluation. Fast-dLLM v1 row explicitly uses PrefixCache. FastV includes active-position output head optimization."
+}

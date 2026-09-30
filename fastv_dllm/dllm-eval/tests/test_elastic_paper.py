@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from fastv_dllm import elastic_paper as paper
+from dllm_eval import worker as paper
 from fastv_dllm.llada_common import MODEL_ID, REVISION
 from fastv_dllm.smart_paper_scheduler import Job
 

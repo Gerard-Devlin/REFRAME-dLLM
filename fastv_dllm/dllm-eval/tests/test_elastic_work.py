@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from fastv_dllm.elastic_work import ElasticQueue, load_completed_records
+from dllm_eval.queue import ElasticQueue, load_completed_records
 
 
 def _consume(root, output):
@@ -70,8 +70,29 @@ def test_live_claim_never_expires_and_release(tmp_path):
     assert queue.claim().indices == (0,)
 
 
+def test_rank_shards_and_membership_change_do_not_duplicate_live_claims(tmp_path):
+    from dllm_eval.scheduler import shard_indices
+    queue = ElasticQueue(tmp_path, total=13, identity={}, completed_indices=[0, 3, 7])
+    plan = shard_indices(queue.remaining_indices(), {0: 100, 2: 200, 7: 300})
+    leases = [queue.claim(row["indices"]) for row in plan.values()]
+    assert len({lease.indices[0] for lease in leases}) == 3
+    queue.complete(leases[0])
+    queue.release(leases[1])  # a worker leaving makes its prompt available again
+    new_plan = shard_indices(queue.remaining_indices(), {0: 100, 7: 300})
+    completed = []
+    for row in new_plan.values():
+        while (lease := queue.claim(row["indices"])) is not None:
+            completed.extend(lease.indices)
+            queue.complete(lease)
+    assert leases[2].indices[0] not in completed  # live claim cannot be stolen
+    queue.complete(leases[2])
+    assert queue.status()["complete"]
+    assert queue.remaining_indices() == []
+    assert queue.claim([]) is None
+
+
 def test_recover_only_proven_dead_same_host(tmp_path, monkeypatch):
-    import fastv_dllm.elastic_work as module
+    import dllm_eval.queue as module
     queue = ElasticQueue(tmp_path, total=3, identity={})
     lease = queue.claim()
     state = json.loads(queue.path.read_text())

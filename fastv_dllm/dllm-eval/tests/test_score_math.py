@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from fastv_dllm.score_math import extract_metric_ast, read_records, score_record, summarize
+from dllm_eval.score_math import extract_metric_ast, read_records, score_record, summarize
 
 
 def fixture_source():
@@ -124,7 +124,7 @@ def test_unequal_method_sets_rejected():
 
 def test_official_source_when_available():
     """Integration: require real installed extraction/normalization semantics."""
-    from fastv_dllm.score_math import installed_utils
+    from dllm_eval.score_math import installed_utils
     try:
         path = installed_utils()
     except RuntimeError:

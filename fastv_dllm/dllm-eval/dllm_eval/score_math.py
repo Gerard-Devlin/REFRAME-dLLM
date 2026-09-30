@@ -84,7 +84,7 @@ def load_metric(path, include_math_verify=False):
     namespace = {
         "re": re, "signal": signal, "Optional": Optional,
         "sympy": sympy, "parse_latex": parse_latex,
-        "eval_logger": logging.getLogger("fastv_dllm.score_math"),
+        "eval_logger": logging.getLogger("dllm_eval.score_math"),
     }
     source = Path(path).read_text(encoding="utf-8")
     tree = extract_metric_ast(source, str(path))

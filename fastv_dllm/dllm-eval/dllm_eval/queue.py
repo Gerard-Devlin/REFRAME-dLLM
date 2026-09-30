@@ -240,7 +240,17 @@ class ElasticQueue:
                 self._write(state)
             return recovered
 
-    def claim(self):
+    def remaining_indices(self):
+        """Unfinished IDs (including in-flight IDs), for round-robin repartition."""
+        with _file_lock(self.lock_path):
+            done = set(self._read()["completed"])
+            return [index for index in range(self.total) if index not in done]
+
+    def claim(self, allowed_indices=None):
+        # Match lmms-eval's per-rank document iterator, while retaining atomic
+        # ownership across a worker restart or a change in available GPU count.
+        allowed = (range(self.total) if allowed_indices is None else
+                   sorted(self._indices(allowed_indices)))
         with _file_lock(self.lock_path):
             state = self._read()
             recovered = self._recover(state)
@@ -248,7 +258,7 @@ class ElasticQueue:
             for owner in state["active"].values():
                 occupied.update(owner["indices"])
             indices = []
-            for index in range(self.total):
+            for index in allowed:
                 if index not in occupied:
                     indices.append(index)
                     if len(indices) == self.chunk_size:
