@@ -8,7 +8,7 @@ import time
 
 import torch
 
-from fastv_dllm.common import extract_answer, prompt_ids
+from focus_dllm.common import extract_answer, prompt_ids
 from .collect import distributed
 from .core import EOS_ID, REVISION, atomic_json, bootstrap_interval, file_sha256, stable_u64
 from .decode import generate_fixed_quota

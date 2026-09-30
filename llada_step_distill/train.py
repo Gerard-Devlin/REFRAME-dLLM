@@ -13,7 +13,7 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from fastv_dllm.common import extract_answer, prompt_ids
+from focus_dllm.common import extract_answer, prompt_ids
 from .collect import distributed
 from .core import ExperimentConfig, SEED, atomic_json, digest, read_json, schedule_factor
 from .data import AlignedShardDataset, build_acceleration_state, build_retention_state

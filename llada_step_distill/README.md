@@ -3,7 +3,7 @@
 This directory contains an isolated experiment for teaching the pinned
 `GSAI-ML/LLaDA-8B-Instruct@08b83a6feb34df1a6011b80c3c00c7563e963b07`
 checkpoint to match two teacher denoising updates with one student update. It does
-not modify `v1/`, `v2/`, or `fastv_dllm/`.
+not modify `v1/`, `v2/`, or `focus_dllm/`.
 
 The experiment intentionally has a hard pre-training gate. `audit` measures the
 unmodified teacher at 16 and 32 fixed-quota steps per 32-token block. If their

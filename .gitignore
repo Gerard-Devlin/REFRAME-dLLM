@@ -38,4 +38,6 @@ fast_dvlm/data/ALLaVA-4V/
 /llada_step_distill/prepared/
 /llada_step_distill/supervision/
 /fastv_dllm/dllm-eval/runs/
-/fastv_dllm/dllm-eval/runs/
+/focus_dllm/dllm-eval/runs/
+/fastv_dllm/runs/
+/focus_dllm/runs/
