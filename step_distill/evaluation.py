@@ -39,7 +39,7 @@ def compare(reference,candidate):
 
 @torch.no_grad()
 def evaluate_models(models,tokenizer,dataset,rank,world,thresholds=(.90,),split='dev'):
-    from competitor_budget.evaluate import prompt_ids,extract_answer
+    from .gsm8k import prompt_ids,extract_answer
     rows=gsm_rows(dataset,split); local=[]
     names=list(models)
     for model in models.values(): generate(model,prompt_ids(tokenizer,rows[rank%len(rows)]['question']))

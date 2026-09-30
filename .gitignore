@@ -31,8 +31,9 @@ fast_dvlm/data/ALLaVA-4V/
 /relation_block/
 /relation_diffusion/
 /relation_update/
+/competitor_budget/
+/precision_path/
 /denoising_dag/runs/
-/precision_path/runs/
 /step_distill/runs/
 /llada_step_distill/runs/
 /llada_step_distill/prepared/

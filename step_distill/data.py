@@ -7,7 +7,7 @@ from .trajectory import generate,synchronize
 from .runtime import gather,barrier,gate
 
 def splits(args,tokenizer):
-    from competitor_budget.evaluate import prompt_ids
+    from .gsm8k import prompt_ids
     return prompt_splits(args.data,[prompt_ids(tokenizer,r['question']) for r in read(args.dataset)])
 
 def parity(teacher,student,record):
