@@ -373,6 +373,8 @@ def finalize(args):
                 result["accuracy_metric"] = "pass@1"
         report["scoring_artifact"] = str(score)
         atomic_json(old, report)
+    from .result_log import log_task_result
+    log_task_result(args.run_root, args.job, report, manifest.get("protocol"))
     (output.parent / "exit_code").write_text("0\n")
     atomic_json(args.run_root / "elastic" / "finalized" / f"{args.job}.json",
                 dict(time=time.time(), examples=len(records), summary=str(old)))
