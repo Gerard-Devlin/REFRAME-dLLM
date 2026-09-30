@@ -58,7 +58,7 @@ class ProgressLog:
             meter = tqdm.format_meter(
                 job["completed"], job["total"], now - hist[0][0],
                 rate=rate if rate and rate > 0 else 1e-99,
-                prefix=f"{name} ", ascii=True, unit="prompt",
+                prefix=f"{name} ", ascii=False, unit="prompt",
                 bar_format="{desc}{percentage:5.1f}%|{bar:24}| {n_fmt}/{total_fmt}")
             eta = ((job["total"] - job["completed"]) / rate if rate and rate > 0 else None)
             speed = f"{rate*60:.2f}" if rate and rate > 0 else "?"

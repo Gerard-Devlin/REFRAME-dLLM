@@ -16,8 +16,8 @@
   },
   "rows": [
     {"name": "LLaDA-original", "job_label": "llada", "cache": "none", "decoding": "single", "method": "flash_native"},
-    {"name": "Fast-dLLM v1", "job_label": "fastdllm_ours_cache", "cache": "prefix", "decoding": "threshold", "method": "flash_native"},
-    {"name": "FOCUS-dLLM (Ours)", "job_label": "fastdllm_ours_cache", "cache": "prefix", "decoding": "threshold", "method": "flash_focus_head"}
+    {"name": "Fast-dLLM v1", "job_label": "fastdllm", "cache": "prefix", "decoding": "threshold", "method": "flash_native"},
+    {"name": "FOCUS-dLLM (Ours)", "job_label": "ours", "cache": "prefix", "decoding": "threshold", "method": "flash_focus_head"}
   ],
   "note": "Fixed configuration before fresh evaluation. Fast-dLLM v1 row explicitly uses PrefixCache. FOCUS-dLLM includes active-position output head optimization."
 }

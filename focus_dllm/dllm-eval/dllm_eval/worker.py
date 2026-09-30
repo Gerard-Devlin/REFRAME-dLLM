@@ -147,7 +147,8 @@ def initialize(args):
         # orders not-yet-started jobs and is replaced in status as workers run.
         estimate = (sum(measured) / len(measured) if measured else
                     job.gen * {"llada": .13, "cache": .046,
-                               "parallel_ours": .05, "fastdllm_ours_cache": .023}[job.label])
+                               "parallel_ours": .05, "fastdllm_ours_cache": .023,
+                               "fastdllm": .012, "ours": .011}[job.label])
         item.update(seconds_per_prompt=estimate, imported=len(rows))
         items.append(item)
         print(f"{job.name}: {len(rows)}/{job.limit}, remaining GPU h="

@@ -29,11 +29,9 @@ class Job:
 
 def main_jobs(datasets):
     config = main_config()
-    groups = {}
-    for row in config["rows"]:
-        key = (row["job_label"], row["cache"], row["decoding"])
-        groups.setdefault(key, []).append(row["method"])
-    groups = sorted(groups.items(), key=lambda pair: pair[0][0] == "llada")
-    return [Job(task, gen, label, cache, decoding, " ".join(methods), str(datasets[task]), spec["examples"])
+    # One row is one complete task, even when two rows share decoding settings.
+    # All GPUs finish this method's prompts before the next method begins.
+    return [Job(task, gen, row["job_label"], row["cache"], row["decoding"],
+                row["method"], str(datasets[task]), spec["examples"])
             for task, spec in config["datasets"].items() for gen in config["generation_lengths"]
-            for (label, cache, decoding), methods in groups]
+            for row in config["rows"]]

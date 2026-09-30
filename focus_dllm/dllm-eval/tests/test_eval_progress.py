@@ -12,6 +12,7 @@ def test_progress_resume_uses_only_new_completed_prompts_and_plain_lines():
     log = ProgressLog(30)
     lines = log.lines(state(), now=100)
     assert "900/1000" in lines[-1]
+    assert "\u2588" in lines[-1] and "#" not in lines[-1]
     assert "? prompt/min" in lines[-1]
     assert log.lines(state(906), now=110) == []
     lines = log.lines(state(912), now=130)
