@@ -34,10 +34,8 @@ fast_dvlm/data/ALLaVA-4V/
 /competitor_budget/
 /precision_path/
 /denoising_dag/runs/
-/step_distill/runs/
-/llada_step_distill/runs/
-/llada_step_distill/prepared/
-/llada_step_distill/supervision/
+/step_distill/
+/llada_step_distill/
 /fastv_dllm/dllm-eval/runs/
 /focus_dllm/dllm-eval/runs/
 /fastv_dllm/runs/

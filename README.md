@@ -2,8 +2,6 @@
 
 The active acceleration experiment in this fork is [FOCUS-dLLM](focus_dllm/),
 with evaluation in [dllm-eval](focus_dllm/dllm-eval/).
-The paused [v2 distillation](step_distill/README.md) and
-[LLaDA-8B distillation](llada_step_distill/README.md) experiments are retained.
 The original upstream project documentation follows.
 
 [![Project](https://img.shields.io/static/v1?label=Project&message=Github&color=blue&logo=github-pages)](https://nvlabs.github.io/Fast-dLLM)
