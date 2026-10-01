@@ -169,9 +169,10 @@ def proportional_flash(block, key_log_mass, key_expansion=None):
 
 class FocusV2Forward:
     """Recompute every live pool each call, without changing formal KV."""
-    def __init__(self, model, config=ProxyConfig()):
+    def __init__(self, model, config=ProxyConfig(), rotary_factory=None):
         config.validate(model.model.config.n_layers)
         self.model, self.config = model, config
+        self.rotary_factory = rotary_factory
         self.records = []
 
     @torch.no_grad()
@@ -226,7 +227,9 @@ class FocusV2Forward:
                             for _ in range(count)], device=ids.device, dtype=torch.long)
                 continue
             rotary = block.rotary_emb
-            block.rotary_emb = PositionedRotary(rotary, positions, len(tokens), past_length)
+            block.rotary_emb = (PositionedRotary(rotary, positions, len(tokens), past_length)
+                               if self.rotary_factory is None else
+                               self.rotary_factory.positioned(rotary, positions, len(tokens), past[0]))
             try:
                 if config.weighted and (partition.pool_count or config.force_mass_kernel):
                     with proportional_flash(block, log_mass, expansion):
