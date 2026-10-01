@@ -11,7 +11,7 @@ import torch.nn.functional as F
 
 from ..llada_common import MASK_ID
 from ..llada_decode import Result, _selected_positions, _sync
-from .backend import selected_forward
+from .padded_head import selected_forward
 from .focus_v2 import FocusV2Forward, ProxyConfig
 
 
@@ -24,6 +24,8 @@ def generate(model, prompt, *, gen_length=256, block_length=32, threshold=.90,
         raise ValueError('Positive block length must divide the canvas')
     if config is not None and config.block_length != block_length:
         raise ValueError('Decoder/pooling block mismatch')
+    if config is not None and config.head_min_rows!=32:
+        raise ValueError('Free generation requires the shared 32-row head control')
     forward = None if config is None else FocusV2Forward(model, config)
     canvas = torch.full((1, prompt.shape[1] + gen_length), MASK_ID,
                         dtype=torch.long, device=prompt.device)

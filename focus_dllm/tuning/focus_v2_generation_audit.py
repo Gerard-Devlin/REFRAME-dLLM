@@ -11,6 +11,7 @@ from . import focus_v2_decode
 from .focus_v2 import ProxyConfig
 from .competitors import select_samples, generation_prompt, write, digest
 from .run import load_model
+from .gpu_contract import check_binding
 
 
 def main():
@@ -18,9 +19,10 @@ def main():
     parser.add_argument('--dataset', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
+    binding=check_binding(required=True)
     assert not (args.output/'complete').exists(), 'Audit already completed'
     model, tokenizer = load_model('cuda:0')
-    report = dict(model=MODEL_ID, revision=REVISION, records=[],
+    report = dict(model=MODEL_ID, revision=REVISION, records=[],gpu_binding=binding,
         dataset_sha256=digest(args.dataset), implementation={p.name:digest(p)
         for p in Path(__file__).parent.glob('*.py')},
         scope='Two reused HumanEval development prompts; instrumented timings are not baseline speed')
@@ -48,8 +50,11 @@ def main():
         errors = [float((a['confidence']-b['confidence']).abs().max())
                   for a,b in zip(native_actions,active_actions)]
         assert all(torch.equal(a['selected'],b['selected']) for a,b in zip(native_actions,active_actions)), 'Native action changed'
-        assert max(errors) == 0., 'Shared head control changed confidence'
-        config = ProxyConfig(mass_implementation='repeat')
+        # Persist quantitative failures before rejecting them.
+        write(args.output/'head_errors.json',dict(id=sample.get('id',sample.get('task_id')),
+            errors=errors,maximum=max(errors),minimum_head_rows=32))
+        assert max(errors) == 0., 'Shared padded head control changed confidence'
+        config = ProxyConfig(mass_implementation='repeat',head_min_rows=32)
         with LLaDAAttentionBackend(model,'flash') as pool_engine, torch.no_grad():
             clean, clean_info = focus_v2_decode.generate(model,prompt,gen_length=128,config=config)
             traced, trace_info = focus_v2_decode.generate(model,prompt,gen_length=128,config=config,trace=True)

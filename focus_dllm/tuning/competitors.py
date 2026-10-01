@@ -259,7 +259,8 @@ def run_generation(args, model, tokenizer, ids, external):
                 from .focus_v2_decode import generate
                 config = None if name == "active_exact" else ProxyConfig(
                     layer=4, keep_ratio=.3125, exact_fraction=.25,
-                    weighted=name == "focus_v2", mass_implementation="repeat", block_length=args.block)
+                    weighted=name == "focus_v2", mass_implementation="repeat", block_length=args.block,
+                    head_min_rows=32)
                 result, mechanics = generate(model, prompt, gen_length=args.length,
                     block_length=args.block, threshold=args.threshold, config=config)
                 output, official_nfe = result.output[:, len(ids):], result.nfe
@@ -346,6 +347,8 @@ def main():
     if args.imports_only:
         print(json.dumps(dict(method=args.method, import_ok=True, adaptations=notes)), flush=True)
         return
+    from .gpu_contract import check_binding
+    binding=check_binding()
     from ..llada_common import MODEL_ID, REVISION, prompt_ids
     from ..llada_evaluate import postprocess_output, percentile
     from .suite import score
@@ -366,12 +369,13 @@ def main():
     if args.method == "dllm_cache":
         notes += ["Original pinned HF LLaDA class for official hook signature, not modified local v1 class"]
     if args.method in {"active_exact", "focus_v2", "focus_v2_unweighted"}:
-        notes += ["Shared active output head, native full-canvas warm calls, formal PrefixCache, >= threshold plus argmax",
+        notes += ["Shared minimum-32-row output head (padding timed), native full-canvas warm calls, formal PrefixCache, >= threshold plus argmax",
                   "No early EOS stop or prepared-RoPE optimization; active_exact isolates output-head engineering"]
     if args.method.startswith("focus_v2"):
         notes += ["FOCUS-v2: current shallow layer4 states pooled; deep future budget .3125, exact fraction .25",
                   "Repeat-mass attention pays full logical key length and two gathers; representative RoPE approximates members"]
     identity = dict(model=MODEL_ID, revision=REVISION, method=args.method, task=args.task,
+        gpu_binding=binding,
         length=args.length, block=args.block, threshold=args.threshold, low_threshold=args.low_threshold,
         batch_size=1, dtype="bfloat16", seed=1234, sample_seed=51713, offset=args.offset,
         fixed_quota_steps_per_block=args.steps_per_block if args.method in ("dkv_decode", "dllm_cache") else None,

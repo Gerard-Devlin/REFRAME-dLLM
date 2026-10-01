@@ -32,6 +32,7 @@ class ProxyConfig:
     block_length: int = 32
     # Numerical control only: singleton full attention with padded head shape.
     force_mass_kernel: bool = False
+    head_min_rows: int = 0
 
     def validate(self, layers):
         if not 1 <= self.layer < layers:
@@ -42,6 +43,8 @@ class ProxyConfig:
             raise ValueError('Invalid block length')
         if self.mass_implementation not in ('feature', 'repeat'):
             raise ValueError('Unknown mass implementation')
+        if self.head_min_rows<0:
+            raise ValueError('Invalid head row budget')
 
 
 @dataclass(frozen=True)
@@ -192,6 +195,10 @@ class FocusV2Forward:
         if (not future or config.keep_ratio == 1) and not config.force_mass_kernel:
             self.records.append(dict(identity=True, original_tokens=len(tokens),
                                      deep_tokens=len(tokens), future=len(future)))
+            if config.head_min_rows:
+                from .padded_head import selected_forward as padded_forward
+                return padded_forward(self.model,ids,targets,minimum=config.head_min_rows,
+                                      past_key_values=past_key_values,use_cache=False).logits
             return selected_forward(self.model, ids, torch.tensor(targets, device=ids.device),
                                     past_key_values=past_key_values, use_cache=False).logits
         core = self.model.model
@@ -241,16 +248,21 @@ class FocusV2Forward:
         compact = {p: i for i, p in enumerate(partition.positions)}
         gather = torch.tensor([compact[p] for p in targets], device=ids.device)
         hidden = core.transformer.ln_f(hidden).index_select(1, gather)
-        logits = (F.linear(hidden, core.transformer.wte.weight) if core.config.weight_tying
-                  else core.transformer.ff_out(hidden))
-        if core.config.scale_logits:
-            logits = logits * (1 / math.sqrt(core.config.d_model))
+        if config.head_min_rows:
+            from .padded_head import project
+            logits=project(self.model,hidden,config.head_min_rows)
+        else:
+            logits = (F.linear(hidden, core.transformer.wte.weight) if core.config.weight_tying
+                      else core.transformer.ff_out(hidden))
+            if core.config.scale_logits:
+                logits = logits * (1 / math.sqrt(core.config.d_model))
         self.records.append(dict(identity=len(partition.positions) == len(tokens),
                                  original_tokens=len(tokens), deep_tokens=len(partition.positions),
                                  future=len(future), exact=partition.exact_count,
                                  pools=partition.pool_count, future_mass=len(future),
                                  weighted=config.weighted, rope_policy='middle_member',
                                  mass_implementation=config.mass_implementation,
+                                 head_min_rows=config.head_min_rows,
                                  deep_key_tokens=(past_length + len(tokens) if expansion is not None
                                                   else past_length + len(partition.positions))))
         return logits

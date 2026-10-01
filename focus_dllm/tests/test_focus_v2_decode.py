@@ -50,7 +50,7 @@ def test_free_identity_pool_preserves_native_tokens_and_budget(weighted):
     model, prompt = TinyModel().eval(), torch.tensor([[1, 2]])
     expected, _ = decoder.generate(model, prompt, gen_length=8, block_length=4)
     result, details = decoder.generate(model, prompt, gen_length=8, block_length=4,
-        config=ProxyConfig(layer=1, keep_ratio=1., block_length=4, weighted=weighted))
+        config=ProxyConfig(layer=1, keep_ratio=1., block_length=4, weighted=weighted,head_min_rows=32))
     assert torch.equal(result.output, expected.output) and result.nfe == expected.nfe
     assert len(details['pooling_calls']) == details['refinement_calls']
     assert details['actions'] is None
@@ -72,7 +72,8 @@ def test_pooled_generation_never_releases_future_or_mutates_formal_prefix(monkey
             return value
     monkeypatch.setattr(decoder, 'FocusV2Forward', Observed)
     result, info = decoder.generate(model, prompt, gen_length=8, block_length=4,
-        config=ProxyConfig(layer=1, keep_ratio=.5, mass_implementation='repeat', block_length=4), trace=True)
+        config=ProxyConfig(layer=1, keep_ratio=.5, mass_implementation='repeat', block_length=4,
+                           head_min_rows=32), trace=True)
     assert torch.equal(result.output[:, :2], prompt)
     assert all(all(2 + a['block'] * 4 <= p < 6 + a['block'] * 4 for p in a['positions'])
                for a in info['actions'])
