@@ -96,5 +96,27 @@ class Checks(unittest.TestCase):
             with NativeRowOps(self.model):self.block._scaled_dot_product_attention(q,q,q,attn_mask=torch.ones(3,3))
         self.assertNotIn('_scaled_dot_product_attention',self.block.__dict__)
 
+    def test_linear_only_does_not_patch_norm_or_attention(self):
+        with NativeRowOps(self.model,('linear',)) as control:
+            self.block.q_proj(self.input)
+            self.block.attn_norm(self.input)
+            self.assertNotIn('forward',self.block.attn_norm.__dict__)
+            self.assertNotIn('_scaled_dot_product_attention',self.block.__dict__)
+        self.assertEqual(control.stats['linear_rows'],4)
+        self.assertEqual(control.stats['normalization_rows'],0)
+        self.assertEqual(control.stats['attention_rows'],0)
+
+    def test_attention_only_does_not_patch_linear(self):
+        q=torch.randn(4,1,3,4,dtype=torch.double)
+        with NativeRowOps(self.model,('attention',)) as control:
+            self.block._scaled_dot_product_attention(q,q,q)
+            self.assertNotIn('forward',self.block.q_proj.__dict__)
+        self.assertEqual(control.stats['attention_rows'],4)
+        self.assertEqual(control.stats['linear_rows'],0)
+
+    def test_reject_invalid_operator_groups(self):
+        for parts in ((),('linear','linear'),('other',)):
+            with self.assertRaises(ValueError):NativeRowOps(self.model,parts)
+
 
 if __name__=='__main__':unittest.main(verbosity=2)

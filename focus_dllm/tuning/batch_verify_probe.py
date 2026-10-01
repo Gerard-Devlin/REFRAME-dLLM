@@ -91,13 +91,17 @@ def main():
     from ..llada_common import MODEL_ID, REVISION, MASK_ID, prompt_ids
     from ..llada_decode import generate_prefix_cache, generate_dual_cache
     from .native_row_ops import NativeRowOps
+    from .reduction_policy import BF16Reduction
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--datasets', type=Path, nargs=3, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--repeats', type=int, default=9)
     parser.add_argument('--cache-mode', choices=('prefix','dual'), default='prefix')
-    parser.add_argument('--operator-mode', choices=('batched','native_rows'), default='batched')
+    row_parts={'native_rows':('linear','normalization','attention'),
+               'linear_rows':('linear',),'attention_rows':('attention',),'norm_rows':('normalization',)}
+    parser.add_argument('--operator-mode', choices=('batched',*row_parts), default='batched')
+    parser.add_argument('--bf16-reduction',choices=('default','disable_reduced'),default='default')
     parser.add_argument('--workload-indices', type=int, nargs='+', default=None,
         help='Explicit subset of the six predeclared workloads; unavailable states are never replaced')
     args = parser.parse_args()
@@ -109,7 +113,7 @@ def main():
     args.output.mkdir(exist_ok=False)
     implementation = {p.name: digest(p) for p in Path(__file__).parent.glob('*.py')}
     report = dict(model=MODEL_ID, revision=REVISION, gpu_binding=binding,cache_mode=args.cache_mode,
-        operator_mode=args.operator_mode,
+        operator_mode=args.operator_mode,bf16_reduction=args.bf16_reduction,
         implementation=implementation, records=[], dataset_sha256=[digest(p) for p in args.datasets],
         configuration=dict(repeats=args.repeats, seed=1234, sample_seed=51713, offset=0,
             lengths=[256, 512], block=32, threshold=.90, temperature=0, widths=[1, 2, 4],
@@ -138,8 +142,8 @@ def main():
                 continue
             wanted_prefix = len(ids) + block_index * 32
             captured, holder, pending = [], {}, {}
-            with LLaDAAttentionBackend(model, 'flash') as backend, (
-                NativeRowOps(model) if args.operator_mode=='native_rows' else nullcontext()
+            with BF16Reduction(args.bf16_reduction=='disable_reduced') as reduction, LLaDAAttentionBackend(model, 'flash') as backend, (
+                NativeRowOps(model, row_parts[args.operator_mode]) if args.operator_mode in row_parts else nullcontext()
             ) as row_ops:
                 clean = native(model, prompt, gen_length=length)
 
@@ -183,7 +187,9 @@ def main():
                 assert torch.equal(clean.output, observed.output) and clean.nfe == observed.nfe
                 record = dict(task=task, id=sample.get('id', sample.get('task_id')), length=length,
                     block_index=block_index, prefix_length=wanted_prefix, captured=len(captured),
-                    teacher_tokens_match=True, teacher_nfe=clean.nfe, variants=[])
+                    teacher_tokens_match=True, teacher_nfe=clean.nfe, teacher_seconds=clean.seconds,
+                    teacher_output_sha256=hashlib.sha256(json.dumps(clean.output[0,len(ids):].tolist()).encode()).hexdigest(),
+                    reduction_policy=reduction.audit,variants=[])
                 report['records'].append(record)
                 if not captured:
                     record['status'] = 'No ordinary states in the predeclared block; not replaced'

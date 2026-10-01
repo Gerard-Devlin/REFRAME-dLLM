@@ -9,8 +9,11 @@ import torch
 
 
 class NativeRowOps(AbstractContextManager):
-    def __init__(self, model):
+    def __init__(self, model, parts=('linear','normalization','attention')):
         self.model=model
+        self.parts=set(parts)
+        if not self.parts or len(self.parts)!=len(parts) or not self.parts<={'linear','normalization','attention'}:
+            raise ValueError('Unique, nonempty native operator groups required')
         self.saved=[]
         self.stats=dict(linear_rows=0,normalization_rows=0,attention_rows=0)
 
@@ -21,12 +24,12 @@ class NativeRowOps(AbstractContextManager):
     def __enter__(self):
         if self.saved:
             raise RuntimeError('Do not enter the same operator context twice')
-        if self.model.model.config.weight_tying:
+        if 'linear' in self.parts and self.model.model.config.weight_tying:
             raise ValueError('This control requires the native explicit Linear output head')
         normalizers={'attn_norm','ff_norm','ln_f','q_norm','k_norm'}
         for name,module in self.model.named_modules():
-            kind=('linear_rows' if isinstance(module,torch.nn.Linear) else
-                  'normalization_rows' if name.split('.')[-1] in normalizers else None)
+            kind=('linear_rows' if 'linear' in self.parts and isinstance(module,torch.nn.Linear) else
+                  'normalization_rows' if 'normalization' in self.parts and name.split('.')[-1] in normalizers else None)
             if kind is None:
                 continue
             original=module.forward
@@ -42,7 +45,7 @@ class NativeRowOps(AbstractContextManager):
         # Enter AFTER the counting Flash backend, so every actual row attention
         # call goes through its counter. RoPE and native cache ownership stay
         # untouched; rows must already have independent writable Dual caches.
-        for block in self.model.model.transformer.blocks:
+        for block in (self.model.model.transformer.blocks if 'attention' in self.parts else ()):
             original=block._scaled_dot_product_attention
 
             def row_attention(q,k,v,*args,_original=original,**kwargs):
