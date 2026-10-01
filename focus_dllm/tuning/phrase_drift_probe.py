@@ -33,7 +33,8 @@ def read_block(logits, canvas, mask_id=MASK_ID):
     top_list=top.tolist()
     draft=[int(top_list[i]) if on else int(canvas[i]) for i,on in enumerate(active)]
     # Score the SAME literal argmax phrase at nearby positions from CURRENT
-    # probabilities. Pure unary score cannot beat the current argmax placement.
+    # probabilities. A partial span can prefer a more confident region; that
+    # does not improve the complete unary argmax path (other slots still count).
     scores=[[None]*(2*distance+1) for _ in range(n)]
     destinations=[];rows=[];columns=[]
     for b in range(n-size+1):
