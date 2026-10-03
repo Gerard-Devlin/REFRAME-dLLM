@@ -47,3 +47,33 @@ acceptance and whether saved cache work exceeds transaction overhead.
 
 No gold answer, unit test, or solution text may enter model input.  Original
 LLaDA/v1 results are reused rather than rerun.
+
+## Measured decision (2026-10-03)
+
+The row-count screen looked favorable (47,744 official regular+verify query
+rows versus 13,248 Relay rows across 138 cycles, an optimistic 3.60x ratio),
+but the real joint-forward gate rejected this version:
+
+- 77 real Flash cycles on three reused development prompts;
+- official regular+verify median: 57.80 ms;
+- padded 96-live/128-kernel-row Relay median: 56.07 ms;
+- aggregate measured state-level speedup: only 1.064x;
+- official acceptance: 202 of 1,106 proposals;
+- Relay acceptance: 77 of 1,106 proposals;
+- equal accepted-prefix length in only 40/77 cycles.
+
+The public cache was bitwise unchanged by the shadow pass and the official
+Flash output hashes matched the earlier trace, so this is not a cache-mutation
+artifact.  Two assumptions failed.  First, the existing Triton kernel rounds
+96 live rows to a 128-row tile, making the joint pass approximately as costly
+as the two original calls.  Second, the dependency-safe mask removes useful
+bidirectional conditioning and sharply reduces acceptance, especially on MATH.
+
+There is also a causal scheduling flaw in the original Relay story: a clean
+branch evaluated before the current verification outcome cannot produce the
+true next proposal conditioned on the newly accepted prefix.  Treating those
+logits as the next cycle would introduce a one-step stale state.  Therefore
+this Relay design stops at the state gate; it must not be promoted to a full
+generator or reported as a 3.60x method.  The preserved diagnostic is
+`results/relay_joint_20261003/diagnostic.json` (SHA256
+`ffac8d2140f37cf90feb89175ee291b4b69e3d919c17896d651b0e09036c9380`).
