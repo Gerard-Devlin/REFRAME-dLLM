@@ -1,0 +1,49 @@
+test_fixed_work_still_records_eos_without_free_early_stop (test_generation.GenerationTests.test_fixed_work_still_records_eos_without_free_early_stop) ... ok
+test_horizon_uses_first_discovered_group_not_first_sorted_eos (test_generation.GenerationTests.test_horizon_uses_first_discovered_group_not_first_sorted_eos) ... ok
+test_identity_repair_is_not_displaced_by_background_score (test_generation.GenerationTests.test_identity_repair_is_not_displaced_by_background_score) ... ok
+test_mask_cannot_masquerade_as_progress_but_eos_can (test_generation.GenerationTests.test_mask_cannot_masquerade_as_progress_but_eos_can) ... ok
+test_rejected_identity_is_not_legal_background (test_generation.GenerationTests.test_rejected_identity_is_not_legal_background) ... ok
+test_render_keeps_official_two_stage_output_semantics (test_generation.GenerationTests.test_render_keeps_official_two_stage_output_semantics) ... ok
+test_actual_two_tile_geometry_and_external_versions (test_handoff.HandoffTests.test_actual_two_tile_geometry_and_external_versions) ... ok
+test_gate_does_not_use_input_only_agreement_as_speed_evidence (test_handoff.HandoffTests.test_gate_does_not_use_input_only_agreement_as_speed_evidence) ... ok
+test_mask_invalid_confidence_and_rewrite_fail_closed (test_handoff.HandoffTests.test_mask_invalid_confidence_and_rewrite_fail_closed) ... ok
+test_no_cross_branch_label_path_in_32_layers (test_handoff.HandoffTests.test_no_cross_branch_label_path_in_32_layers) ... ok
+test_paired_input_is_exactly_independent_input_concatenation (test_handoff.HandoffTests.test_paired_input_is_exactly_independent_input_concatenation) ... ok
+test_transition_full_set_and_tie_order (test_handoff.HandoffTests.test_transition_full_set_and_tie_order) ... ok
+test_uninitialized_or_duplicate_physical_positions_rejected (test_handoff.HandoffTests.test_uninitialized_or_duplicate_physical_positions_rejected) ... ok
+test_first_mismatch_and_no_later_commit (test_match.MatchTests.test_first_mismatch_and_no_later_commit) ... ok
+test_invalid_statistics_fail_closed (test_match.MatchTests.test_invalid_statistics_fail_closed) ... ok
+test_low_confidence_argmax_is_separate_policy (test_match.MatchTests.test_low_confidence_argmax_is_separate_policy) ... ok
+test_match_does_not_bypass_special_token_policy (test_match.MatchTests.test_match_does_not_bypass_special_token_policy) ... ok
+test_full_reference_covers_each_initialized_position_once (test_mechanism.MechanismTests.test_full_reference_covers_each_initialized_position_once) ... ok
+test_instrumentation_keeps_decision_and_observes_before_return (test_mechanism.MechanismTests.test_instrumentation_keeps_decision_and_observes_before_return) ... ok
+test_private_cache_restores_objects_after_exception (test_mechanism.MechanismTests.test_private_cache_restores_objects_after_exception) ... ok
+test_actual_tensor_transaction (test_packet.PacketTests.test_actual_tensor_transaction) ... ok
+test_all_layer_source_isolation (test_packet.PacketTests.test_all_layer_source_isolation) ... ok
+test_all_pass_and_no_special_tail (test_packet.PacketTests.test_all_pass_and_no_special_tail) ... ok
+test_bad_probabilities_fail_closed (test_packet.PacketTests.test_bad_probabilities_fail_closed) ... ok
+test_budget_exhaustion_is_not_whole_epoch_abort (test_packet.PacketTests.test_budget_exhaustion_is_not_whole_epoch_abort) ... ok
+test_exactly_one_version_per_position (test_packet.PacketTests.test_exactly_one_version_per_position) ... ok
+test_first_failure_retains_prefix_and_one_correction (test_packet.PacketTests.test_first_failure_retains_prefix_and_one_correction) ... ok
+test_packet_capacity_includes_identity_repair (test_packet.PacketTests.test_packet_capacity_includes_identity_repair) ... ok
+test_promotion_never_installs_rejected_or_corrected_draft (test_packet.PacketTests.test_promotion_never_installs_rejected_or_corrected_draft) ... ok
+test_required_repair_not_silent_stale_identity (test_packet.PacketTests.test_required_repair_not_silent_stale_identity) ... ok
+test_summarizer_does_not_credit_baseline_safe_commits (test_packet.PacketTests.test_summarizer_does_not_credit_baseline_safe_commits) ... ok
+test_actual_call_geometry_covers_clean_unselected_positions (test_query_budget.QueryBudgetTests.test_actual_call_geometry_covers_clean_unselected_positions) ... ok
+test_all_layer_label_exclusion_and_one_version (test_query_budget.QueryBudgetTests.test_all_layer_label_exclusion_and_one_version) ... ok
+test_invalid_probabilities_and_versions_fail_closed (test_query_budget.QueryBudgetTests.test_invalid_probabilities_and_versions_fail_closed) ... ok
+test_legacy_geometry_and_decisions_are_unchanged (test_query_budget.QueryBudgetTests.test_legacy_geometry_and_decisions_are_unchanged) ... ok
+test_old_context_rotation_and_mandatory_identity_repairs (test_query_budget.QueryBudgetTests.test_old_context_rotation_and_mandatory_identity_repairs) ... ok
+test_rejected_draft_does_not_block_independent_unselected_root (test_query_budget.QueryBudgetTests.test_rejected_draft_does_not_block_independent_unselected_root) ... ok
+test_repair_capacity_caps_simultaneous_clean_roots (test_query_budget.QueryBudgetTests.test_repair_capacity_caps_simultaneous_clean_roots) ... ok
+test_shadow_readout_uses_only_projected_rows (test_query_budget.QueryBudgetTests.test_shadow_readout_uses_only_projected_rows) ... ok
+test_clean_conflict_stops_dependent_prefix (test_revision.RevisionTests.test_clean_conflict_stops_dependent_prefix) ... ok
+test_forbidden_and_invalid_values_fail_closed (test_revision.RevisionTests.test_forbidden_and_invalid_values_fail_closed) ... ok
+test_independent_clean_tail_survives_prefix_failure (test_revision.RevisionTests.test_independent_clean_tail_survives_prefix_failure) ... ok
+test_no_low_probability_audit_correction (test_revision.RevisionTests.test_no_low_probability_audit_correction) ... ok
+test_progress_capacity_and_no_duplicate_commits (test_revision.RevisionTests.test_progress_capacity_and_no_duplicate_commits) ... ok
+
+----------------------------------------------------------------------
+Ran 44 tests in 0.212s
+
+OK

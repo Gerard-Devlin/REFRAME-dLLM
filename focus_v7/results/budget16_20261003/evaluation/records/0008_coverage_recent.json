@@ -1,0 +1,3688 @@
+{
+  "index": 8,
+  "id": "HumanEval/141",
+  "method": "coverage_recent",
+  "result": {
+    "text": "def file_name_check(file_name):\n    # Check if there are more than three digits\n    if len(file_name) > 3:\n        return 'No'\n    \n    # Check if there is exactly one dot\n    if file_name.count('.') != 1:\n        return 'No'\n    \n    # Check if the part before the dot starts with a letter\n    if not file_name.split('.')[0].isalpha():\n        return 'No'\n    \n    # Check if the part after the dot is one of the valid extensions\n    if file_name.split('.')[1].lower() not in ['txt', 'exe', 'dll']:\n        return 'No'\n    \n    return 'Yes'",
+    "raw_token_ids": [
+      1413,
+      2296,
+      4150,
+      17652,
+      15604,
+      4150,
+      3535,
+      198,
+      305,
+      1260,
+      6616,
+      624,
+      947,
+      449,
+      778,
+      1040,
+      2274,
+      28477,
+      198,
+      305,
+      624,
+      6496,
+      15604,
+      4150,
+      8,
+      1944,
+      220,
+      18,
+      25,
+      198,
+      394,
+      944,
+      689,
+      4127,
+      6,
+      198,
+      263,
+      198,
+      305,
+      1260,
+      6616,
+      624,
+      947,
+      341,
+      6604,
+      810,
+      20402,
+      198,
+      305,
+      624,
+      2296,
+      4150,
+      22289,
+      23264,
+      4414,
+      2648,
+      220,
+      16,
+      25,
+      198,
+      394,
+      944,
+      689,
+      4127,
+      6,
+      198,
+      263,
+      198,
+      305,
+      1260,
+      6616,
+      624,
+      268,
+      914,
+      1749,
+      268,
+      20402,
+      9811,
+      391,
+      259,
+      7885,
+      198,
+      305,
+      624,
+      526,
+      2296,
+      4150,
+      19039,
+      23264,
+      56366,
+      15,
+      2192,
+      276,
+      5768,
+      16621,
+      198,
+      394,
+      944,
+      689,
+      4127,
+      6,
+      198,
+      263,
+      198,
+      305,
+      1260,
+      6616,
+      624,
+      268,
+      914,
+      1459,
+      268,
+      20402,
+      341,
+      810,
+      300,
+      268,
+      4977,
+      23309,
+      198,
+      305,
+      624,
+      2296,
+      4150,
+      19039,
+      23264,
+      56366,
+      16,
+      2192,
+      13547,
+      739,
+      526,
+      296,
+      9812,
+      29467,
+      1341,
+      689,
+      68763,
+      1341,
+      689,
+      102949,
+      2500,
+      25,
+      198,
+      394,
+      944,
+      689,
+      4127,
+      6,
+      198,
+      263,
+      198,
+      305,
+      944,
+      689,
+      8647,
+      6,
+      126348,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336
+    ],
+    "nfe": 71,
+    "packets": [
+      {
+        "k": 8,
+        "accepted": 4,
+        "progress": 5,
+        "correction": null,
+        "positions": [
+          234,
+          235,
+          232,
+          233,
+          239
+        ],
+        "tokens": [
+          4150,
+          17652,
+          1413,
+          2296,
+          198
+        ],
+        "dirty": [
+          239
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          236,
+          238,
+          240
+        ],
+        "tokens": [
+          15604,
+          3535,
+          305
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 1260,
+        "positions": [
+          241
+        ],
+        "tokens": [
+          1260
+        ],
+        "dirty": [
+          241
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 6616,
+        "positions": [
+          242
+        ],
+        "tokens": [
+          6616
+        ],
+        "dirty": [
+          242
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 947,
+        "positions": [
+          244
+        ],
+        "tokens": [
+          947
+        ],
+        "dirty": [
+          244
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          243,
+          245
+        ],
+        "tokens": [
+          624,
+          449
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          247,
+          246,
+          248
+        ],
+        "tokens": [
+          1040,
+          778,
+          2274
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          249
+        ],
+        "tokens": [
+          28477
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 198,
+        "positions": [
+          250
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [
+          250
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          251,
+          252
+        ],
+        "tokens": [
+          305,
+          624
+        ],
+        "dirty": [
+          252
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 6496,
+        "positions": [
+          253
+        ],
+        "tokens": [
+          6496
+        ],
+        "dirty": [
+          253
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 15604,
+        "positions": [
+          254
+        ],
+        "tokens": [
+          15604
+        ],
+        "dirty": [
+          254
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          255
+        ],
+        "tokens": [
+          4150
+        ],
+        "dirty": [
+          255
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 8,
+        "positions": [
+          256
+        ],
+        "tokens": [
+          8
+        ],
+        "dirty": [
+          256
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 220,
+        "positions": [
+          258
+        ],
+        "tokens": [
+          220
+        ],
+        "dirty": [
+          258
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 18,
+        "positions": [
+          259
+        ],
+        "tokens": [
+          18
+        ],
+        "dirty": [
+          259
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 1944,
+        "positions": [
+          257
+        ],
+        "tokens": [
+          1944
+        ],
+        "dirty": [
+          257
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 25,
+        "positions": [
+          260
+        ],
+        "tokens": [
+          25
+        ],
+        "dirty": [
+          260
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 4,
+        "progress": 5,
+        "correction": null,
+        "positions": [
+          261,
+          263,
+          262,
+          267,
+          265
+        ],
+        "tokens": [
+          198,
+          944,
+          394,
+          198,
+          4127
+        ],
+        "dirty": [
+          265
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 6,
+        "positions": [
+          266
+        ],
+        "tokens": [
+          6
+        ],
+        "dirty": [
+          266
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          264
+        ],
+        "tokens": [
+          689
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 198,
+        "positions": [
+          269
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [
+          269
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 4,
+        "progress": 4,
+        "correction": null,
+        "positions": [
+          268,
+          270,
+          272,
+          271
+        ],
+        "tokens": [
+          263,
+          305,
+          6616,
+          1260
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          273
+        ],
+        "tokens": [
+          624
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 947,
+        "positions": [
+          274
+        ],
+        "tokens": [
+          947
+        ],
+        "dirty": [
+          274
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 341,
+        "positions": [
+          275
+        ],
+        "tokens": [
+          341
+        ],
+        "dirty": [
+          275
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 198,
+        "positions": [
+          279
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [
+          279
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 4,
+        "correction": null,
+        "positions": [
+          276,
+          280,
+          277,
+          281
+        ],
+        "tokens": [
+          6604,
+          305,
+          810,
+          624
+        ],
+        "dirty": [
+          280,
+          277,
+          281
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          278
+        ],
+        "tokens": [
+          20402
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          283
+        ],
+        "tokens": [
+          4150
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          287,
+          282
+        ],
+        "tokens": [
+          2648,
+          2296
+        ],
+        "dirty": [
+          287,
+          282
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 4,
+        "correction": null,
+        "positions": [
+          289,
+          285,
+          286,
+          288
+        ],
+        "tokens": [
+          16,
+          23264,
+          4414,
+          220
+        ],
+        "dirty": [
+          289,
+          285,
+          286,
+          288
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 14,
+        "correction": null,
+        "positions": [
+          290,
+          291,
+          293,
+          295,
+          296,
+          292,
+          284,
+          297,
+          299,
+          294,
+          300,
+          298,
+          301,
+          302
+        ],
+        "tokens": [
+          25,
+          198,
+          944,
+          4127,
+          6,
+          394,
+          22289,
+          198,
+          198,
+          689,
+          305,
+          263,
+          1260,
+          6616
+        ],
+        "dirty": [
+          299,
+          294,
+          300,
+          298,
+          301,
+          302
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          303
+        ],
+        "tokens": [
+          624
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 268,
+        "positions": [
+          304
+        ],
+        "tokens": [
+          268
+        ],
+        "dirty": [
+          304
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 1749,
+        "positions": [
+          306
+        ],
+        "tokens": [
+          1749
+        ],
+        "dirty": [
+          306
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          307,
+          308
+        ],
+        "tokens": [
+          268,
+          20402
+        ],
+        "dirty": [
+          308
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 391,
+        "positions": [
+          310
+        ],
+        "tokens": [
+          391
+        ],
+        "dirty": [
+          310
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          309,
+          311
+        ],
+        "tokens": [
+          9811,
+          259
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 7885,
+        "positions": [
+          312
+        ],
+        "tokens": [
+          7885
+        ],
+        "dirty": [
+          312
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          314,
+          313
+        ],
+        "tokens": [
+          305,
+          198
+        ],
+        "dirty": [
+          314,
+          313
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 624,
+        "positions": [
+          315
+        ],
+        "tokens": [
+          624
+        ],
+        "dirty": [
+          315
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 526,
+        "positions": [
+          316
+        ],
+        "tokens": [
+          526
+        ],
+        "dirty": [
+          316
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          318
+        ],
+        "tokens": [
+          4150
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          317
+        ],
+        "tokens": [
+          2296
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 23264,
+        "positions": [
+          320
+        ],
+        "tokens": [
+          23264
+        ],
+        "dirty": [
+          320
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 19039,
+        "positions": [
+          319
+        ],
+        "tokens": [
+          19039
+        ],
+        "dirty": [
+          319
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          322
+        ],
+        "tokens": [
+          15
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          321,
+          323
+        ],
+        "tokens": [
+          56366,
+          2192
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 10,
+        "correction": null,
+        "positions": [
+          331,
+          326,
+          329,
+          330,
+          327,
+          328,
+          335,
+          334,
+          338,
+          324
+        ],
+        "tokens": [
+          4127,
+          16621,
+          944,
+          689,
+          198,
+          394,
+          198,
+          263,
+          6616,
+          276
+        ],
+        "dirty": [
+          338,
+          324
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 7,
+        "progress": 7,
+        "correction": null,
+        "positions": [
+          337,
+          325,
+          336,
+          333,
+          339,
+          332,
+          340
+        ],
+        "tokens": [
+          1260,
+          5768,
+          305,
+          198,
+          624,
+          6,
+          268
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          344,
+          343
+        ],
+        "tokens": [
+          20402,
+          268
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          342,
+          345
+        ],
+        "tokens": [
+          1459,
+          341
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 810,
+        "positions": [
+          346
+        ],
+        "tokens": [
+          810
+        ],
+        "dirty": [
+          346
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          347
+        ],
+        "tokens": [
+          300
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          348
+        ],
+        "tokens": [
+          268
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 23309,
+        "positions": [
+          350
+        ],
+        "tokens": [
+          23309
+        ],
+        "dirty": [
+          350
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 6,
+        "progress": 6,
+        "correction": null,
+        "positions": [
+          352,
+          351,
+          356,
+          353,
+          355,
+          357
+        ],
+        "tokens": [
+          305,
+          198,
+          19039,
+          624,
+          4150,
+          23264
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          354
+        ],
+        "tokens": [
+          2296
+        ],
+        "dirty": [
+          354
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 739,
+        "positions": [
+          362
+        ],
+        "tokens": [
+          739
+        ],
+        "dirty": [
+          362
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 6,
+        "correction": null,
+        "positions": [
+          359,
+          358,
+          360,
+          364,
+          361,
+          363
+        ],
+        "tokens": [
+          16,
+          56366,
+          2192,
+          296,
+          13547,
+          526
+        ],
+        "dirty": [
+          359,
+          358,
+          360,
+          364,
+          361,
+          363
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 8,
+        "correction": null,
+        "positions": [
+          365,
+          367,
+          366,
+          368,
+          371,
+          370,
+          374,
+          373
+        ],
+        "tokens": [
+          9812,
+          1341,
+          29467,
+          689,
+          689,
+          1341,
+          25,
+          2500
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 6,
+        "progress": 12,
+        "correction": null,
+        "positions": [
+          369,
+          372,
+          375,
+          376,
+          378,
+          377,
+          381,
+          379,
+          382,
+          383,
+          380,
+          384
+        ],
+        "tokens": [
+          68763,
+          102949,
+          198,
+          394,
+          689,
+          944,
+          198,
+          4127,
+          263,
+          198,
+          6,
+          305
+        ],
+        "dirty": [
+          381,
+          379,
+          382,
+          383,
+          380,
+          384
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 6,
+        "positions": [
+          388
+        ],
+        "tokens": [
+          6
+        ],
+        "dirty": [
+          388
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          386,
+          385,
+          387
+        ],
+        "tokens": [
+          689,
+          944,
+          8647
+        ],
+        "dirty": [
+          387
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 126081,
+        "positions": [
+          394
+        ],
+        "tokens": [
+          126081
+        ],
+        "dirty": [
+          394
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 5,
+        "correction": null,
+        "positions": [
+          393,
+          390,
+          389,
+          392,
+          391
+        ],
+        "tokens": [
+          126081,
+          126081,
+          126348,
+          126081,
+          126081
+        ],
+        "dirty": [
+          389,
+          392,
+          391
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 3,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 4977,
+        "positions": [
+          349
+        ],
+        "tokens": [
+          4977
+        ],
+        "dirty": [
+          349
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 2,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 914,
+        "positions": [
+          305
+        ],
+        "tokens": [
+          914
+        ],
+        "dirty": [
+          305
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 1,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          341
+        ],
+        "tokens": [
+          914
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      }
+    ],
+    "bootstrap_commits": 1,
+    "cold_proposal_positions": 154,
+    "cold_projection_calls": 66,
+    "committed_count": 163,
+    "first_eos": 158,
+    "discovered_eos": 162,
+    "truncated": false,
+    "horizon": 163,
+    "fixed_work": false,
+    "sdpa_calls": 0,
+    "approximation": "Conditional private audit, expanded clean coverage, approximate background KV",
+    "query_geometry": [
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 8,
+        "draft": 8,
+        "tracked": 40,
+        "query_rows": 64
+      },
+      {
+        "clean": 3,
+        "draft": 3,
+        "tracked": 55,
+        "query_rows": 64
+      },
+      {
+        "clean": 2,
+        "draft": 2,
+        "tracked": 58,
+        "query_rows": 64
+      },
+      {
+        "clean": 1,
+        "draft": 1,
+        "tracked": 61,
+        "query_rows": 64
+      }
+    ],
+    "tracked_history": [
+      {
+        "step": 0,
+        "tracked": [
+          237,
+          231,
+          230,
+          229,
+          228,
+          227,
+          226,
+          225,
+          224,
+          223,
+          222,
+          221,
+          220,
+          219,
+          218,
+          217
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 1,
+        "tracked": [
+          234,
+          235,
+          232,
+          233,
+          239,
+          237,
+          231,
+          230,
+          229,
+          228,
+          227,
+          226,
+          225,
+          224,
+          223,
+          222
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 2,
+        "tracked": [
+          236,
+          238,
+          240,
+          239,
+          233,
+          232,
+          235,
+          234,
+          237,
+          231,
+          230,
+          229,
+          228,
+          227,
+          226,
+          225
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 3,
+        "tracked": [
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232,
+          235,
+          234,
+          237,
+          231,
+          230,
+          229,
+          228,
+          227,
+          226
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 4,
+        "tracked": [
+          242,
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232,
+          235,
+          234,
+          237,
+          231,
+          230,
+          229,
+          228,
+          227
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 5,
+        "tracked": [
+          244,
+          242,
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232,
+          235,
+          234,
+          237,
+          231,
+          230,
+          229,
+          228
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 6,
+        "tracked": [
+          243,
+          245,
+          244,
+          242,
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232,
+          235,
+          234,
+          237,
+          231,
+          230
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 7,
+        "tracked": [
+          247,
+          246,
+          248,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232,
+          235,
+          234
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 8,
+        "tracked": [
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232,
+          235
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 9,
+        "tracked": [
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240,
+          238,
+          236,
+          239,
+          233,
+          232
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 10,
+        "tracked": [
+          251,
+          252,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240,
+          238,
+          236,
+          239
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 11,
+        "tracked": [
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240,
+          238,
+          236
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 12,
+        "tracked": [
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240,
+          238
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 13,
+        "tracked": [
+          255,
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241,
+          240
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 14,
+        "tracked": [
+          256,
+          255,
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242,
+          241
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 15,
+        "tracked": [
+          258,
+          256,
+          255,
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244,
+          242
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 16,
+        "tracked": [
+          259,
+          258,
+          256,
+          255,
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243,
+          244
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 17,
+        "tracked": [
+          257,
+          259,
+          258,
+          256,
+          255,
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245,
+          243
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 18,
+        "tracked": [
+          260,
+          257,
+          259,
+          258,
+          256,
+          255,
+          254,
+          253,
+          252,
+          251,
+          250,
+          249,
+          248,
+          246,
+          247,
+          245
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 19,
+        "tracked": [
+          261,
+          263,
+          262,
+          267,
+          265,
+          260,
+          257,
+          259,
+          258,
+          256,
+          255,
+          254,
+          253,
+          252,
+          251,
+          250
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 20,
+        "tracked": [
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260,
+          257,
+          259,
+          258,
+          256,
+          255,
+          254,
+          253,
+          252,
+          251
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 21,
+        "tracked": [
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260,
+          257,
+          259,
+          258,
+          256,
+          255,
+          254,
+          253,
+          252
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 22,
+        "tracked": [
+          269,
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260,
+          257,
+          259,
+          258,
+          256,
+          255,
+          254,
+          253
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 23,
+        "tracked": [
+          268,
+          270,
+          272,
+          271,
+          269,
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260,
+          257,
+          259,
+          258
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 24,
+        "tracked": [
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260,
+          257,
+          259
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 25,
+        "tracked": [
+          274,
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260,
+          257
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 26,
+        "tracked": [
+          275,
+          274,
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261,
+          260
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 27,
+        "tracked": [
+          279,
+          275,
+          274,
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264,
+          266,
+          265,
+          267,
+          262,
+          263,
+          261
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 28,
+        "tracked": [
+          276,
+          280,
+          277,
+          281,
+          279,
+          275,
+          274,
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264,
+          266,
+          265
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 29,
+        "tracked": [
+          278,
+          281,
+          277,
+          280,
+          276,
+          279,
+          275,
+          274,
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264,
+          266
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 30,
+        "tracked": [
+          283,
+          278,
+          281,
+          277,
+          280,
+          276,
+          279,
+          275,
+          274,
+          273,
+          271,
+          272,
+          270,
+          268,
+          269,
+          264
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 31,
+        "tracked": [
+          287,
+          282,
+          283,
+          278,
+          281,
+          277,
+          280,
+          276,
+          279,
+          275,
+          274,
+          273,
+          271,
+          272,
+          270,
+          268
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 32,
+        "tracked": [
+          289,
+          285,
+          286,
+          288,
+          282,
+          287,
+          283,
+          278,
+          281,
+          277,
+          280,
+          276,
+          279,
+          275,
+          274,
+          273
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 33,
+        "tracked": [
+          290,
+          291,
+          293,
+          295,
+          296,
+          292,
+          284,
+          297,
+          299,
+          294,
+          300,
+          298,
+          301,
+          302,
+          288,
+          286
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 34,
+        "tracked": [
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297,
+          284,
+          292,
+          296,
+          295,
+          293,
+          291,
+          290,
+          288
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 35,
+        "tracked": [
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297,
+          284,
+          292,
+          296,
+          295,
+          293,
+          291,
+          290
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 36,
+        "tracked": [
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297,
+          284,
+          292,
+          296,
+          295,
+          293,
+          291
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 37,
+        "tracked": [
+          307,
+          308,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297,
+          284,
+          292,
+          296,
+          295
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 38,
+        "tracked": [
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297,
+          284,
+          292,
+          296
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 39,
+        "tracked": [
+          309,
+          311,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297,
+          284
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 40,
+        "tracked": [
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294,
+          299,
+          297
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 41,
+        "tracked": [
+          314,
+          313,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300,
+          294
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 42,
+        "tracked": [
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298,
+          300
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 43,
+        "tracked": [
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301,
+          298
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 44,
+        "tracked": [
+          318,
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302,
+          301
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 45,
+        "tracked": [
+          317,
+          318,
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303,
+          302
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 46,
+        "tracked": [
+          320,
+          317,
+          318,
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304,
+          303
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 47,
+        "tracked": [
+          319,
+          320,
+          317,
+          318,
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306,
+          304
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 48,
+        "tracked": [
+          322,
+          319,
+          320,
+          317,
+          318,
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308,
+          307,
+          306
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 49,
+        "tracked": [
+          321,
+          323,
+          322,
+          319,
+          320,
+          317,
+          318,
+          316,
+          315,
+          313,
+          314,
+          312,
+          311,
+          309,
+          310,
+          308
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 50,
+        "tracked": [
+          331,
+          326,
+          329,
+          330,
+          327,
+          328,
+          335,
+          334,
+          338,
+          324,
+          323,
+          321,
+          322,
+          319,
+          320,
+          317
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 51,
+        "tracked": [
+          337,
+          325,
+          336,
+          333,
+          339,
+          332,
+          340,
+          324,
+          338,
+          334,
+          335,
+          328,
+          327,
+          330,
+          329,
+          326
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 52,
+        "tracked": [
+          344,
+          343,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337,
+          324,
+          338,
+          334,
+          335,
+          328,
+          327,
+          330
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 53,
+        "tracked": [
+          342,
+          345,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337,
+          324,
+          338,
+          334,
+          335,
+          328
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 54,
+        "tracked": [
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337,
+          324,
+          338,
+          334,
+          335
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 55,
+        "tracked": [
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337,
+          324,
+          338,
+          334
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 56,
+        "tracked": [
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337,
+          324,
+          338
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 57,
+        "tracked": [
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337,
+          324
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 58,
+        "tracked": [
+          352,
+          351,
+          356,
+          353,
+          355,
+          357,
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 59,
+        "tracked": [
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 60,
+        "tracked": [
+          362,
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 61,
+        "tracked": [
+          359,
+          358,
+          360,
+          364,
+          361,
+          363,
+          362,
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350,
+          348
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 62,
+        "tracked": [
+          365,
+          367,
+          366,
+          368,
+          371,
+          370,
+          374,
+          373,
+          363,
+          361,
+          364,
+          360,
+          358,
+          359,
+          362,
+          354
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 63,
+        "tracked": [
+          369,
+          372,
+          375,
+          376,
+          378,
+          377,
+          381,
+          379,
+          382,
+          383,
+          380,
+          384,
+          373,
+          374,
+          370,
+          371
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 64,
+        "tracked": [
+          388,
+          384,
+          380,
+          383,
+          382,
+          379,
+          381,
+          377,
+          378,
+          376,
+          375,
+          372,
+          369,
+          373,
+          374,
+          370
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 65,
+        "tracked": [
+          386,
+          385,
+          387,
+          388,
+          384,
+          380,
+          383,
+          382,
+          379,
+          381,
+          377,
+          378,
+          376,
+          375,
+          372,
+          369
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 66,
+        "tracked": [
+          394,
+          387,
+          385,
+          386,
+          388,
+          384,
+          380,
+          383,
+          382,
+          379,
+          381,
+          377,
+          378,
+          376,
+          375,
+          372,
+          369,
+          373,
+          374,
+          370,
+          371,
+          368,
+          366,
+          367,
+          365,
+          363,
+          361,
+          364,
+          360,
+          358,
+          359,
+          362,
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350
+        ],
+        "max_age": 4
+      },
+      {
+        "step": 67,
+        "tracked": [
+          393,
+          390,
+          389,
+          392,
+          391,
+          394,
+          387,
+          385,
+          386,
+          388,
+          384,
+          380,
+          383,
+          382,
+          379,
+          381,
+          377,
+          378,
+          376,
+          375,
+          372,
+          369,
+          373,
+          374,
+          370,
+          371,
+          368,
+          366,
+          367,
+          365,
+          363,
+          361,
+          364,
+          360,
+          358,
+          359,
+          362,
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339
+        ],
+        "max_age": 9
+      },
+      {
+        "step": 68,
+        "tracked": [
+          349,
+          391,
+          392,
+          389,
+          390,
+          393,
+          394,
+          387,
+          385,
+          386,
+          388,
+          384,
+          380,
+          383,
+          382,
+          379,
+          381,
+          377,
+          378,
+          376,
+          375,
+          372,
+          369,
+          373,
+          374,
+          370,
+          371,
+          368,
+          366,
+          367,
+          365,
+          363,
+          361,
+          364,
+          360,
+          358,
+          359,
+          362,
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336
+        ],
+        "max_age": 10
+      },
+      {
+        "step": 69,
+        "tracked": [
+          305,
+          349,
+          391,
+          392,
+          389,
+          390,
+          393,
+          394,
+          387,
+          385,
+          386,
+          388,
+          384,
+          380,
+          383,
+          382,
+          379,
+          381,
+          377,
+          378,
+          376,
+          375,
+          372,
+          369,
+          373,
+          374,
+          370,
+          371,
+          368,
+          366,
+          367,
+          365,
+          363,
+          361,
+          364,
+          360,
+          358,
+          359,
+          362,
+          354,
+          357,
+          355,
+          353,
+          356,
+          351,
+          352,
+          350,
+          348,
+          347,
+          346,
+          345,
+          342,
+          343,
+          344,
+          340,
+          332,
+          339,
+          333,
+          336,
+          325,
+          337
+        ],
+        "max_age": 11
+      }
+    ],
+    "configuration": {
+      "clean_limit": 32,
+      "draft_limit": 8,
+      "tracking": "recent",
+      "threshold": 0.9,
+      "gamma": 0.8,
+      "query_width": 64
+    },
+    "seconds": 2.2191865099593997,
+    "output_tokens": 157
+  },
+  "correct": false
+}

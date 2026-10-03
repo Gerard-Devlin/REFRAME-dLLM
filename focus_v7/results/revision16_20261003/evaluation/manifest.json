@@ -1,0 +1,80 @@
+{
+  "model": "GSAI-ML/LLaDA-8B-Instruct",
+  "revision": "08b83a6feb34df1a6011b80c3c00c7563e963b07",
+  "binding": {
+    "visible_uuid": "GPU-43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "actual_uuid": "43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "device_name": "NVIDIA GeForce RTX 5090"
+  },
+  "task": "humaneval",
+  "length": 256,
+  "seed": 51713,
+  "offset": 0,
+  "limit": 16,
+  "ids": [
+    "HumanEval/122",
+    "HumanEval/54",
+    "HumanEval/25",
+    "HumanEval/140",
+    "HumanEval/26",
+    "HumanEval/32",
+    "HumanEval/130",
+    "HumanEval/108",
+    "HumanEval/141",
+    "HumanEval/144",
+    "HumanEval/34",
+    "HumanEval/124",
+    "HumanEval/9",
+    "HumanEval/30",
+    "HumanEval/83",
+    "HumanEval/158"
+  ],
+  "configurations": {
+    "refresh_only": [
+      true,
+      false
+    ],
+    "admission_only": [
+      false,
+      true
+    ],
+    "both": [
+      true,
+      true
+    ]
+  },
+  "implementation": {
+    "launch_quality128.py": "b872dbedfe895855a7b494a29aeb5018af97f75c85e78eacd4ecf1722781a0bf",
+    "mechanism_probe.py": "b4db0779190ea42e923bab73327f62f66b6309d149a8e6810169e8707c4b6abc",
+    "revision_evaluate.py": "3fdcb1a7e854fdb3f4097eed1bc067ca95ab8cf770b1b42057a6411c5c58b36c",
+    "revision.py": "f62d76dda6de7c728f1b382900ebce005aa32d4e884415f4adbeec9899a5953e",
+    "probe.py": "0b43bb2273fd0bfaa3b9c2859b4aee1f4e3575a6e25d326e8c895506cb67826a",
+    "launch_mechanism.py": "b52d758da2412eb3dbc3c4c3f1d803c5ff7c64e4ed7b07bf253384f58ce5ff17",
+    "greedy.py": "6cdea90bc6403e13d9bd5b41df61c0257e8b1ae2dd82ade82ea797500c4c31f0",
+    "mechanism.py": "121c9d5ea92c1d1456058ac829c486ca49fc5b830192a301a25b397abc27c094",
+    "launch_match.py": "8fdd719e512b01ddf757991f0b45d97060b429295c20c307afb487ea88089008",
+    "packet.py": "ea1bbe1fd1b30bf420e443ec8afae6bed1d2bc1e803832857bd1ede398ad3f3c",
+    "launch.py": "046760d8c7f00033a2c246d897ac05baa5822ec9dffd2269863b758511796fa2",
+    "quality128.py": "f045a8a8ec1b08ab9dd6e73f6ece76859746b254261029d3b70f48ddfce42da2",
+    "launch_revision.py": "d6ac011046081f74494fa8762b883ba3916d7c3e6a898afffb89ab52d967ca8e",
+    "match_probe.py": "cdcb0945a1935aed474b1a0ac5b25c8fe8895aa3e8a33560818438ce424d1ebc",
+    "__init__.py": "5b6b5041f3e75a7a97da49467aa35f4d2fd55c5cda99cacb041a0e9acd7a3d80",
+    "cache.py": "741a45e9ee8119625a9184e56f045288b757087def3fed0be885bed089a93da7",
+    "launch_generation.py": "1398296e79bae4f91d0cdea0ab469c6645d2e0a0ada9f576a66a47d4a59dc504",
+    "generation.py": "b1abcd0fc8b1ce2bed09db4190fdbd07cddf99c4d6a579889b58e7a619b76b15",
+    "observe.py": "c60e2e1596de0470bcfc09be26509f5cba29fe0042bea8658e7daf2d509eb78d",
+    "free_generation.py": "8e4293211ec8c534e9681ee1f41dc40cdac8b98ad646b049b651b82849ca7b2d"
+  },
+  "scorers": {
+    "score_gsm8k.py": "9406bdd80bb5871d9fb5b5667fd680740ec561407de928ba8137b668f42db677",
+    "score_humaneval.py": "3eafcb5cef18ebc0fafaf83c39fc90d97d4e4cbeb410338a4272c3920b7f639a",
+    "score_answers.py": "43724cd98cb67b8f2b75c0314d8f9db8997c9202e456574d2bd5e45bfbe4cbbb",
+    "score_mbpp.py": "5882c85c06c90c17572fa136b95e68c8ac07bc7ab9830952a47d26c81474114c",
+    "score_math.py": "4133eaaeb735f16fbf280f9628c6be3244e0faa5cc25c1a930d506d859d4ffe5"
+  },
+  "dataset_sha256": "bc61f7f86cdd60d34fcd025f88c0572831847c7e21c3d44fb90dea9811a6be66",
+  "adaptation": [],
+  "original_v7_summary_sha256": "e6a86a8043a1040ac3618d93567443584aae356c92091362eead6d2ba4d322c7",
+  "all_refreshes_own_paid": true,
+  "scope": "Fixed factorial implementation/admission development screen"
+}

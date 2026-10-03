@@ -1,0 +1,67 @@
+{
+  "atomic_reference_analysis": {
+    "2": {
+      "windows": 12,
+      "actual_passed_epochs": 3,
+      "epochs_entirely_matching_reference_final": 9,
+      "reference_all_match_optimistic_rate_ratio": 0.8353416532867739,
+      "individual_top1_matches": 20,
+      "individual_candidates": 24,
+      "scope": "Teacher final is a retrospective reference, not gold or a deployable audit. This is not a universal speed bound."
+    },
+    "4": {
+      "windows": 12,
+      "actual_passed_epochs": 1,
+      "epochs_entirely_matching_reference_final": 8,
+      "reference_all_match_optimistic_rate_ratio": 0.9681875120677597,
+      "individual_top1_matches": 40,
+      "individual_candidates": 48,
+      "scope": "Teacher final is a retrospective reference, not gold or a deployable audit. This is not a universal speed bound."
+    },
+    "8": {
+      "windows": 12,
+      "actual_passed_epochs": 1,
+      "epochs_entirely_matching_reference_final": 3,
+      "reference_all_match_optimistic_rate_ratio": 0.6558069972159268,
+      "individual_top1_matches": 76,
+      "individual_candidates": 96,
+      "scope": "Teacher final is a retrospective reference, not gold or a deployable audit. This is not a universal speed bound."
+    }
+  },
+  "distinct_accepted_position_value_tuples_across_k": 16,
+  "flash_prefix_length_predictability": {
+    "cycles": 138,
+    "zero_accepted": 43,
+    "histogram": {
+      "0": 43,
+      "1": 21,
+      "2": 19,
+      "3": 12,
+      "4": 10,
+      "5": 3,
+      "6": 6,
+      "8": 7,
+      "9": 2,
+      "10": 4,
+      "11": 3,
+      "12": 2,
+      "13": 2,
+      "14": 1,
+      "16": 3
+    },
+    "same_prompt_adjacent_pairs": 132,
+    "predict_previous_count_correct": 21,
+    "scope": "Descriptive six-prompt trace only. Rejects blind fixed/previous-count branch guessing; does not evaluate logits-based predictors."
+  },
+  "own_label_private_controls": {
+    "checks": 12,
+    "all_own_errors_zero": true
+  },
+  "decision": "Stop the deferred all-or-none epoch architecture. Do not implement fusion or free generation from these data.",
+  "interpretation": "Removing source contamination is feasible, but low audit acceptance and whole-epoch abort costs both hurt. Even a retrospective all-reference-matching batch rule lacks a strong cost signal here.",
+  "statistical_scope": "Six reused development prompts, 12 correlated windows; descriptive counts, no independent holdout or task accuracy claim.",
+  "source_sha256": {
+    "focus_v6\\results\\atomic_audit_20261003\\diagnostic.json": "e88c158e3a284c208ff25a9424c1e80931394ae2b37f6c35064fd72e7ce23e63",
+    "focus_v5\\results\\relay_ceiling_20261003\\diagnostic.json": "4decd1517a4561e5b41ed271d379bb4727de7e32572cb0b54d35432d64791ce0"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "cases": [
+    {
+      "id": "HumanEval/6",
+      "correct": false,
+      "masks_in_render_slice": 0,
+      "committed_beyond_horizon": 2,
+      "horizon": 127,
+      "committed_count": 129
+    },
+    {
+      "id": "HumanEval/75",
+      "correct": false,
+      "masks_in_render_slice": 1,
+      "committed_beyond_horizon": 1,
+      "horizon": 116,
+      "committed_count": 117
+    },
+    {
+      "id": "HumanEval/93",
+      "correct": false,
+      "masks_in_render_slice": 2,
+      "committed_beyond_horizon": 8,
+      "horizon": 127,
+      "committed_count": 135
+    },
+    {
+      "id": "HumanEval/156",
+      "correct": false,
+      "masks_in_render_slice": 0,
+      "committed_beyond_horizon": 1,
+      "horizon": 234,
+      "committed_count": 235
+    }
+  ],
+  "total128": 128,
+  "scope": "Count-based slice inherited from official renderer; this audit does not alter output or scoring"
+}

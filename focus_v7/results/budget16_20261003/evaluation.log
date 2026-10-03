@@ -1,0 +1,35 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 211.32it/s]
+SCORE 0 HumanEval/122 coverage_recent True 0.6115775462239981 18
+SCORE 0 HumanEval/122 coverage_age True 0.883028700016439 25
+SCORE 1 HumanEval/54 coverage_age False 1.2138121956959367 36
+SCORE 1 HumanEval/54 coverage_recent False 2.329402885399759 74
+SCORE 2 HumanEval/25 coverage_recent False 2.622210963629186 85
+SCORE 2 HumanEval/25 coverage_age False 2.0522780092433095 65
+SCORE 3 HumanEval/140 coverage_age False 1.3759997626766562 42
+SCORE 3 HumanEval/140 coverage_recent False 1.8714912943542004 59
+SCORE 4 HumanEval/26 coverage_recent False 2.491423036903143 83
+SCORE 4 HumanEval/26 coverage_age False 2.025662025436759 66
+SCORE 5 HumanEval/32 coverage_age False 0.24807306565344334 3
+SCORE 5 HumanEval/32 coverage_recent False 0.422770987264812 3
+SCORE 6 HumanEval/130 coverage_recent False 1.2609981475397944 38
+SCORE 6 HumanEval/130 coverage_age False 1.34312286041677 41
+SCORE 7 HumanEval/108 coverage_age False 1.7086191242560744 52
+SCORE 7 HumanEval/108 coverage_recent False 1.7026922591030598 53
+SCORE 8 HumanEval/141 coverage_recent False 2.2191865099593997 71
+SCORE 8 HumanEval/141 coverage_age False 2.718346569687128 88
+SCORE 9 HumanEval/144 coverage_age False 3.0034127263352275 94
+SCORE 9 HumanEval/144 coverage_recent False 2.748307573609054 89
+SCORE 10 HumanEval/34 coverage_recent True 2.5026816399767995 82
+SCORE 10 HumanEval/34 coverage_age True 2.2272380143404007 73
+SCORE 11 HumanEval/124 coverage_age False 2.361012735404074 73
+SCORE 11 HumanEval/124 coverage_recent False 3.2706922572106123 100
+SCORE 12 HumanEval/9 coverage_recent False 1.3504940709099174 41
+SCORE 12 HumanEval/9 coverage_age False 1.3881857180967927 43
+SCORE 13 HumanEval/30 coverage_age True 1.3432530900463462 41
+SCORE 13 HumanEval/30 coverage_recent True 1.7248245580121875 55
+SCORE 14 HumanEval/83 coverage_recent False 1.9992726063355803 65
+SCORE 14 HumanEval/83 coverage_age False 1.8699981551617384 60
+SCORE 15 HumanEval/158 coverage_age True 1.377231896854937 42
+SCORE 15 HumanEval/158 coverage_recent False 1.2356525845825672 37
+FINAL {"coverage_recent": {"completed": 16, "correct": 3, "accuracy": 0.1875, "mean_seconds": 1.8977299325633794, "mean_nfe": 59.5625, "mean_output_tokens": 152.875, "truncations": 0, "mean_clean_coverage": 29.77801494130203, "mean_audit_width": 7.854855923159018, "historical_engineering_focus_speedup": 1.2625714926504013, "scope": "16 reused development IDs; not independent accuracy/noninferiority evidence"}, "coverage_age": {"completed": 16, "correct": 4, "accuracy": 0.25, "mean_seconds": 1.696204665582627, "mean_nfe": 52.75, "mean_output_tokens": 158.125, "truncations": 0, "mean_clean_coverage": 29.6219806763285, "mean_audit_width": 7.823671497584541, "historical_engineering_focus_speedup": 1.4125770092613712, "scope": "16 reused development IDs; not independent accuracy/noninferiority evidence"}}

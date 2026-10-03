@@ -1,0 +1,9 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 208.08it/s]
+PROMPT humaneval HumanEval/122 windows 4 online 26 shadow 9
+PROMPT humaneval HumanEval/54 windows 4 online 39 shadow 9
+PROMPT mbpp 358 windows 3 online 8 shadow 7
+PROMPT mbpp 337 windows 4 online 13 shadow 9
+PROMPT math prealgebra:test:609 windows 4 online 37 shadow 9
+PROMPT math algebra:test:923 windows 4 online 50 shadow 9
+FINAL {"packets": 167, "commits": 857, "admission": {"accepted_draft": {"count": 694, "below_05": 73, "below_09": 261, "mean_probability": 0.8393660848914742}, "correction": {"count": 163, "below_05": 73, "below_09": 123, "mean_probability": 0.5688701960589503}}, "shadows": {"windows": 23, "old_clean_vs_full": {"matches": 276, "positions": 368, "fraction": 0.75}, "fresh_clean_vs_full": {"matches": 365, "positions": 368, "fraction": 0.9918478260869565}, "old_audit_vs_fresh_audit": {"matches": 304, "positions": 368, "fraction": 0.8260869565217391}, "old_actual_commit_vs_full": {"matches": 142, "positions": 165, "fraction": 0.8606060606060606}, "mean_audit_logit_rms": 0.6769742913868116, "old_fresh_decision_changes": 10, "scope": "Paid same-state shadows; full MASK top1 is not gold or sequential verification equivalence"}}

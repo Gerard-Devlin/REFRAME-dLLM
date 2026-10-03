@@ -1,0 +1,2035 @@
+{
+  "model": "GSAI-ML/LLaDA-8B-Instruct",
+  "revision": "08b83a6feb34df1a6011b80c3c00c7563e963b07",
+  "binding": {
+    "visible_uuid": "GPU-43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "actual_uuid": "43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "device_name": "NVIDIA GeForce RTX 5090"
+  },
+  "official_source_sha256": "96d3e15b2600eb73e7084d7cd3f23a1c74c44451a1ff7b5db96942d671e0e2d8",
+  "adaptation": [],
+  "implementation": {
+    "epoch.py": "e30eb07932a073bfe90996bf1bdeeda9472bc78c863245caeadb6268ea7af5c9",
+    "launch.py": "5a6eb9c0e2bbabd003ee0443c8fde2d7ec6d8439860e2ae0557ccd2f58a942df",
+    "audit_probe.py": "50fc9c02b1e1b7866d4cdfa59cb0657f942402cd1e94aa81b119dfbe423598a4",
+    "audit.py": "046a91b1c7eda725642e5967a5a4e4b689d4a69f830f882a8053559a2d026a29",
+    "__init__.py": "525edfdb53580f777ff71cdef85658ddb8fe603bd0fb95ae3ca170879d041b68"
+  },
+  "datasets": {
+    "/home/xuyouwen/hf_home_local/benchmarks/humaneval_test.json": "bc61f7f86cdd60d34fcd025f88c0572831847c7e21c3d44fb90dea9811a6be66",
+    "/home/xuyouwen/hf_home_local/benchmarks/mbpp_paper_3shot.json": "9a86a512c07b4c882cbcf32d9c02cd4c4c39db6fa100a0e81e9f25d27ae92bc5",
+    "/home/xuyouwen/hf_home_local/benchmarks/math_paper_4shot_v2.json": "9040adebb273671ce570ac946fa795456c882354c21b56c0ca1b3fff1a8ec3e5"
+  },
+  "configuration": {
+    "length": 256,
+    "block": 32,
+    "threshold": 0.9,
+    "gamma": 0.8,
+    "k": [
+      2,
+      4,
+      8
+    ],
+    "windows_per_prompt": 2,
+    "prompts_per_task": 2,
+    "seed": 51713,
+    "offset": 0,
+    "first_eligible": "search>=8, first8 no special tokens; one pending batch"
+  },
+  "records": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 0,
+      "k": 2,
+      "positions": [
+        155,
+        153
+      ],
+      "drafts": [
+        60543,
+        1413
+      ],
+      "probabilities": [
+        0.9907466190161829,
+        0.9894252859505569
+      ],
+      "top1": [
+        60543,
+        1413
+      ],
+      "safe_progress": 1,
+      "atomic_pass": true,
+      "audit_ms": 52.32012939453125,
+      "observed_regular_ms": 781.299560546875,
+      "observed_verify_ms": 22.059104919433594,
+      "regular_ms": 33.17646408081055,
+      "verify_ms": 22.04753589630127,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 0,
+      "k": 4,
+      "positions": [
+        155,
+        153,
+        154,
+        157
+      ],
+      "drafts": [
+        60543,
+        1413,
+        1088,
+        11
+      ],
+      "probabilities": [
+        0.999520231177643,
+        0.9980894529781864,
+        0.9998022931688743,
+        0.9600002219381625
+      ],
+      "top1": [
+        60543,
+        1413,
+        1088,
+        11
+      ],
+      "safe_progress": 1,
+      "atomic_pass": true,
+      "audit_ms": 21.9256649017334,
+      "observed_regular_ms": 781.299560546875,
+      "observed_verify_ms": 22.059104919433594,
+      "regular_ms": 33.17646408081055,
+      "verify_ms": 22.04753589630127,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 0,
+      "k": 8,
+      "positions": [
+        155,
+        153,
+        154,
+        157,
+        164,
+        159,
+        161,
+        158
+      ],
+      "drafts": [
+        60543,
+        1413,
+        1088,
+        11,
+        198,
+        60543,
+        198,
+        636
+      ],
+      "probabilities": [
+        0.9857189453635241,
+        0.7743303129453211,
+        0.9974377365530247,
+        0.9736859499915492,
+        0.19072356415512914,
+        4.1332289961720017e-07,
+        0.2465642535814486,
+        0.1487606303058664
+      ],
+      "top1": [
+        60543,
+        1413,
+        1088,
+        11,
+        198,
+        3535,
+        198,
+        1088
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 22.010175704956055,
+      "observed_regular_ms": 781.299560546875,
+      "observed_verify_ms": 22.059104919433594,
+      "regular_ms": 33.17646408081055,
+      "verify_ms": 22.04753589630127,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 1,
+      "k": 2,
+      "positions": [
+        172,
+        162
+      ],
+      "drafts": [
+        6666,
+        1260
+      ],
+      "probabilities": [
+        0.2557197303636889,
+        0.20971825234884842
+      ],
+      "top1": [
+        6666,
+        9913
+      ],
+      "safe_progress": 5,
+      "atomic_pass": false,
+      "audit_ms": 21.990495681762695,
+      "observed_regular_ms": 39.2639045715332,
+      "observed_verify_ms": 22.039104461669922,
+      "regular_ms": 33.17646408081055,
+      "verify_ms": 22.04753589630127,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 0,
+      "teacher_final_matches": [
+        true,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 1,
+      "k": 4,
+      "positions": [
+        172,
+        162,
+        179,
+        163
+      ],
+      "drafts": [
+        6666,
+        1260,
+        198,
+        373
+      ],
+      "probabilities": [
+        0.1257449323107214,
+        0.003050620591111938,
+        0.12623859171126717,
+        0.0019840262360101384
+      ],
+      "top1": [
+        6666,
+        1490,
+        198,
+        30409
+      ],
+      "safe_progress": 5,
+      "atomic_pass": false,
+      "audit_ms": 21.968032836914062,
+      "observed_regular_ms": 39.2639045715332,
+      "observed_verify_ms": 22.039104461669922,
+      "regular_ms": 33.17646408081055,
+      "verify_ms": 22.04753589630127,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 0,
+      "teacher_final_matches": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 1,
+      "k": 8,
+      "positions": [
+        172,
+        162,
+        179,
+        163,
+        167,
+        165,
+        166,
+        180
+      ],
+      "drafts": [
+        6666,
+        1260,
+        198,
+        373,
+        198,
+        220,
+        15,
+        305
+      ],
+      "probabilities": [
+        0.10825569655629308,
+        0.00033918248822132496,
+        0.9909876558651297,
+        0.0034315082506705245,
+        0.5640431695468611,
+        0.9166852871459689,
+        0.986940873334227,
+        0.5672981986177399
+      ],
+      "top1": [
+        6666,
+        1490,
+        198,
+        30409,
+        198,
+        220,
+        15,
+        305
+      ],
+      "safe_progress": 5,
+      "atomic_pass": false,
+      "audit_ms": 21.995872497558594,
+      "observed_regular_ms": 39.2639045715332,
+      "observed_verify_ms": 22.039104461669922,
+      "regular_ms": 33.17646408081055,
+      "verify_ms": 22.04753589630127,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 0,
+      "teacher_final_matches": [
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 0,
+      "k": 2,
+      "positions": [
+        150,
+        151
+      ],
+      "drafts": [
+        2088,
+        698
+      ],
+      "probabilities": [
+        0.012296037282191417,
+        1.3431764498545909e-05
+      ],
+      "top1": [
+        6952,
+        1853
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 21.973663330078125,
+      "observed_regular_ms": 59.30064010620117,
+      "observed_verify_ms": 22.020992279052734,
+      "regular_ms": 33.21139144897461,
+      "verify_ms": 22.09110450744629,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 0,
+      "teacher_final_matches": [
+        false,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 0,
+      "k": 4,
+      "positions": [
+        150,
+        151,
+        155,
+        153
+      ],
+      "drafts": [
+        2088,
+        698,
+        86798,
+        268
+      ],
+      "probabilities": [
+        0.018933140455390768,
+        5.844637062565148e-05,
+        0.03239183172446021,
+        0.07630047936930802
+      ],
+      "top1": [
+        6952,
+        4479,
+        1399,
+        547
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 21.97987174987793,
+      "observed_regular_ms": 59.30064010620117,
+      "observed_verify_ms": 22.020992279052734,
+      "regular_ms": 33.21139144897461,
+      "verify_ms": 22.09110450744629,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 0,
+      "teacher_final_matches": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 0,
+      "k": 8,
+      "positions": [
+        150,
+        151,
+        155,
+        153,
+        166,
+        181,
+        156,
+        169
+      ],
+      "drafts": [
+        2088,
+        698,
+        86798,
+        268,
+        198,
+        198,
+        2774,
+        198
+      ],
+      "probabilities": [
+        0.015140576750351171,
+        6.732760752697972e-05,
+        0.0792130169254318,
+        0.04900071697333187,
+        0.10301462605485488,
+        0.11284379590723063,
+        0.1462171502260082,
+        0.0841048922131881
+      ],
+      "top1": [
+        6952,
+        4479,
+        1399,
+        547,
+        198,
+        198,
+        1399,
+        198
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 22.000703811645508,
+      "observed_regular_ms": 59.30064010620117,
+      "observed_verify_ms": 22.020992279052734,
+      "regular_ms": 33.21139144897461,
+      "verify_ms": 22.09110450744629,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 0,
+      "teacher_final_matches": [
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 1,
+      "k": 2,
+      "positions": [
+        168,
+        172
+      ],
+      "drafts": [
+        6616,
+        561
+      ],
+      "probabilities": [
+        0.9217404938528505,
+        0.800014078390118
+      ],
+      "top1": [
+        6616,
+        561
+      ],
+      "safe_progress": 11,
+      "atomic_pass": false,
+      "audit_ms": 21.960351943969727,
+      "observed_regular_ms": 33.1657600402832,
+      "observed_verify_ms": 22.00841522216797,
+      "regular_ms": 33.21139144897461,
+      "verify_ms": 22.09110450744629,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 8,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 1,
+      "k": 4,
+      "positions": [
+        168,
+        172,
+        166,
+        167
+      ],
+      "drafts": [
+        6616,
+        561,
+        198,
+        305
+      ],
+      "probabilities": [
+        0.9254136223110314,
+        0.8089653918765063,
+        0.9973359629270868,
+        0.9940358768987432
+      ],
+      "top1": [
+        6616,
+        561,
+        198,
+        305
+      ],
+      "safe_progress": 11,
+      "atomic_pass": false,
+      "audit_ms": 21.964832305908203,
+      "observed_regular_ms": 33.1657600402832,
+      "observed_verify_ms": 22.00841522216797,
+      "regular_ms": 33.21139144897461,
+      "verify_ms": 22.09110450744629,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 8,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 1,
+      "k": 8,
+      "positions": [
+        168,
+        172,
+        166,
+        167,
+        171,
+        173,
+        174,
+        164
+      ],
+      "drafts": [
+        6616,
+        561,
+        198,
+        305,
+        4614,
+        268,
+        1853,
+        305
+      ],
+      "probabilities": [
+        0.9857117134788326,
+        0.9991437003061134,
+        0.9989736663318262,
+        0.995238088037706,
+        0.9974195012346603,
+        0.9999465817590025,
+        0.9993498935142239,
+        0.955742010846431
+      ],
+      "top1": [
+        6616,
+        561,
+        198,
+        305,
+        4614,
+        268,
+        1853,
+        305
+      ],
+      "safe_progress": 11,
+      "atomic_pass": true,
+      "audit_ms": 21.972959518432617,
+      "observed_regular_ms": 33.1657600402832,
+      "observed_verify_ms": 22.00841522216797,
+      "regular_ms": 33.21139144897461,
+      "verify_ms": 22.09110450744629,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 8,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 0,
+      "k": 2,
+      "positions": [
+        740,
+        737
+      ],
+      "drafts": [
+        3535,
+        11
+      ],
+      "probabilities": [
+        0.7661787828892536,
+        0.7277510335930595
+      ],
+      "top1": [
+        3535,
+        11
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.62931251525879,
+      "observed_regular_ms": 111.92352294921875,
+      "observed_verify_ms": 23.48633575439453,
+      "regular_ms": 34.39139175415039,
+      "verify_ms": 23.509023666381836,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 0,
+      "k": 4,
+      "positions": [
+        740,
+        737,
+        732,
+        742
+      ],
+      "drafts": [
+        3535,
+        11,
+        18514,
+        305
+      ],
+      "probabilities": [
+        0.9748400228531175,
+        0.8089688264106129,
+        0.0010827145081997575,
+        0.6743853510382145
+      ],
+      "top1": [
+        3535,
+        11,
+        1273,
+        305
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.499807357788086,
+      "observed_regular_ms": 111.92352294921875,
+      "observed_verify_ms": 23.48633575439453,
+      "regular_ms": 34.39139175415039,
+      "verify_ms": 23.509023666381836,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true,
+        false,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 0,
+      "k": 8,
+      "positions": [
+        740,
+        737,
+        732,
+        742,
+        731,
+        739,
+        741,
+        735
+      ],
+      "drafts": [
+        3535,
+        11,
+        18514,
+        305,
+        1413,
+        17,
+        198,
+        24498
+      ],
+      "probabilities": [
+        0.9994076361834631,
+        0.985118512070888,
+        2.995593976811411e-09,
+        0.9323294344476877,
+        0.010303135233146118,
+        0.9509600699753197,
+        0.999843522267407,
+        0.9504002699244075
+      ],
+      "top1": [
+        3535,
+        11,
+        1273,
+        305,
+        2891,
+        17,
+        198,
+        24498
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.426176071166992,
+      "observed_regular_ms": 111.92352294921875,
+      "observed_verify_ms": 23.48633575439453,
+      "regular_ms": 34.39139175415039,
+      "verify_ms": 23.509023666381836,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 1,
+      "k": 2,
+      "positions": [
+        743,
+        745
+      ],
+      "drafts": [
+        944,
+        28009
+      ],
+      "probabilities": [
+        0.7681534998570408,
+        0.8869134073571326
+      ],
+      "top1": [
+        944,
+        28009
+      ],
+      "safe_progress": 9,
+      "atomic_pass": false,
+      "audit_ms": 23.49577522277832,
+      "observed_regular_ms": 36.931617736816406,
+      "observed_verify_ms": 23.487871170043945,
+      "regular_ms": 34.39139175415039,
+      "verify_ms": 23.509023666381836,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 1,
+      "k": 4,
+      "positions": [
+        743,
+        745,
+        746,
+        747
+      ],
+      "drafts": [
+        944,
+        28009,
+        50650,
+        1529
+      ],
+      "probabilities": [
+        0.7743558368586464,
+        0.9782034087654423,
+        0.9999195292573245,
+        0.8805991310320813
+      ],
+      "top1": [
+        944,
+        28009,
+        50650,
+        1529
+      ],
+      "safe_progress": 9,
+      "atomic_pass": false,
+      "audit_ms": 23.49635124206543,
+      "observed_regular_ms": 36.931617736816406,
+      "observed_verify_ms": 23.487871170043945,
+      "regular_ms": 34.39139175415039,
+      "verify_ms": 23.509023666381836,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 1,
+      "k": 8,
+      "positions": [
+        743,
+        745,
+        746,
+        747,
+        748,
+        744,
+        750,
+        763
+      ],
+      "drafts": [
+        944,
+        28009,
+        50650,
+        1529,
+        1529,
+        1746,
+        1529,
+        17
+      ],
+      "probabilities": [
+        0.9996529930590011,
+        0.9986390530289928,
+        0.9999648168647849,
+        0.009178394128189953,
+        0.0002466023458960974,
+        0.9979187282374189,
+        0.3436448005578057,
+        0.2697522656508892
+      ],
+      "top1": [
+        944,
+        28009,
+        50650,
+        25,
+        25,
+        1746,
+        340,
+        17
+      ],
+      "safe_progress": 9,
+      "atomic_pass": false,
+      "audit_ms": 23.464672088623047,
+      "observed_regular_ms": 36.931617736816406,
+      "observed_verify_ms": 23.487871170043945,
+      "regular_ms": 34.39139175415039,
+      "verify_ms": 23.509023666381836,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        true,
+        false,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 0,
+      "k": 2,
+      "positions": [
+        703,
+        709
+      ],
+      "drafts": [
+        198,
+        23656
+      ],
+      "probabilities": [
+        0.8588196516535165,
+        0.0006739792346155401
+      ],
+      "top1": [
+        198,
+        3535
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.546527862548828,
+      "observed_regular_ms": 103.58367919921875,
+      "observed_verify_ms": 23.460832595825195,
+      "regular_ms": 34.486080169677734,
+      "verify_ms": 23.532255172729492,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 1,
+      "teacher_final_matches": [
+        true,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 0,
+      "k": 4,
+      "positions": [
+        703,
+        709,
+        701,
+        704
+      ],
+      "drafts": [
+        198,
+        23656,
+        1684,
+        198
+      ],
+      "probabilities": [
+        0.8949726734922318,
+        0.0004737338127513544,
+        0.6330826876336767,
+        0.8188248025530411
+      ],
+      "top1": [
+        198,
+        3535,
+        1684,
+        198
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.52288055419922,
+      "observed_regular_ms": 103.58367919921875,
+      "observed_verify_ms": 23.460832595825195,
+      "regular_ms": 34.486080169677734,
+      "verify_ms": 23.532255172729492,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 1,
+      "teacher_final_matches": [
+        true,
+        false,
+        true,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 0,
+      "k": 8,
+      "positions": [
+        703,
+        709,
+        701,
+        704,
+        705,
+        712,
+        710,
+        702
+      ],
+      "drafts": [
+        198,
+        23656,
+        1684,
+        198,
+        1413,
+        305,
+        3535,
+        321
+      ],
+      "probabilities": [
+        0.9996952606881656,
+        4.9039992038357666e-05,
+        0.9998497770267303,
+        0.9999923188170754,
+        0.9954264413614058,
+        0.8684962276321746,
+        0.999926154169214,
+        0.9941195435345038
+      ],
+      "top1": [
+        198,
+        10839,
+        1684,
+        198,
+        1413,
+        305,
+        3535,
+        321
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.457599639892578,
+      "observed_regular_ms": 103.58367919921875,
+      "observed_verify_ms": 23.460832595825195,
+      "regular_ms": 34.486080169677734,
+      "verify_ms": 23.532255172729492,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 1,
+      "teacher_final_matches": [
+        true,
+        false,
+        true,
+        false,
+        false,
+        false,
+        false,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 1,
+      "k": 2,
+      "positions": [
+        711,
+        713
+      ],
+      "drafts": [
+        305,
+        373
+      ],
+      "probabilities": [
+        0.9051677220007321,
+        0.7980649853007185
+      ],
+      "top1": [
+        305,
+        373
+      ],
+      "safe_progress": 8,
+      "atomic_pass": false,
+      "audit_ms": 23.558399200439453,
+      "observed_regular_ms": 34.37638473510742,
+      "observed_verify_ms": 23.534048080444336,
+      "regular_ms": 34.486080169677734,
+      "verify_ms": 23.532255172729492,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 1,
+      "k": 4,
+      "positions": [
+        711,
+        713,
+        712,
+        716
+      ],
+      "drafts": [
+        305,
+        373,
+        5591,
+        7106
+      ],
+      "probabilities": [
+        0.9358907323319136,
+        0.9971486050987617,
+        0.9237168843600728,
+        0.6073835655185593
+      ],
+      "top1": [
+        305,
+        373,
+        5591,
+        7106
+      ],
+      "safe_progress": 8,
+      "atomic_pass": false,
+      "audit_ms": 23.44883155822754,
+      "observed_regular_ms": 34.37638473510742,
+      "observed_verify_ms": 23.534048080444336,
+      "regular_ms": 34.486080169677734,
+      "verify_ms": 23.532255172729492,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 1,
+      "k": 8,
+      "positions": [
+        711,
+        713,
+        712,
+        716,
+        714,
+        717,
+        715,
+        733
+      ],
+      "drafts": [
+        305,
+        373,
+        5591,
+        7106,
+        321,
+        24528,
+        46148,
+        198
+      ],
+      "probabilities": [
+        0.9106275666239686,
+        0.9998566617238764,
+        0.964849868265831,
+        0.9979937122612894,
+        0.9993747747785922,
+        0.687231802017059,
+        0.9990502106470737,
+        0.10380855782824887
+      ],
+      "top1": [
+        305,
+        373,
+        5591,
+        7106,
+        321,
+        24528,
+        46148,
+        198
+      ],
+      "safe_progress": 8,
+      "atomic_pass": false,
+      "audit_ms": 23.48464012145996,
+      "observed_regular_ms": 34.37638473510742,
+      "observed_verify_ms": 23.534048080444336,
+      "regular_ms": 34.486080169677734,
+      "verify_ms": 23.532255172729492,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 0,
+      "k": 2,
+      "positions": [
+        721,
+        722
+      ],
+      "drafts": [
+        2088,
+        1491
+      ],
+      "probabilities": [
+        0.9967870383598141,
+        0.9322507359816882
+      ],
+      "top1": [
+        2088,
+        1491
+      ],
+      "safe_progress": 1,
+      "atomic_pass": true,
+      "audit_ms": 23.679935455322266,
+      "observed_regular_ms": 103.55811309814453,
+      "observed_verify_ms": 23.495328903198242,
+      "regular_ms": 34.46409606933594,
+      "verify_ms": 23.552703857421875,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 14,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 0,
+      "k": 4,
+      "positions": [
+        721,
+        722,
+        725,
+        729
+      ],
+      "drafts": [
+        2088,
+        1491,
+        6212,
+        1963
+      ],
+      "probabilities": [
+        0.9987578884415081,
+        0.968119301126966,
+        0.8203290430688431,
+        0.5624873002487928
+      ],
+      "top1": [
+        2088,
+        1491,
+        6212,
+        1963
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.526399612426758,
+      "observed_regular_ms": 103.55811309814453,
+      "observed_verify_ms": 23.495328903198242,
+      "regular_ms": 34.46409606933594,
+      "verify_ms": 23.552703857421875,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 14,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 0,
+      "k": 8,
+      "positions": [
+        721,
+        722,
+        725,
+        729,
+        724,
+        735,
+        734,
+        737
+      ],
+      "drafts": [
+        2088,
+        1491,
+        6212,
+        1963,
+        3320,
+        20,
+        16,
+        438
+      ],
+      "probabilities": [
+        0.9998998269845014,
+        0.982634093284291,
+        0.9998649414195139,
+        0.7582950213898831,
+        0.9980942760659313,
+        0.9925547246776486,
+        0.9846943429542967,
+        0.754341541071512
+      ],
+      "top1": [
+        2088,
+        1491,
+        6212,
+        1963,
+        3320,
+        20,
+        16,
+        438
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.470239639282227,
+      "observed_regular_ms": 103.55811309814453,
+      "observed_verify_ms": 23.495328903198242,
+      "regular_ms": 34.46409606933594,
+      "verify_ms": 23.552703857421875,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 14,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 1,
+      "k": 2,
+      "positions": [
+        739,
+        738
+      ],
+      "drafts": [
+        297,
+        1050
+      ],
+      "probabilities": [
+        0.9996380419900748,
+        0.9987028104617616
+      ],
+      "top1": [
+        297,
+        1050
+      ],
+      "safe_progress": 1,
+      "atomic_pass": true,
+      "audit_ms": 23.550975799560547,
+      "observed_regular_ms": 34.44041442871094,
+      "observed_verify_ms": 23.510944366455078,
+      "regular_ms": 34.46409606933594,
+      "verify_ms": 23.552703857421875,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 1,
+      "k": 4,
+      "positions": [
+        739,
+        738,
+        723,
+        741
+      ],
+      "drafts": [
+        297,
+        1050,
+        259,
+        268
+      ],
+      "probabilities": [
+        0.9994723773250301,
+        0.999176976713424,
+        0.8172270114648622,
+        0.3815420782143432
+      ],
+      "top1": [
+        297,
+        1050,
+        259,
+        268
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.54105567932129,
+      "observed_regular_ms": 34.44041442871094,
+      "observed_verify_ms": 23.510944366455078,
+      "regular_ms": 34.46409606933594,
+      "verify_ms": 23.552703857421875,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 1,
+      "k": 8,
+      "positions": [
+        739,
+        738,
+        723,
+        741,
+        744,
+        742,
+        740,
+        743
+      ],
+      "drafts": [
+        297,
+        1050,
+        259,
+        268,
+        300,
+        9796,
+        6191,
+        300
+      ],
+      "probabilities": [
+        0.9999807994404147,
+        0.9996578978718275,
+        0.7545687477297383,
+        0.8056384828490865,
+        0.0002752969852751259,
+        0.009425649319149881,
+        0.13609386434053208,
+        1.3542959736612403e-05
+      ],
+      "top1": [
+        297,
+        1050,
+        259,
+        268,
+        220,
+        1963,
+        3117,
+        5803
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.49523162841797,
+      "observed_regular_ms": 34.44041442871094,
+      "observed_verify_ms": 23.510944366455078,
+      "regular_ms": 34.46409606933594,
+      "verify_ms": 23.552703857421875,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 3,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        false,
+        false,
+        false,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 0,
+      "k": 2,
+      "positions": [
+        663,
+        664
+      ],
+      "drafts": [
+        268,
+        22719
+      ],
+      "probabilities": [
+        0.9583794951072657,
+        0.6919300158077505
+      ],
+      "top1": [
+        268,
+        22719
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.5532169342041,
+      "observed_regular_ms": 103.73942565917969,
+      "observed_verify_ms": 23.537919998168945,
+      "regular_ms": 34.51393699645996,
+      "verify_ms": 23.57966423034668,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 0,
+      "k": 4,
+      "positions": [
+        663,
+        664,
+        660,
+        661
+      ],
+      "drafts": [
+        268,
+        22719,
+        1050,
+        297
+      ],
+      "probabilities": [
+        0.9962502743445463,
+        0.7389561531385818,
+        0.8292531694567149,
+        0.993923007248325
+      ],
+      "top1": [
+        268,
+        22719,
+        1050,
+        297
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.559551239013672,
+      "observed_regular_ms": 103.73942565917969,
+      "observed_verify_ms": 23.537919998168945,
+      "regular_ms": 34.51393699645996,
+      "verify_ms": 23.57966423034668,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 0,
+      "k": 8,
+      "positions": [
+        663,
+        664,
+        660,
+        661,
+        666,
+        662,
+        665,
+        672
+      ],
+      "drafts": [
+        268,
+        22719,
+        1050,
+        297,
+        87,
+        1491,
+        558,
+        87
+      ],
+      "probabilities": [
+        0.9996249163396093,
+        0.9455347190272431,
+        0.8345288813861845,
+        0.9999955793611548,
+        0.9882441734991173,
+        0.04179813524851117,
+        0.9561869178477741,
+        0.2339944052086533
+      ],
+      "top1": [
+        268,
+        22719,
+        1050,
+        297,
+        87,
+        9237,
+        558,
+        87
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.540576934814453,
+      "observed_regular_ms": 103.73942565917969,
+      "observed_verify_ms": 23.537919998168945,
+      "regular_ms": 34.51393699645996,
+      "verify_ms": 23.57966423034668,
+      "cost_reference": "optimistic steady median geometry",
+      "official_accepted": 2,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 1,
+      "k": 2,
+      "positions": [
+        665,
+        667
+      ],
+      "drafts": [
+        558,
+        61
+      ],
+      "probabilities": [
+        0.8655455862243284,
+        0.904045554536951
+      ],
+      "top1": [
+        558,
+        61
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.549375534057617,
+      "observed_regular_ms": 34.4431037902832,
+      "observed_verify_ms": 23.56870460510254,
+      "regular_ms": 34.51393699645996,
+      "verify_ms": 23.57966423034668,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 16,
+      "teacher_final_matches": [
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 1,
+      "k": 4,
+      "positions": [
+        665,
+        667,
+        666,
+        660
+      ],
+      "drafts": [
+        558,
+        61,
+        87,
+        1050
+      ],
+      "probabilities": [
+        0.8972832161463211,
+        0.9937319054277144,
+        0.9996311537043066,
+        0.886360432319715
+      ],
+      "top1": [
+        558,
+        61,
+        87,
+        1050
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.506399154663086,
+      "observed_regular_ms": 34.4431037902832,
+      "observed_verify_ms": 23.56870460510254,
+      "regular_ms": 34.51393699645996,
+      "verify_ms": 23.57966423034668,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 16,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 1,
+      "k": 8,
+      "positions": [
+        665,
+        667,
+        666,
+        660,
+        668,
+        661,
+        672,
+        676
+      ],
+      "drafts": [
+        558,
+        61,
+        87,
+        1050,
+        17,
+        297,
+        87,
+        797
+      ],
+      "probabilities": [
+        0.8895431741397225,
+        0.998988859268344,
+        0.9999395987690114,
+        0.9666097377662903,
+        0.9996230314697763,
+        0.9999973907031222,
+        0.8270292746013072,
+        0.7187618923354286
+      ],
+      "top1": [
+        558,
+        61,
+        87,
+        1050,
+        17,
+        297,
+        87,
+        797
+      ],
+      "safe_progress": 1,
+      "atomic_pass": false,
+      "audit_ms": 23.56505584716797,
+      "observed_regular_ms": 34.4431037902832,
+      "observed_verify_ms": 23.56870460510254,
+      "regular_ms": 34.51393699645996,
+      "verify_ms": 23.57966423034668,
+      "cost_reference": "steady same-row geometry",
+      "official_accepted": 16,
+      "teacher_final_matches": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "public_cache_unchanged": true
+    }
+  ],
+  "prompts": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "windows": 2,
+      "official_cycles": 23,
+      "text_sha256": "39e3819d9963fc3ec4bf34972b86f14db87b621c2b3181f50b58fa8ed2e145c4",
+      "final_canvas_sha256": "c31ae3338fa62e4d9dcfb321544b61b4a61af47aeae59b5d4583be9d0e7160a3",
+      "official_output_unchanged": true,
+      "sdpa_calls": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "windows": 2,
+      "official_cycles": 8,
+      "text_sha256": "2152b9780c7a83ac85c97546bebb5745271f21d79bceaf53f24fded4b3e6965f",
+      "final_canvas_sha256": "d7b5d8bd70213659fd7b515f99e3b5e8b9961e55421a521b833e32965d8ca057",
+      "official_output_unchanged": true,
+      "sdpa_calls": 0
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "windows": 2,
+      "official_cycles": 6,
+      "text_sha256": "636efe92f5faeaab1d148eb23e16df104707df8df61ab7b400c81d55a54eb258",
+      "final_canvas_sha256": "d6eba05862eb213762ca4772d6fe0eba2cddd58b3a673c35f6c0e56c2eb8d001",
+      "official_output_unchanged": true,
+      "sdpa_calls": 0
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "windows": 2,
+      "official_cycles": 12,
+      "text_sha256": "72f214717f052347af5ef1e4e82ffb433cfe19bf9cd4b6dcfe3a2b73de127467",
+      "final_canvas_sha256": "d353045784276ac593b9321e26371b76aa726da60f8ee901484dbeac9e22da89",
+      "official_output_unchanged": true,
+      "sdpa_calls": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "windows": 2,
+      "official_cycles": 48,
+      "text_sha256": "73edb612f782aaa0fa789acc765925462379d3aa2c00e2b6c305cb3b4584e850",
+      "final_canvas_sha256": "9b534d46cc1f8476a94bb33abca80d45d3e6a799983b62b0d47bc50a8c7cb3e3",
+      "official_output_unchanged": true,
+      "sdpa_calls": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "windows": 2,
+      "official_cycles": 41,
+      "text_sha256": "0152212be98b20ce3584187a6b214eff3cd0c56c2286674a7d80008f6be08dfc",
+      "final_canvas_sha256": "ecb87234f80bebba8103243452100576cc7caa982a861fbe8c9aab919c1a3cb0",
+      "official_output_unchanged": true,
+      "sdpa_calls": 0
+    }
+  ],
+  "private_controls": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 0,
+      "controls": [
+        {
+          "candidate": 0,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 11.9375
+        },
+        {
+          "candidate": 1,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 12.7734375
+        },
+        {
+          "candidate": 2,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 11.4375
+        },
+        {
+          "candidate": 3,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 8.40625
+        }
+      ]
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 0,
+      "controls": [
+        {
+          "candidate": 0,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 3.546875
+        },
+        {
+          "candidate": 1,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 4.5
+        },
+        {
+          "candidate": 2,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 4.375
+        },
+        {
+          "candidate": 3,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 8.15625
+        }
+      ]
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 0,
+      "controls": [
+        {
+          "candidate": 0,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 8.4375
+        },
+        {
+          "candidate": 1,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 18.03125
+        },
+        {
+          "candidate": 2,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 4.046875
+        },
+        {
+          "candidate": 3,
+          "own_max_logit_error": 0.0,
+          "peer_max_logit_change": 2.9296875
+        }
+      ]
+    }
+  ],
+  "scope": "Read-only paid shadow audit; official Flash commits unchanged. No gold input.",
+  "summary": {
+    "2": {
+      "windows": 12,
+      "passed_epochs": 3,
+      "pass_fraction": 0.25,
+      "accepted_epoch_tokens": 6,
+      "teacher_final_matches": 6,
+      "teacher_final_agreement": 1.0,
+      "task_agreement": {
+        "humaneval": 1.0,
+        "mbpp": null,
+        "math": 1.0
+      },
+      "task_optimistic_rate_ratio": {
+        "humaneval": 0.6560532189252477,
+        "mbpp": 0.5921562737581189,
+        "math": 0.23013880372572929
+      },
+      "optimistic_effective_rate_ratio": 0.47414267573371777,
+      "median_paid_shadow_audit_ms": 23.550175666809082,
+      "prompt_count": 6,
+      "gate_passed": false,
+      "scope": "Optimistic necessary screen on reused fixed states; not achieved speedup or task accuracy."
+    },
+    "4": {
+      "windows": 12,
+      "passed_epochs": 1,
+      "pass_fraction": 0.08333333333333333,
+      "accepted_epoch_tokens": 4,
+      "teacher_final_matches": 4,
+      "teacher_final_agreement": 1.0,
+      "task_agreement": {
+        "humaneval": 1.0,
+        "mbpp": null,
+        "math": null
+      },
+      "task_optimistic_rate_ratio": {
+        "humaneval": 0.7216585408177725,
+        "mbpp": 0.5921562737581189,
+        "math": 0.0863228376004423
+      },
+      "optimistic_effective_rate_ratio": 0.41404395823999285,
+      "median_paid_shadow_audit_ms": 23.498079299926758,
+      "prompt_count": 6,
+      "gate_passed": false,
+      "scope": "Optimistic necessary screen on reused fixed states; not achieved speedup or task accuracy."
+    },
+    "8": {
+      "windows": 12,
+      "passed_epochs": 1,
+      "pass_fraction": 0.08333333333333333,
+      "accepted_epoch_tokens": 8,
+      "teacher_final_matches": 8,
+      "teacher_final_agreement": 1.0,
+      "task_agreement": {
+        "humaneval": 1.0,
+        "mbpp": null,
+        "math": null
+      },
+      "task_optimistic_rate_ratio": {
+        "humaneval": 0.8529973952943696,
+        "mbpp": 0.5921562737581189,
+        "math": 0.0863228376004423
+      },
+      "optimistic_effective_rate_ratio": 0.45086795710612004,
+      "median_paid_shadow_audit_ms": 23.461135864257812,
+      "prompt_count": 6,
+      "gate_passed": false,
+      "scope": "Optimistic necessary screen on reused fixed states; not achieved speedup or task accuracy."
+    }
+  },
+  "gate_passed": false
+}

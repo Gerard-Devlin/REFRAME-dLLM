@@ -1,0 +1,31 @@
+{
+  "scope": "CPU source/primitive review only; no model, accuracy, online acceptance or speed claim.",
+  "repository": "https://github.com/cychomatica/FreeDave",
+  "revision": "806883355c5db3de22310fc8abad039a6e47be1f",
+  "clean_checkout": true,
+  "source_sha256": {
+    "generation/core.py": "f8d88b77ad4e1fc50b080f4fbf07c136b256db89c40c05a8a491b4edf7005a91",
+    "generation/cache_utils.py": "1bd132381ba129be3355666f0767fae251e73390b4ceded9b7ccabe22f6fef5a",
+    "generation/attn_utils.py": "5f8cb743d82ba04766f1bd2263072d155a8406c14450d3f7dfa3848ec7a4cdd7",
+    "modeling/llada/modeling_llada.py": "40a1a08c2c87eef70d4d237643c04b48da8c8820bb1a3dcfb078e00ec5d63ed8",
+    "README.md": "000e0011f0e30b717cf36b2f6c4c9ed016e8be1e918a988decf10a6d99e3b55e"
+  },
+  "checks": {
+    "tree_geometry_and_repeated_absolute_positions": true,
+    "cross_branch_edges_absent": true,
+    "cross_branch_paths_absent_after_32_layers": true,
+    "compose_prefix_private_branches_suffix": true,
+    "private_forward_does_not_mutate_base": true,
+    "packed_tree_matches_independent_attention_cpu_fp64": true,
+    "visibility_to_additive_not_zero_one_bias": true,
+    "rejection_handoff_uses_selected_branch_not_last_branch": true
+  },
+  "attention_cpu_fp64_max_error": 1.7763568394002505e-15,
+  "cache_test_scaffold": "Minimal base-container scaffold, not installed Transformers compatibility.",
+  "handoff_test": "Synthetic exact-match branch rejection. Does not test full sampler equivalence.",
+  "warnings": [
+    "Private branches multiply queries; sharing KV does not make them free.",
+    "Numerical equality here is a single CPU FP64 attention primitive, not BF16 Transformer equality.",
+    "FreeDave debug monitor adjusts logical NFE; future comparisons must count physical model calls."
+  ]
+}

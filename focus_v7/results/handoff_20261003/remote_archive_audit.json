@@ -1,0 +1,26 @@
+{
+  "output": "/home/xuyouwen/REFRAME-dLLM/focus_dllm/dllm-eval/runs/tuning_gpu1_20260930_145350/focus_v7_handoff_20261003_150411",
+  "archive": "/home/xuyouwen/REFRAME-dLLM/focus_dllm/dllm-eval/runs/tuning_gpu1_20260930_145350/staging/focus_v7_handoff_result_20261003.tar",
+  "archive_sha256": "fc0181783ec9eb95dff8994be1d242900bd4ae63950e065140da423fce1a1963",
+  "source_archive_sha256": "71408cf842c5b01dc152ee18e36c4a6c0ad48dcfee0ba825089f0d7cf35db42a",
+  "actual_process_absent": true,
+  "source_set_verified": true,
+  "guard": {
+    "gpu": 1,
+    "uuid": "GPU-43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "free_mib": 32110,
+    "used_mib": 0,
+    "utilization": 0,
+    "main_max": 5,
+    "main_used": 0,
+    "protected": {
+      "llada_evaluate.py": "9abee5d7575745e95d8c78d6d4b7b0fe1e3d0ed7c6ff348e8f8fc424ef5e9eda",
+      "llada_decode.py": "bae1cead489f1c139c0f77f9ef506392372354ab8dca713e21a5e89b602bff86",
+      "llada_backend.py": "44bb091473e931bbda9d056cb2d6086298df184d0b688171c5aa6c7210fc1fa1",
+      "llada_pruning.py": "ed14317abfbef7d201c86bf97c29f73517ce2f5777df7fb6e29704082e26f07a",
+      "llada_common.py": "e75283228242ede16c07d2cdb8240c03a2c2dc33db75c382374db20bd4746f06",
+      "common.py": "28b18cb4002910119b21255965f8fe8eca1a737a92700712878a5a757e64fa36"
+    },
+    "shared_gpu_authorized": true
+  }
+}

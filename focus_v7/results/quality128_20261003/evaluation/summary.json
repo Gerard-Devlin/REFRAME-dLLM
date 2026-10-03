@@ -1,0 +1,89 @@
+{
+  "completed": 128,
+  "total": 128,
+  "correct": 17,
+  "accuracy": 0.1328125,
+  "mean_seconds": 1.037061845905555,
+  "mean_nfe": 31.5546875,
+  "mean_committed": 160.3984375,
+  "mean_output_tokens": 152.0625,
+  "truncation_rate": 0,
+  "first_eos_mean": 152.9140625,
+  "comparison_vs_engineering_focus": {
+    "accuracy_difference_pp": -20.3125,
+    "accuracy_difference_95ci_pp": [
+      -28.90625,
+      -12.5
+    ],
+    "pooled_speedup": 2.3825252185154984,
+    "speedup_95ci": [
+      2.2082075022896315,
+      2.5727338011247314
+    ],
+    "bootstrap_samples": 10000,
+    "seed": 1234,
+    "scope": "Paired screening interval; does not establish statistical losslessness",
+    "timing_scope": "Saved historical FOCUS timings on sameIDs; interval omits cross-run hardware/system variation"
+  },
+  "original_focus_historical_latency_ratio": 2.6760653195465216,
+  "focus_correct_v7_wrong": [
+    "HumanEval/30",
+    "HumanEval/74",
+    "HumanEval/116",
+    "HumanEval/94",
+    "HumanEval/27",
+    "HumanEval/162",
+    "HumanEval/4",
+    "HumanEval/60",
+    "HumanEval/0",
+    "HumanEval/12",
+    "HumanEval/86",
+    "HumanEval/8",
+    "HumanEval/5",
+    "HumanEval/143",
+    "HumanEval/31",
+    "HumanEval/152",
+    "HumanEval/82",
+    "HumanEval/58",
+    "HumanEval/89",
+    "HumanEval/73",
+    "HumanEval/121",
+    "HumanEval/29",
+    "HumanEval/15",
+    "HumanEval/92",
+    "HumanEval/44",
+    "HumanEval/79",
+    "HumanEval/87",
+    "HumanEval/88",
+    "HumanEval/7",
+    "HumanEval/40"
+  ],
+  "v7_correct_focus_wrong": [
+    "HumanEval/144",
+    "HumanEval/2",
+    "HumanEval/24",
+    "HumanEval/41"
+  ],
+  "scope": "User-authorized128 reused development prompts; no independent generalization or noninferiority claim",
+  "baselines": {
+    "original_focus": {
+      "accuracy": 0.3359375,
+      "mean_seconds": 2.7752452400527545,
+      "mean_nfe": 79.8359375,
+      "correct": 43
+    },
+    "engineering_focus": {
+      "examples": 128,
+      "scored_examples": 128,
+      "unresolved_scores": 0,
+      "accuracy": 0.3359375,
+      "mean_seconds": 2.4708260010302183,
+      "mean_nfe": 79.8359375,
+      "mean_output_tokens": 173.7578125,
+      "raw_token_ids_available": true,
+      "truncation_rate": 0,
+      "first_eos_mean": 173.7578125
+    }
+  },
+  "warmup_seconds": 1.995726346038282
+}

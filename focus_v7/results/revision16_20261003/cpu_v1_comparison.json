@@ -1,0 +1,124 @@
+{
+  "ids": [
+    "HumanEval/122",
+    "HumanEval/54",
+    "HumanEval/25",
+    "HumanEval/140",
+    "HumanEval/26",
+    "HumanEval/32",
+    "HumanEval/130",
+    "HumanEval/108",
+    "HumanEval/141",
+    "HumanEval/144",
+    "HumanEval/34",
+    "HumanEval/124",
+    "HumanEval/9",
+    "HumanEval/30",
+    "HumanEval/83",
+    "HumanEval/158"
+  ],
+  "length": 256,
+  "seed": 51713,
+  "offset": 0,
+  "methods": {
+    "v1": {
+      "correct": 7,
+      "total": 16,
+      "accuracy": 0.4375,
+      "correct_ids": [
+        "HumanEval/122",
+        "HumanEval/144",
+        "HumanEval/34",
+        "HumanEval/124",
+        "HumanEval/30",
+        "HumanEval/83",
+        "HumanEval/158"
+      ],
+      "correctness": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true,
+        true
+      ],
+      "mean_seconds": 3.02894892799668
+    },
+    "focus": {
+      "correct": 2,
+      "total": 16,
+      "accuracy": 0.125,
+      "correct_ids": [
+        "HumanEval/34",
+        "HumanEval/30"
+      ],
+      "correctness": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "mean_seconds": 2.6874403188121505
+    },
+    "llada": {
+      "correct": 4,
+      "total": 16,
+      "accuracy": 0.25,
+      "correct_ids": [
+        "HumanEval/122",
+        "HumanEval/34",
+        "HumanEval/30",
+        "HumanEval/158"
+      ],
+      "correctness": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        true
+      ],
+      "mean_seconds": 14.31027952407021
+    }
+  },
+  "original_v1_sources_verified": {
+    "/home/xuyouwen/REFRAME-dLLM/focus_dllm/dllm-eval/runs/main_single_methods_20260930_173809/humaneval_g256_fastdllm/output/rank_elastic.jsonl": "d5914624a9171b844efc633cc5f7bf60f049f9758ba1773a78bca306b0d8a1b0",
+    "/home/xuyouwen/REFRAME-dLLM/focus_dllm/dllm-eval/runs/main_single_methods_20260930_173809/humaneval_g256_fastdllm/output/humaneval_pass_at_1.json": "f2bbf2fcc261d639c822081ed8a6f2a6780222b710064833536188c62ce7d3cf"
+  },
+  "frozen_path": "/home/xuyouwen/REFRAME-dLLM/focus_dllm/dllm-eval/runs/tuning_gpu1_20260930_145350/cpu_frozen_development128_20261003.json",
+  "frozen_sha256": "81dbf42a9282e6d1a00990eb2ac29352c50829288dd1260c791884f031d608dd",
+  "baseline_regenerated": false,
+  "scope": "Same 16 reused HumanEval development questions; official code execution scores and historical saved timings; not quality noninferiority evidence"
+}

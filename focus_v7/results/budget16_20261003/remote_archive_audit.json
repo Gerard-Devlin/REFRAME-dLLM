@@ -1,0 +1,36 @@
+{
+  "terminal": true,
+  "source_set_verified": true,
+  "guard": {
+    "gpu": 1,
+    "uuid": "GPU-43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "free_mib": 29553,
+    "used_mib": 2557,
+    "utilization": 0,
+    "main_max": 5,
+    "main_used": 0,
+    "protected": {
+      "llada_evaluate.py": "9abee5d7575745e95d8c78d6d4b7b0fe1e3d0ed7c6ff348e8f8fc424ef5e9eda",
+      "llada_decode.py": "bae1cead489f1c139c0f77f9ef506392372354ab8dca713e21a5e89b602bff86",
+      "llada_backend.py": "44bb091473e931bbda9d056cb2d6086298df184d0b688171c5aa6c7210fc1fa1",
+      "llada_pruning.py": "ed14317abfbef7d201c86bf97c29f73517ce2f5777df7fb6e29704082e26f07a",
+      "llada_common.py": "e75283228242ede16c07d2cdb8240c03a2c2dc33db75c382374db20bd4746f06",
+      "common.py": "28b18cb4002910119b21255965f8fe8eca1a737a92700712878a5a757e64fa36"
+    },
+    "shared_gpu_authorized": true
+  },
+  "flash_same16": {
+    "correct": 5,
+    "correct_ids": [
+      "HumanEval/122",
+      "HumanEval/25",
+      "HumanEval/34",
+      "HumanEval/30",
+      "HumanEval/158"
+    ],
+    "mean_seconds": 1.3704847062472254,
+    "mean_nfe": 46.875,
+    "scope": "Saved same16IDs optimized Flash, official execution scores; historical request timing"
+  },
+  "source_output": "/home/xuyouwen/REFRAME-dLLM/focus_dllm/dllm-eval/runs/tuning_gpu1_20260930_145350/focus_v7_budget16_readoutfix1_20261003_144028"
+}

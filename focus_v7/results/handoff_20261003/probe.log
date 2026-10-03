@@ -1,0 +1,9 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 210.53it/s]
+PROMPT HumanEval/122 online 25 private 65
+PROMPT HumanEval/54 online 36 private 65
+PROMPT HumanEval/25 online 65 private 13
+PROMPT HumanEval/140 online 42 private 13
+PROMPT HumanEval/26 online 66 private 13
+PROMPT HumanEval/32 online 3 private 0
+FINAL {"windows": 20, "exact_proposed_updates": 3, "exact_fraction": 0.15, "all_packed_actions_equal": false, "usable_fraction": 0.1, "optimistic_opportunity_ratios": [0.9203686999075082, 1.0312922657857428], "gate_passed": false, "scope": "Same frozen-bank conditional operator; diagnostic ceiling, not online acceleration or quality."}

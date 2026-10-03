@@ -1,0 +1,8 @@
+{
+  "seconds": {
+    "coverage_recent": 0.6870568953454494,
+    "coverage_age": 0.8865754324942827
+  },
+  "excluded_from_report": true,
+  "shadow_model_calls": 6
+}

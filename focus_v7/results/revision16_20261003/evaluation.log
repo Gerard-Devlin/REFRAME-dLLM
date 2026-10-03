@@ -1,0 +1,51 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 206.87it/s]
+SCORE 0 HumanEval/122 refresh_only False 0.8977049319073558 27
+SCORE 0 HumanEval/122 admission_only True 0.9694417538121343 29
+SCORE 0 HumanEval/122 both True 1.0532357702031732 29
+SCORE 1 HumanEval/54 admission_only False 1.1656955452635884 35
+SCORE 1 HumanEval/54 both False 1.202941171824932 35
+SCORE 1 HumanEval/54 refresh_only False 1.3418846875429153 40
+SCORE 2 HumanEval/25 both False 3.5846994621679187 116
+SCORE 2 HumanEval/25 refresh_only False 1.2086293483152986 34
+SCORE 2 HumanEval/25 admission_only False 3.5179955223575234 116
+SCORE 3 HumanEval/140 refresh_only False 1.1393077252432704 32
+SCORE 3 HumanEval/140 admission_only False 3.5903606237843633 119
+SCORE 3 HumanEval/140 both False 3.677432036958635 120
+SCORE 4 HumanEval/26 admission_only False 2.284697021357715 75
+SCORE 4 HumanEval/26 both False 2.280716617591679 75
+SCORE 4 HumanEval/26 refresh_only False 3.02331231161952 34
+SCORE 5 HumanEval/32 both False 0.25740621890872717 3
+SCORE 5 HumanEval/32 refresh_only False 0.400817952118814 2
+SCORE 5 HumanEval/32 admission_only False 0.25402958784252405 3
+SCORE 6 HumanEval/130 refresh_only False 3.0265538413077593 27
+SCORE 6 HumanEval/130 admission_only False 3.894924639724195 128
+SCORE 6 HumanEval/130 both False 3.9579853173345327 129
+SCORE 7 HumanEval/108 admission_only False 3.8734705317765474 129
+SCORE 7 HumanEval/108 both False 3.885269707068801 128
+SCORE 7 HumanEval/108 refresh_only False 0.9665950210765004 28
+SCORE 8 HumanEval/141 both False 2.739466844126582 87
+SCORE 8 HumanEval/141 refresh_only False 1.2828384786844254 39
+SCORE 8 HumanEval/141 admission_only False 2.616307882592082 85
+SCORE 9 HumanEval/144 refresh_only True 1.3984324093908072 43
+SCORE 9 HumanEval/144 admission_only False 3.5399085013195872 117
+SCORE 9 HumanEval/144 both False 3.64393728133291 117
+SCORE 10 HumanEval/34 admission_only True 2.9037359934300184 97
+SCORE 10 HumanEval/34 both True 5.0690374644473195 97
+SCORE 10 HumanEval/34 refresh_only True 1.0913565438240767 33
+SCORE 11 HumanEval/124 both False 3.225932321511209 104
+SCORE 11 HumanEval/124 refresh_only False 1.3417861927300692 34
+SCORE 11 HumanEval/124 admission_only False 3.2305638855323195 104
+SCORE 12 HumanEval/9 refresh_only False 0.8607741808518767 25
+SCORE 12 HumanEval/9 admission_only False 2.4151972038671374 80
+SCORE 12 HumanEval/9 both False 2.5420413548126817 83
+SCORE 13 HumanEval/30 admission_only False 1.6772772781550884 53
+SCORE 13 HumanEval/30 both False 3.9404505090788007 63
+SCORE 13 HumanEval/30 refresh_only False 1.2350348522886634 36
+SCORE 14 HumanEval/83 both False 4.854333229362965 97
+SCORE 14 HumanEval/83 refresh_only False 1.0665250597521663 32
+SCORE 14 HumanEval/83 admission_only False 3.017854972742498 101
+SCORE 15 HumanEval/158 refresh_only False 0.9666216736659408 28
+SCORE 15 HumanEval/158 admission_only False 3.17997261043638 104
+SCORE 15 HumanEval/158 both False 3.3321621492505074 106
+FINAL {"refresh_only": {"completed": 16, "correct": 2, "accuracy": 0.125, "mean_seconds": 1.3280109506449662, "mean_nfe": 30.875, "mean_output_tokens": 147.8125, "mean_full_refreshes": 0.75, "truncations": 0, "original_v7_correct": 2, "focus_correct": 2, "historical_engineering_focus_speedup": 1.804216834537571, "scope": "Same reused development IDs; historical baseline timing, no quality noninferiority claim"}, "admission_only": {"completed": 16, "correct": 2, "accuracy": 0.125, "mean_seconds": 2.6332145971246064, "mean_nfe": 85.9375, "mean_output_tokens": 161.5625, "mean_full_refreshes": 0, "truncations": 0, "original_v7_correct": 2, "focus_correct": 2, "historical_engineering_focus_speedup": 0.9099219320067097, "scope": "Same reused development IDs; historical baseline timing, no quality noninferiority claim"}, "both": {"completed": 16, "correct": 2, "accuracy": 0.125, "mean_seconds": 3.077940465998836, "mean_nfe": 86.8125, "mean_output_tokens": 159.5, "mean_full_refreshes": 1.3125, "truncations": 0, "original_v7_correct": 2, "focus_correct": 2, "historical_engineering_focus_speedup": 0.7784490116271137, "scope": "Same reused development IDs; historical baseline timing, no quality noninferiority claim"}}

@@ -1,0 +1,28 @@
+{
+  "summary": {
+    "windows": 20,
+    "exact_proposed_updates": 3,
+    "exact_fraction": 0.15,
+    "all_packed_actions_equal": false,
+    "usable_fraction": 0.1,
+    "optimistic_opportunity_ratios": [
+      0.9203686999075082,
+      1.0312922657857428
+    ],
+    "gate_passed": false,
+    "scope": "Same frozen-bank conditional operator; diagnostic ceiling, not online acceleration or quality."
+  },
+  "proposal_mismatch_types": {
+    "set_only": 14,
+    "equal": 3,
+    "token_on_common": 3
+  },
+  "actual_online_calls": 237,
+  "actual_private_calls": 169,
+  "all_six_original_trajectories_unchanged": true,
+  "independent_private_label_controls": 5,
+  "all_label_controls_exact": true,
+  "scope": "CPU review of saved mechanism evidence. No new scoring or model run.",
+  "source_archive_verified": true,
+  "local_v7_source_hashes_verified": true
+}

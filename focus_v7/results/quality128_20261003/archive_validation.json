@@ -1,0 +1,23 @@
+{
+  "records": 128,
+  "ids_match_saved_baseline": true,
+  "correct": 17,
+  "focus_correct": 43,
+  "aggregate_metrics_verified": true,
+  "exit_code": 0,
+  "cpu_tests_passed": 21,
+  "local_v7_sources_match_remote_manifest": true,
+  "historical_local_source_differences_outside_v7": [
+    "focus_v5/relay_joint_probe.py",
+    "focus_v6/epoch.py",
+    "focus_v6/tests/test_epoch.py",
+    "focus_dllm/tuning/test_versioned_dataflow_probe.py",
+    "focus_dllm/tuning/versioned_dataflow_probe.py"
+  ],
+  "remote_frozen_research_sources_verified_unchanged_after_completion": true,
+  "tested_source_sha256": "0ff5892fca430a566befad2b5e073544e89784c1f453f5594e9df066529a92da",
+  "baseline_regenerated": false,
+  "comparison_scope": "Same prompt/model/scoring; historical saved latency, not contemporaneous paired GPU timing",
+  "gpu1_released": true,
+  "protected_main_source_hashes_verified_after_completion": true
+}

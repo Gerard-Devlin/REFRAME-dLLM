@@ -1,0 +1,37 @@
+`torch_dtype` is deprecated! Use `dtype` instead!
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:00<00:00, 211.80it/s]
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/budget_evaluate.py", line 144, in <module>
+    if __name__=='__main__':main()
+                            ^^^^^^
+  File "/home/xuyouwen/.conda/envs/fastdllm311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/budget_evaluate.py", line 120, in main
+    warms={name:run(ids,tracking,observer=observer,shadow_calls=3)['seconds'] for name,tracking in CONFIGS.items()}
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/budget_evaluate.py", line 120, in <dictcomp>
+    warms={name:run(ids,tracking,observer=observer,shadow_calls=3)['seconds'] for name,tracking in CONFIGS.items()}
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/budget_evaluate.py", line 73, in run
+    result=generate_budget(model,tokenizer,external,ids,length=256,clean_limit=clean_limit,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/.conda/envs/fastdllm311/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/query_budget.py", line 224, in generate_budget
+    result=scope[source.__name__](model,tokenizer,external,ids,length=length)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/generation.py:query_budget", line 1, in generate
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/query_budget.py", line 180, in observe
+    if observer is not None:observer(current)
+                            ^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/budget_evaluate.py", line 90, in observer
+    repeated,captured=shadow(current['query'])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/xuyouwen/REFRAME-dLLM/focus_v7/budget_evaluate.py", line 89, in shadow
+    return value.logits.detach().clone(),captured
+           ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'Readout' object has no attribute 'detach'

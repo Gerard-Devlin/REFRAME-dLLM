@@ -1,0 +1,48 @@
+[
+  {
+    "layout": {
+      "clean": 32,
+      "draft": 8,
+      "tracked": 16
+    },
+    "repeat_max_error": 0.0,
+    "private_kv_max_error": 0.0,
+    "mutations": [
+      {
+        "draft_index": 0,
+        "clean_max_error": 0.0,
+        "own_and_earlier_audit_max_error": 0.0
+      },
+      {
+        "draft_index": 7,
+        "clean_max_error": 0.0,
+        "own_and_earlier_audit_max_error": 0.0
+      }
+    ],
+    "public_bank_unchanged": true,
+    "shadow_model_calls": 3
+  },
+  {
+    "layout": {
+      "clean": 32,
+      "draft": 8,
+      "tracked": 16
+    },
+    "repeat_max_error": 0.0,
+    "private_kv_max_error": 0.0,
+    "mutations": [
+      {
+        "draft_index": 0,
+        "clean_max_error": 0.0,
+        "own_and_earlier_audit_max_error": 0.0
+      },
+      {
+        "draft_index": 7,
+        "clean_max_error": 0.0,
+        "own_and_earlier_audit_max_error": 0.0
+      }
+    ],
+    "public_bank_unchanged": true,
+    "shadow_model_calls": 3
+  }
+]
