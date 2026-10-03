@@ -51,6 +51,20 @@ holdout excludes the first128 shuffled development IDs. Source/config/data
 hashes gate resume. Final-expression-v3 and official code execution are applied
 only after generation; legitimate prompt fields are explicitly whitelisted.
 
+The first accuracy screen runs `joint` on the same128development prompts/task
+as the completed Flash/v1/FOCUS results, at256positions. `--baseline-root` checks
+ordered prompt IDs, data/model/revision/scorer hashes before loading the model.
+Completed baselines are read, never regenerated. Logs include correct counts,
+unresolved scores, accuracy, and a paired bootstrap interval versus Flash.
+Unresolved outcomes keep the full accuracy unknown and expose explicit bounds.
+This is development evaluation, not an independent non-inferiority certificate.
+
+The user explicitly authorized sharing GPU1 on2026-10-03. A deployment must opt
+in with `allow_shared_gpu1`; the default remains exclusive. Shared launch checks
+the exact UUID, at least24GiB free memory, prior completion, protected sources,
+and the research lock. No other process is terminated or reset. Shared timing
+is marked separately and does not establish dedicated-card speedup.
+
 Recorded latency includes prefill, initialization, signal extraction, CPU
 planning/synchronization, every forward and cache repair. Private perturbation
 and dense controls run in a separate generation; their timing is not a speed

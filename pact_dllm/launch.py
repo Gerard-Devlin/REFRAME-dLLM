@@ -7,7 +7,8 @@ from pathlib import Path
 import subprocess
 import time
 from .evaluate import implementation,write
-from focus_dllm.tuning.firebreak.launch import guard,REPO,PYTHON,UUID
+from focus_dllm.tuning.firebreak.launch import REPO,PYTHON,UUID
+from .resource_guard import guard
 
 
 def main():
@@ -22,7 +23,8 @@ def main():
         previous=json.loads((root/'firebreak_base_audit_queue.json').read_text())
         assert previous['status']=='complete' and previous['exit_code']==0
         assert (Path(previous['output'])/'probe/complete').exists()
-        checks=guard(root,deployment['previous_failure'])
+        sharing=deployment.get('allow_shared_gpu1',False)
+        checks=guard(root,deployment['previous_failure'],allow_shared_gpu1=sharing)
         frozen=implementation();assert frozen==deployment['sources']
         assert args.scope==deployment['scope'],'No automatic scope expansion'
         output.mkdir(exist_ok=False)
@@ -42,12 +44,15 @@ def main():
             test=subprocess.run([PYTHON,'-m','unittest','pact_dllm.test_pact','-v'],cwd=REPO,
                 env=dict(env,CUDA_VISIBLE_DEVICES=''),stdout=log,stderr=subprocess.STDOUT)
         assert test.returncode==0,'CPU checks failed; no model execution'
-        guard(root,deployment['previous_failure']);assert implementation()==frozen
+        guard(root,deployment['previous_failure'],allow_shared_gpu1=sharing);assert implementation()==frozen
         development=json.loads((root/'cpu_frozen_development128_20261003.json').read_text())
         command=[PYTHON,'-u','-m','pact_dllm.evaluate','--third-party',str(root/'third_party/pinned_20261001'),
             '--datasets',*(development['datasets'][t]['path'] for t in ('humaneval','mbpp','math')),
             '--output',str(output/'evaluation'),'--scope',args.scope,'--limit',
             '2' if args.scope=='mechanism_smoke' else '128','--length','64' if args.scope=='mechanism_smoke' else '256']
+        command+=['--variants',*deployment.get('variants',('reference','cache_only','decode_only','joint'))]
+        if args.scope=='development128':command+=['--baseline-root',str(root)]
+        if sharing:command+=['--shared-gpu1']
         with (output/'evaluation.log').open('x') as log:
             child=subprocess.Popen(command,cwd=REPO,env=env,stdout=log,stderr=subprocess.STDOUT)
             write(root/'pact_queue.json',dict(status='running',pid=child.pid,gpu=1,uuid=UUID,
@@ -60,7 +65,8 @@ def main():
             scope=args.scope,gpu=1,exit_code=code,sources_unchanged=unchanged,
             goal_achieved=False,automatic_expansion=False,automatic_retry=False))
         if not complete:raise RuntimeError(f'PACT exit{code}; records preserved, no automatic retry')
-        guard(root,deployment['previous_failure'])
+        # The other user's memory can change after launch; only integrity/exit
+        # defines completion. A later launch repeats the free-memory preflight.
 
 
 if __name__=='__main__':main()

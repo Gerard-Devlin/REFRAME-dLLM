@@ -248,4 +248,30 @@ class PoolTests(unittest.TestCase):
         self.assertEqual(pooled_keys(torch.randn(4,2,128),()).shape,(0,2,128))
 
 
+class QualityTests(unittest.TestCase):
+    def test_unknown_scores_do_not_become_a_full_accuracy(self):
+        from .quality import accuracy
+        result=accuracy([True,False,None])
+        self.assertIsNone(result['accuracy']);self.assertEqual(result['known_accuracy'],.5)
+        self.assertEqual(result['accuracy_bounds'],[1/3,2/3])
+
+    def test_paired_missing_scores_stay_excluded_and_visible(self):
+        from .quality import paired
+        result=paired([True,False,None],[False,False,True],draws=100)
+        self.assertEqual(result['accuracy_delta'],.5)
+        self.assertEqual(result['paired_examples'],2);self.assertEqual(result['excluded_unknown'],1)
+        with self.assertRaises(ValueError):paired([True],[True,False])
+
+    def test_frozen_comparison_rejects_wrong_prompt_order_before_scoring(self):
+        import tempfile,json
+        from pathlib import Path
+        from .quality import load_baselines
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder); data=root/'data.json';data.write_text('[]')
+            (root/'cpu_frozen_development128_20261003.json').write_text(json.dumps(
+                {'datasets':{'humaneval':{'development_ids':['a','b'],'sha256':'unused'}}}))
+            with self.assertRaisesRegex(ValueError,'IDs/data'):
+                load_baselines(root,'humaneval',[{'id':'b'},{'id':'a'}],data,256,'model','rev')
+
+
 if __name__=='__main__':unittest.main()

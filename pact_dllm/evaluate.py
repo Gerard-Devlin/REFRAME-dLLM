@@ -42,6 +42,8 @@ def main():
     parser.add_argument('--offset',type=int,default=0)
     parser.add_argument('--variants',nargs='+',choices=VARIANTS,default=list(VARIANTS))
     parser.add_argument('--resume',action='store_true')
+    parser.add_argument('--baseline-root',type=Path)
+    parser.add_argument('--shared-gpu1',action='store_true')
     args=parser.parse_args()
     if args.scope!='mechanism_smoke' and args.limit<128:parser.error('Quality selection requires128 or more per task')
     if args.scope=='holdout128' and args.offset<128:parser.error('Independent validation must exclude development128')
@@ -55,13 +57,24 @@ def main():
         config=asdict(config),scope=args.scope,limit=args.limit,offset=args.offset,variants=args.variants,
         model=MODEL_ID,revision=REVISION,official_projection_sha256=digest(args.third_party/'flash_dllm/llada/flash_cache_triton.py'),
         seed=51713,stop_policy='Fixed generation work; EOS does not skip later blocks')
+    frozen['latency_context']='shared_gpu1' if args.shared_gpu1 else 'exclusive_gpu1'
+    baselines={}
+    if args.baseline_root is not None:
+        if args.scope!='development128':parser.error('Frozen128 comparison requires development128')
+        from .quality import load_baselines
+        from dllm_eval.score_answers import policy_hash
+        for task,path in zip(('humaneval','mbpp','math'),args.datasets):
+            baselines[task]=load_baselines(args.baseline_root,task,select_samples(path,args.limit,args.offset),
+                path,args.length,MODEL_ID,REVISION,policy_hash() if task=='math' else None)
+        frozen['baseline_sources']={t:b['source_sha256'] for t,b in baselines.items()}
     manifest=args.output/'manifest.json'
     if manifest.exists():
         if json.loads(manifest.read_text())['frozen']!=frozen:raise ValueError('Resume source/config/data hash mismatch')
     else:write(manifest,dict(frozen=frozen,binding=binding,adaptations=adaptations))
     model,tokenizer=load_model(SimpleNamespace(method='flash_verify'),cls)
     forbidden=set(tokenizer.all_special_ids)
-    report=dict(scope=args.scope,goal_achieved=False,quality_claim=False,bindings=binding,tasks={},private_controls=[],torch_sdpa_calls=0)
+    report=dict(scope=args.scope,goal_achieved=False,quality_claim=False,bindings=binding,tasks={},private_controls=[],torch_sdpa_calls=0,
+                comparisons={},latency_context=frozen['latency_context'])
     # Independent dense reference only in controls; production path must remain Triton.
     original=torch.nn.functional.scaled_dot_product_attention
     def sdpa(*a,**kw):
@@ -127,16 +140,20 @@ def main():
             if args.scope!='mechanism_smoke':
                 from focus_dllm.tuning.focus_v4_evaluate import score
                 scoring=score(task,samples,records,args.variants);write(args.output/f'{task}_scores.json',scoring)
+                from .quality import accuracy,compare
                 for variant in args.variants:
-                    correct=scoring['correct'][variant];known=[c for c in correct if c is not None]
-                    summary[variant].update(accuracy=sum(known)/len(known) if known else None,
-                                          scoring_unknown=len(correct)-len(known),quality_scope=args.scope)
+                    summary[variant].update(accuracy(scoring['correct'][variant]),quality_scope=args.scope,
+                                            scoring_policy=scoring['policy'],scoring_policy_sha256=scoring.get('policy_sha256'))
+                if task in baselines:
+                    report['comparisons'][task]=compare(scoring,args.variants,baselines[task])
+                    write(args.output/f'{task}_comparison.json',report['comparisons'][task])
             else:
                 for row in summary.values():row['accuracy']=None
             report['tasks'][task]=summary
             print('TASK SUMMARY '+json.dumps(dict(task=task,scope=args.scope,methods=summary),ensure_ascii=False),flush=True)
             write(args.output/'summary.json',report)
         assert implementation()==frozen['sources'],'Sources changed during research'
+        assert all(digest(p)==h for b in baselines.values() for p,h in b['source_sha256'].items()),'Frozen baseline changed'
         assert report['torch_sdpa_calls']==0
         write(args.output/'summary.json',report);(args.output/'complete').write_text('0\n')
     finally:torch.nn.functional.scaled_dot_product_attention=original
