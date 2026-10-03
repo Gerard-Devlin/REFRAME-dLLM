@@ -2,7 +2,7 @@ import unittest
 import torch
 from .layout import layout, prefix_union, dependency_closed, cumulative_prefixes
 from .attention import dense_reference
-from .engine import decide
+from .engine import decide,prepare
 from .boundary import adapted
 
 
@@ -59,6 +59,42 @@ class ProvenanceTests(unittest.TestCase):
 
 
 class AttentionAndDecisionTests(unittest.TestCase):
+    def test_shared_context_never_reads_speculative_labels(self):
+        p=layout([7,2,9,1],[30,40,50,60],cache_length=12,group_count=2)
+        ready=prepare(p,None,'cpu',shared_positions=[0,10],shared_tokens=[11,12])
+        self.assertFalse(ready.choices[-2:,:4].any())
+        self.assertTrue(ready.choices[:,-2:].all())
+        self.assertEqual(ready.private_rows.tolist(),[0,1,2,3,12,13])
+        self.assertEqual(ready.mapping[[7,2,9,1,0,10]].tolist(),list(range(6)))
+
+    def test_shared_context_validation(self):
+        p=layout([1],[5],cache_length=4,group_count=1)
+        for pos,tok in (([1],[2]),([0],[126336]),([0,0],[2,3]),([5],[2]),([0],[])):
+            with self.assertRaises(ValueError):
+                prepare(p,None,'cpu',shared_positions=pos,shared_tokens=tok)
+
+    def test_shared_context_preserves_multilayer_provenance(self):
+        p=layout([7,2,9,1],[30,40,50,60],cache_length=12,group_count=2)
+        ready=prepare(p,None,'cpu',shared_positions=[0,10],shared_tokens=[11,12])
+        paths=torch.zeros(len(ready.ids),4,dtype=torch.int64);paths[:4]=torch.eye(4,dtype=torch.int64)
+        for _ in range(32):
+            paths=((paths+ready.choices.to(torch.int64)@paths[ready.private_rows])>0).to(torch.int64)
+        self.assertFalse(paths[-2:].any())
+        for i in range(4):
+            self.assertEqual(paths[4+i].tolist(),[int(j<i and p.groups[j]==p.groups[i]) for j in range(4)])
+            self.assertEqual(paths[8+i,i].item(),0)
+
+    def test_shared_key_replaces_base_once(self):
+        p=layout([1],[5],cache_length=2,group_count=1,cross=False)
+        ready=prepare(p,None,'cpu',shared_positions=[0],shared_tokens=[2])
+        q=torch.zeros(3,1,2);bk=torch.zeros(2,1,2);bv=torch.full_like(bk,99.)
+        dk=torch.zeros(2,1,2);dv=torch.tensor([[[3.,3.]],[[7.,7.]]])
+        actual=dense_reference(q,bk,bv,dk,dv,ready.mapping,ready.choices)
+        # D sees own draft plus refreshed shared value, not base duplicates.
+        self.assertEqual(actual[0,0,0].item(),5.)
+        # I and shared see the original MASK at candidate1, plus shared7.
+        self.assertEqual(actual[1,0,0].item(),53.)
+
     def test_dense_version_selection(self):
         # A one-position draft query MUST receive exactly its draft value.
         q = torch.ones(2, 1, 2)

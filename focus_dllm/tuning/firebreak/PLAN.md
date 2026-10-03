@@ -34,6 +34,20 @@ All32 layers follow the same provenance rule and original absolute RoPE.
 The public cache is immutable. Private KV must never be published, even when
 its token identity is accepted. In this first diagnostic nothing is committed.
 
+## 2026-10-03 implementation audit correction
+
+The initial12-window diagnostic omitted the legal tracked query refresh: Flash
+has just accepted some normal-proposal tokens, while their cached KV still
+represents the earlier MASK input. Therefore its12/12/8/1 shadow acceptance
+counts do NOT alone establish the proposed isolation mechanism's feasibility.
+All original records remain preserved. The audited operator additionally packs
+the EXACT known legal tracked tokens/positions supplied by the ordinary verifier.
+These shared rows read base or refreshed legal shared KV, never speculative
+draft KV. All D/I/O queries read the refreshed shared version exactly once;
+only D and shared rows are private keys. Its32-layer compute and readout costs
+are explicitly measured. No paid teacher KV or future output is substituted.
+Shared-refresh isolation still changes Flash's graph, so not native equivalence.
+
 Use contiguous chunks in candidate confidence order, R=1,2,4, without regrouping
 or searching after seeing failures. Compare matched single-chain and grouped
 isolation, grouped isolation plus read-only cross veto, and the actual official

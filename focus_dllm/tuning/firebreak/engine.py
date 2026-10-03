@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import math
 import torch
-from .attention import streaming
+from .attention import streaming, dense_reference
 from .layout import prefix_union, dependency_closed, cumulative_prefixes
 
 
@@ -14,17 +14,33 @@ class Prepared:
     mapping: torch.Tensor
     choices: torch.Tensor
     rotary: object
+    private_rows: torch.Tensor
+    shared_count: int
 
 
-def prepare(plan, rotary, device, mask_id=126336):
+def prepare(plan, rotary, device, mask_id=126336, *, shared_positions=(), shared_tokens=()):
     b = plan.count
-    ids = torch.tensor(plan.tokens+(mask_id,)*(b*(plan.families-1)),
+    shared_positions, shared_tokens = tuple(map(int,shared_positions)),tuple(map(int,shared_tokens))
+    t = len(shared_positions)
+    if (t != len(shared_tokens) or b+t > 128 or len(set(shared_positions)) != t
+            or set(shared_positions) & set(plan.positions)
+            or any(p < 0 or p >= plan.cache_length for p in shared_positions)
+            or any(v < 0 or v == mask_id for v in shared_tokens)):
+        raise ValueError('Unique legal accepted shared context, disjoint from drafts, required')
+    ids = torch.tensor(plan.tokens+(mask_id,)*(b*(plan.families-1))+shared_tokens,
                        device=device, dtype=torch.long)
-    positions = torch.tensor(plan.positions*plan.families, device=device, dtype=torch.long)
+    positions = torch.tensor(plan.positions*plan.families+shared_positions, device=device, dtype=torch.long)
     mapping = torch.full((plan.cache_length,), -1, device=device, dtype=torch.int32)
     mapping[positions[:b]] = torch.arange(b, device=device, dtype=torch.int32)
-    choices = torch.tensor(plan.choices(), device=device, dtype=torch.bool).contiguous()
-    return Prepared(plan, ids, positions, mapping, choices, rotary)
+    if t:
+        mapping[positions[-t:]] = torch.arange(b,b+t,device=device,dtype=torch.int32)
+    # Shared legal context is refreshed at every layer, but NEVER reads any
+    # speculative draft. I/O never become keys. One bank per original position.
+    choices = tuple(row+(True,)*t for row in plan.choices())+((False,)*b+(True,)*t,)*t
+    choices = torch.tensor(choices, device=device, dtype=torch.bool).contiguous()
+    private_rows = torch.tensor(tuple(range(b))+tuple(range(b*plan.families,b*plan.families+t)),
+                                device=device,dtype=torch.long)
+    return Prepared(plan, ids, positions, mapping, choices, rotary,private_rows,t)
 
 
 def rotate(x, positions, rotary):
@@ -36,7 +52,7 @@ def rotate(x, positions, rotary):
 
 
 @torch.no_grad()
-def forward(model, prepared, snapshot, *, changed_token=None):
+def forward(model, prepared, snapshot, *, changed_token=None, attention_reference=False):
     plan = prepared.plan
     core = model.model
     if len(snapshot) != len(core.transformer.blocks):
@@ -55,26 +71,30 @@ def forward(model, prepared, snapshot, *, changed_token=None):
     for block, (base_k, base_v) in zip(core.transformer.blocks, snapshot):
         xn = block.attn_norm(x)
         q = block.q_proj(xn).view(-1, h, d)
-        # Only draft rows are private keys; no I/O KV is projected or consumed.
-        k = block.k_proj(xn[:b]).view(b, h, d)
-        v = block.v_proj(xn[:b]).view(b, h, d).contiguous()
+        # Only draft and uncontaminated legal shared rows are private keys.
+        # Accepted token IDs can differ from their pre-proposal cached MASK KV;
+        # omitting this shared refresh was the legacy diagnostic's confound.
+        keys = xn.index_select(0,prepared.private_rows)
+        k = block.k_proj(keys).view(-1, h, d)
+        v = block.v_proj(keys).view(-1, h, d).contiguous()
         if block.q_norm is not None or block.k_norm is not None:
             raise ValueError('Unexpected Q/K normalization in the pinned backbone')
         q = rotate(q, prepared.positions, prepared.rotary).contiguous()
-        k = rotate(k, prepared.positions[:b], prepared.rotary).contiguous()
-        att = streaming(q, base_k.view(-1, h, d), base_v.view(-1, h, d), k, v,
-                        prepared.mapping, prepared.choices).flatten(1)
+        k = rotate(k, prepared.positions.index_select(0,prepared.private_rows), prepared.rotary).contiguous()
+        attention = dense_reference if attention_reference else streaming
+        att = attention(q, base_k.view(-1, h, d), base_v.view(-1, h, d), k, v,
+                        prepared.mapping, prepared.choices).to(x.dtype).flatten(1)
         x = x+block.dropout(block.attn_out(att))
         xn = block.ff_norm(x)
         x = x+block.dropout(block.ff_out(block.act(block.ff_proj(xn))*block.up_proj(xn)))
     normalized = core.transformer.ln_f(x)
-    consume = normalized[b:]
+    consume = normalized[b:b*plan.families]
     logits = (torch.nn.functional.linear(consume, core.transformer.wte.weight)
               if core.config.weight_tying else core.transformer.ff_out(consume))
     if core.config.scale_logits:
         logits = logits/math.sqrt(core.config.d_model)
     return dict(iso=logits[:b], cross=logits[b:] if plan.cross else None,
-                draft_hidden=normalized[:b])
+                draft_hidden=normalized[:b],shared_hidden=normalized[b*plan.families:])
 
 
 @torch.no_grad()

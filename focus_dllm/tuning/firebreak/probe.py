@@ -49,6 +49,18 @@ def kernel_check(device):
         assert torch.isfinite(actual).all() and error < .025, (count, n, error)
         checks.append(dict(candidates=count,cache=n,max_error=error,
                            reference='Dense FP32 diagnostic, not BF16 native equivalence'))
+    plan=layout(range(16),range(20,36),cache_length=193,group_count=4)
+    ready=prepare(plan,None,device,shared_positions=range(16,48),shared_tokens=range(40,72))
+    m,b=len(ready.ids),len(ready.private_rows)
+    q=(torch.randn(m,2,128,device=device)*.2).bfloat16()
+    bk=(torch.randn(193,2,128,device=device)*.2).bfloat16();bv=torch.randn_like(bk)
+    dk=(torch.randn(b,2,128,device=device)*.2).bfloat16();dv=torch.randn_like(dk)
+    actual=streaming(q,bk,bv,dk,dv,ready.mapping,ready.choices)
+    reference=dense_reference(q,bk,bv,dk,dv,ready.mapping,ready.choices)
+    error=float((actual.float()-reference).abs().max())
+    assert torch.isfinite(actual).all() and error<.025,error
+    checks.append(dict(candidates=16,shared=32,private_keys=b,cache=193,max_error=error,
+                       reference='Dense FP32 diagnostic, not BF16 native equivalence'))
     return checks
 
 
@@ -90,6 +102,8 @@ def main():
     parser.add_argument('--third-party', type=Path, required=True)
     parser.add_argument('--datasets', type=Path, nargs=3, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--refresh-shared',action='store_true',
+        help='Audit the omitted legal tracked-context refresh; preserve stale control separately')
     args = parser.parse_args(); args.output.mkdir(exist_ok=False)
     binding = check_binding(required=True)
     cls, official, adaptation = load_external(args.third_party, 'flash_verify')
@@ -104,7 +118,8 @@ def main():
         adaptation=adaptation, boundary_adapter='Actual masked-window extent; third-party files unchanged',
         implementation={str(p.relative_to(Path(__file__).parent)):sha256(p) for p in Path(__file__).parent.rglob('*.py')},
         configuration=dict(length=256, block=32, threshold=.9, gamma=.8, eta=.05,
-                           groups=[1,2,4], seed=51713, prompts_per_task=2, windows_per_prompt=2),
+                           groups=[1,2,4], seed=51713, prompts_per_task=2, windows_per_prompt=2,
+                           shared_context_refresh=args.refresh_shared),
         datasets={task:sha256(path) for task,path in zip(('humaneval','mbpp','math'),args.datasets)},
         kernel_checks=[], prompts=[], controls=[], torch_sdpa_calls=0,
         scope='Private experimental contexts, no online FIREBREAK commits, no task-quality/speed/novelty claim.')
@@ -123,7 +138,8 @@ def main():
                 input_ids = prompt_ids(tokenizer,generation_prompt(sample),task,preformatted=True)
                 prompt = torch.tensor(input_ids, device=model.device)
                 flags = dict(busy=False,calls=0,shadow=0,controls=0,pending=None,
-                             proposal_seconds=None,normal_start=None,verify_start=None)
+                             proposal_seconds=None,normal_start=None,verify_start=None,
+                             normal_positions=None,normal_logits=None)
                 actions, prompt_controls = [], []
                 def action(pos, token):
                     actions.append((pos.detach().cpu().tolist(),token.detach().cpu().tolist()))
@@ -161,16 +177,32 @@ def main():
                         if len(paired)<4:
                             return
                         positions,tokens=map(tuple,zip(*paired))
+                        shared_positions=tuple(map(int,pos[:tracked].detach().cpu().tolist())) if args.refresh_shared else ()
+                        shared_tokens=tuple(map(int,query[:tracked].detach().cpu().tolist())) if args.refresh_shared else ()
                         n=int(torch.cat((pos,kwargs['positions'][1])).max())+1
                         blocks=model.model.transformer.blocks
                         flags['busy']=True
                         try:
                             snapshot,snapshot_seconds=measured(lambda:[(b.k_cache[:n].clone(),b.v_cache[:n].clone()) for b in blocks])
                             results={}
+                            stale_control=None
+                            if args.refresh_shared:
+                                stale_plan=layout(positions,tokens,cache_length=n,group_count=1,cross=False,forbidden=forbidden)
+                                stale_prepared=prepare(stale_plan,kwargs['positions'][2],model.device)
+                                stale_value,stale_seconds=measured(lambda:forward(model,stale_prepared,snapshot));flags['shadow']+=1
+                                stale_control=dict(**decide(stale_value,stale_plan),verify_seconds=stale_seconds)
+                                root=flags['normal_positions'].index(positions[0])
+                                native=flags['normal_logits'][root]
+                                expected_probability=float(native.double().softmax(-1)[tokens[0]])
+                                stale_control['normal_root_probability']=expected_probability
+                                stale_control['root_probability_difference_from_normal']=abs(stale_control['probabilities'][0]-expected_probability)
+                                stale_control['root_top1_matches_normal']=int(stale_value['iso'][0].argmax())==int(native.argmax())
+                                del stale_value,stale_prepared
                             first_plan=None; first_prepared=None; first_value=None
                             for name,groups,cross in [('chain',1,False),('groups2',2,False),('groups4',4,False),('groups4_cross',4,True)]:
                                 plan=layout(positions,tokens,cache_length=n,group_count=groups,cross=cross,forbidden=forbidden)
-                                prepared,setup=measured(lambda:prepare(plan,kwargs['positions'][2],model.device))
+                                prepared,setup=measured(lambda:prepare(plan,kwargs['positions'][2],model.device,
+                                    shared_positions=shared_positions,shared_tokens=shared_tokens))
                                 value,cold=measured(lambda:forward(model,prepared,snapshot));flags['shadow']+=1
                                 gate,gate_seconds=measured(lambda:decide(value,plan))
                                 if name=='groups4_cross':
@@ -183,7 +215,18 @@ def main():
                                     times.append(seconds);del repeated
                                 results[name]=dict(**gate,setup_seconds=setup,cold_seconds=cold,
                                     stable_seconds=statistics.median(times),gate_seconds=gate_seconds,
-                                    query_rows=plan.count*plan.families,private_key_rows=plan.count)
+                                    query_rows=len(prepared.ids),private_key_rows=len(prepared.private_rows),
+                                    shared_rows=prepared.shared_count)
+                                if args.refresh_shared and name=='groups4_cross' and flags['controls']==0:
+                                    dense,dense_seconds=measured(lambda:forward(model,prepared,snapshot,attention_reference=True));flags['shadow']+=1
+                                    dense_gate=decide(dense,plan)
+                                    results[name]['dense32_reference']=dict(seconds=dense_seconds,
+                                        iso_max_logit_error=float((value['iso'].float()-dense['iso'].float()).abs().max()),
+                                        cross_max_logit_error=float((value['cross'].float()-dense['cross'].float()).abs().max()),
+                                        iso_probability_max_error=max(abs(a-b) for a,b in zip(gate['probabilities'],dense_gate['probabilities'])),
+                                        accepted=dense_gate['accepted'],accepted_matches=dense_gate['accepted']==gate['accepted'],
+                                        scope='Dense FP32 attention with identical BF16 projections and operator; not native Flash equivalence')
+                                    del dense
                                 if name!='groups4_cross':del value
                             replacement=next(t for t in replacements if t!=tokens[0])
                             altered,_=measured(lambda:forward(model,first_prepared,snapshot,changed_token=replacement));flags['shadow']+=1
@@ -192,13 +235,16 @@ def main():
                             iso_error=float((first_value['iso'][iso_independent].float()-altered['iso'][iso_independent].float()).abs().max())
                             own_cross_error=float((first_value['cross'][0].float()-altered['cross'][0].float()).abs().max())
                             draft_error=float((first_value['draft_hidden'][outside].float()-altered['draft_hidden'][outside].float()).abs().max()) if outside else 0.
-                            assert iso_error==own_cross_error==draft_error==0, (iso_error,own_cross_error,draft_error)
+                            shared_error=float((first_value['shared_hidden'].float()-altered['shared_hidden'].float()).abs().max()) if shared_positions else 0.
+                            assert iso_error==own_cross_error==draft_error==shared_error==0, (iso_error,own_cross_error,draft_error,shared_error)
                             assert cache_equal(blocks,snapshot,n),'Private verifier wrote the public cache'
                             pending=dict(task=task,id=ident,positions=list(positions),tokens=list(tokens),
                                 methods=results,snapshot_seconds=snapshot_seconds,
                                 proposal_seconds=flags['proposal_seconds'],cache_length=n,
                                 forbidden_iso_max_logit_change=iso_error,own_cross_max_logit_change=own_cross_error,
                                 outside_group_draft_max_hidden_change=draft_error,global_cache_unchanged=True,
+                                shared_max_hidden_change=shared_error,shared_positions=list(shared_positions),
+                                shared_tokens=list(shared_tokens),stale_control=stale_control,
                                 changed_label_index=0,old_label=tokens[0],replacement=replacement,
                                 tracked=tracked,search=search)
                             assert pending['proposal_seconds'] is not None
@@ -214,6 +260,9 @@ def main():
                             torch.cuda.synchronize()
                             if flags['normal_start'] is not None:
                                 flags['proposal_seconds']=time.perf_counter()-flags['normal_start']
+                            if args.refresh_shared:
+                                flags['normal_positions']=kwargs['positions'][0][:32].detach().cpu().tolist()
+                                flags['normal_logits']=output.logits[0,:32].detach().clone()
                             return
                         value=flags['pending']
                         if value is None:

@@ -1,5 +1,6 @@
 """Exclusive GPU1 launch after the old pipeline is terminal, never a retry."""
 import fcntl
+import argparse
 import hashlib
 import json
 import os
@@ -60,14 +61,22 @@ def guard(root, previous):
 
 
 def main():
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--audit-shared-context',action='store_true')
+    args=parser.parse_args()
+    stem='firebreak_audit' if args.audit_shared_context else 'firebreak'
     root = Path((REPO/'focus_dllm/dllm-eval/runs/latest_tuning.txt').read_text().strip())
-    deployment = json.loads((root/'firebreak_deployment.json').read_text())
+    deployment = json.loads((root/f'{stem}_deployment.json').read_text())
     output = Path(deployment['output'])
     with (root/'gpu1_research.lock').open('a') as lock:
         fcntl.flock(lock.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
         checks = guard(root, deployment['previous_failure'])
         frozen = sources()
         assert frozen == deployment['sources']
+        if args.audit_shared_context:
+            previous=json.loads((root/'firebreak_queue.json').read_text())
+            assert previous['status']=='complete' and previous['exit_code']==0
+            assert (Path(previous['output'])/'probe/complete').exists()
         output.mkdir(exist_ok=False)
         env = os.environ.copy()
         for name in ('HTTP_PROXY','HTTPS_PROXY','ALL_PROXY','http_proxy','https_proxy','all_proxy',
@@ -83,7 +92,9 @@ def main():
             previous_failure=deployment['previous_failure'],snapshot=deployment['snapshot'],
             plan='Private provenance/cost diagnostic; no new online commits or full128 expansion'))
         with (output/'cpu_tests.log').open('w') as log:
-            test = subprocess.run([PYTHON,'-m','unittest','focus_dllm.tuning.firebreak.test_firebreak','-v'],
+            tests=['focus_dllm.tuning.firebreak.test_firebreak']
+            if args.audit_shared_context:tests.append('focus_dllm.tuning.wave_verify.test_graph')
+            test = subprocess.run([PYTHON,'-m','unittest',*tests,'-v'],
                                   cwd=REPO,env=dict(env,CUDA_VISIBLE_DEVICES=''),stdout=log,stderr=subprocess.STDOUT)
         assert test.returncode == 0, 'CPU tests failed; no GPU experiment launched'
         guard(root, deployment['previous_failure']); assert sources() == frozen
@@ -92,16 +103,17 @@ def main():
             '--third-party',str(root/'third_party/pinned_20261001'),'--datasets',
             *(development['datasets'][task]['path'] for task in ('humaneval','mbpp','math')),
             '--output',str(output/'probe')]
+        if args.audit_shared_context:command.append('--refresh-shared')
         with (output/'probe.log').open('x') as log:
             child = subprocess.Popen(command,cwd=REPO,env=env,stdout=log,stderr=subprocess.STDOUT)
-            write(root/'firebreak_queue.json',dict(status='running',pid=child.pid,gpu=1,uuid=UUID,
+            write(root/f'{stem}_queue.json',dict(status='running',pid=child.pid,gpu=1,uuid=UUID,
                 output=str(output),started=time.time(),sources=frozen))
             code = child.wait()
         assert sources() == frozen, 'Running research source changed'
         (output/'probe_exit_code').write_text(str(code)+'\n')
-        (root/'firebreak_exit_code').write_text(str(code)+'\n')
+        (root/f'{stem}_exit_code').write_text(str(code)+'\n')
         complete = code == 0 and (output/'probe/complete').exists()
-        write(root/'firebreak_queue.json',dict(status='complete' if complete else 'failed',
+        write(root/f'{stem}_queue.json',dict(status='complete' if complete else 'failed',
             gpu=1,output=str(output),exit_code=code,goal_achieved=False,
             automatic_expansion=False,automatic_retry=False))
         if not complete:

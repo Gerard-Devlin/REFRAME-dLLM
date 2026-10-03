@@ -26,11 +26,11 @@ def streaming(q, base_k, base_v, draft_k, draft_v, mapping, choices):
         raise ValueError('BF16 CUDA with128-dimensional heads required')
     m, h, d = q.shape
     b, n = draft_k.shape[0], base_k.shape[0]
-    if not 0 < b <= 32 or choices.shape != (m, b) or mapping.shape != (n,):
+    if not 0 < b <= 128 or choices.shape != (m, b) or mapping.shape != (n,):
         raise ValueError('Invalid version-selection geometry')
     out = torch.empty_like(q)
     versioned_attention[((m+31)//32, h)](
         q, base_k, base_v, draft_k, draft_v, mapping, choices, out,
         M=m, N=n, B=b, H=h, D=d, SCALE=1/math.sqrt(d),
-        BM=32, BN=64, BD=32, num_warps=4, num_stages=2)
+        BM=32, BN=64, BD=max(32,1 << (b-1).bit_length()), num_warps=4, num_stages=2)
     return out
