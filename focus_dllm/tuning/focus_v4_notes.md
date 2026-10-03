@@ -57,3 +57,26 @@ The fixed validation uses seed 51713, offset 64, 16 prompts per task at each of
 256/512; only FOCUS controls and this chosen v4 config run. Native LLaDA/v1 stay
 frozen. Scorer exceptions remain explicitly unresolved instead of counting as
 incorrect answers. Every traced action and every clean token/NFE is checked.
+
+## Research objective clarified by the user
+
+The v4 method is allowed to change the token sequence, commit order, NFE,
+pruning and decoding decisions. The target is genuinely higher task accuracy
+and lower end-to-end decoding latency, not reproduction of old FOCUS outputs.
+Exact trajectory checks apply only to the current execution-only control;
+they are not an acceptance gate for subsequent quality-improving candidates.
+
+Keep the ongoing immutable runtime validation as a component result. A quality
+candidate uses a separate run identity after that job releases GPU 1; do not
+edit its source, configuration, or interpretation halfway through the run.
+Choose candidates on the existing development prompts, then fix one common
+configuration and reserve new IDs for paired quality validation. A different
+answer is evaluated by final-expression-v3 or official code execution, rather
+than by equality with the previous answer. Native LLaDA/v1 results stay frozen.
+
+Report accuracy gains and regressions, paired uncertainty, request latency,
+NFE, truncation and setup/correction costs together. Retain better quality/speed
+tradeoffs as experimental candidates, and prefer candidates improving both.
+Do not claim higher accuracy from format-only score changes or from a few
+development examples. The current 7–11% execution gains improve cost only;
+an actual quality gain remains unproven.
