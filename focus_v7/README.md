@@ -314,3 +314,29 @@ concrete differences in selected-state prediction handoff, branch coverage,
 private cache persistence, numerical reference and physical model-call counting.
 Eight CPU primitive checks are in `results/freedave_review_20261003.json`.
 They do not constitute a new decoder, FreeDave GPU result or quality guarantee.
+
+## Whole-state handoff control: negative
+
+The complete-state paired control is archived in `results/handoff_20261003/`.
+Packing two prepared calls is1.67–1.75x faster than their serial pair, but only
+3/20proposed updates match the fresh complete update and only2/20also preserve
+both packed/sequential actions. The resulting optimistic gross opportunity is
+.92–1.03x before online overhead. Five numerical action disagreements also
+prevent equivalence claims. The six original trajectories remain unchanged;
+there is no new quality or online speed result. This control is stopped.
+
+## User-requested fixed GSM8K screen
+
+The user accepts speed near Flash with an independently developed substantive
+mechanism and limited quality loss, and explicitly asks to try the just-tested
+configuration on more GSM8K questions. `gsm_screen.py` therefore evaluates only
+the existing coverage-age T16/C32/D8/A8 configuration, at256tokens, on the frozen
+first128GSM8K development IDs (seed51713). It does not revive the handoff control
+or introduce a new algorithm/sweep. Saved LLaDA/v1/FOCUS outputs, scores and
+timings are reused and their hashes checked. Each output is persisted before
+the reference is accessed; final-expression-v3 is primary and the unchanged
+lm-eval filters are additionally retained. No holdout or novelty claim follows
+from this screen. Historical timings and authorized foreign GPU allocation
+limit the timing comparison; no foreign process is stopped. The launch uses
+the exclusive research lock, terminal check, before snapshot,45CPU checks and
+frozen research Python sources for the duration of the run.
