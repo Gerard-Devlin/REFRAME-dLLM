@@ -63,8 +63,10 @@ def guard(root, previous):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--audit-shared-context',action='store_true')
+    parser.add_argument('--audit-clean-background',action='store_true')
     args=parser.parse_args()
-    stem='firebreak_audit' if args.audit_shared_context else 'firebreak'
+    assert not (args.audit_shared_context and args.audit_clean_background)
+    stem='firebreak_base_audit' if args.audit_clean_background else 'firebreak_audit' if args.audit_shared_context else 'firebreak'
     root = Path((REPO/'focus_dllm/dllm-eval/runs/latest_tuning.txt').read_text().strip())
     deployment = json.loads((root/f'{stem}_deployment.json').read_text())
     output = Path(deployment['output'])
@@ -73,8 +75,8 @@ def main():
         checks = guard(root, deployment['previous_failure'])
         frozen = sources()
         assert frozen == deployment['sources']
-        if args.audit_shared_context:
-            previous=json.loads((root/'firebreak_queue.json').read_text())
+        if args.audit_shared_context or args.audit_clean_background:
+            previous=json.loads((root/('firebreak_audit_queue.json' if args.audit_clean_background else 'firebreak_queue.json')).read_text())
             assert previous['status']=='complete' and previous['exit_code']==0
             assert (Path(previous['output'])/'probe/complete').exists()
         output.mkdir(exist_ok=False)
@@ -93,7 +95,7 @@ def main():
             plan='Private provenance/cost diagnostic; no new online commits or full128 expansion'))
         with (output/'cpu_tests.log').open('w') as log:
             tests=['focus_dllm.tuning.firebreak.test_firebreak']
-            if args.audit_shared_context:tests.append('focus_dllm.tuning.wave_verify.test_graph')
+            if args.audit_shared_context or args.audit_clean_background:tests.append('focus_dllm.tuning.wave_verify.test_graph')
             test = subprocess.run([PYTHON,'-m','unittest',*tests,'-v'],
                                   cwd=REPO,env=dict(env,CUDA_VISIBLE_DEVICES=''),stdout=log,stderr=subprocess.STDOUT)
         assert test.returncode == 0, 'CPU tests failed; no GPU experiment launched'
@@ -103,7 +105,8 @@ def main():
             '--third-party',str(root/'third_party/pinned_20261001'),'--datasets',
             *(development['datasets'][task]['path'] for task in ('humaneval','mbpp','math')),
             '--output',str(output/'probe')]
-        if args.audit_shared_context:command.append('--refresh-shared')
+        if args.audit_shared_context or args.audit_clean_background:command.append('--refresh-shared')
+        if args.audit_clean_background:command.append('--clean-base-audit')
         with (output/'probe.log').open('x') as log:
             child = subprocess.Popen(command,cwd=REPO,env=env,stdout=log,stderr=subprocess.STDOUT)
             write(root/f'{stem}_queue.json',dict(status='running',pid=child.pid,gpu=1,uuid=UUID,

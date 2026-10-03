@@ -16,31 +16,38 @@ class Prepared:
     rotary: object
     private_rows: torch.Tensor
     shared_count: int
+    clean_mask_count: int
 
 
-def prepare(plan, rotary, device, mask_id=126336, *, shared_positions=(), shared_tokens=()):
+def prepare(plan, rotary, device, mask_id=126336, *, shared_positions=(), shared_tokens=(), clean_masks=False):
     b = plan.count
     shared_positions, shared_tokens = tuple(map(int,shared_positions)),tuple(map(int,shared_tokens))
     t = len(shared_positions)
-    if (t != len(shared_tokens) or b+t > 128 or len(set(shared_positions)) != t
+    clean = b if clean_masks else 0
+    if (t != len(shared_tokens) or b+t+clean > 128 or len(set(shared_positions)) != t
             or set(shared_positions) & set(plan.positions)
             or any(p < 0 or p >= plan.cache_length for p in shared_positions)
             or any(v < 0 or v == mask_id for v in shared_tokens)):
         raise ValueError('Unique legal accepted shared context, disjoint from drafts, required')
-    ids = torch.tensor(plan.tokens+(mask_id,)*(b*(plan.families-1))+shared_tokens,
+    ids = torch.tensor(plan.tokens+(mask_id,)*(b*(plan.families-1))+shared_tokens+(mask_id,)*clean,
                        device=device, dtype=torch.long)
-    positions = torch.tensor(plan.positions*plan.families+shared_positions, device=device, dtype=torch.long)
+    positions = torch.tensor(plan.positions*plan.families+shared_positions+(plan.positions if clean else ()), device=device, dtype=torch.long)
     mapping = torch.full((plan.cache_length,), -1, device=device, dtype=torch.int32)
     mapping[positions[:b]] = torch.arange(b, device=device, dtype=torch.int32)
     if t:
-        mapping[positions[-t:]] = torch.arange(b,b+t,device=device,dtype=torch.int32)
+        mapping[positions[b*plan.families:b*plan.families+t]] = torch.arange(b,b+t,device=device,dtype=torch.int32)
+    if clean:
+        # This original position ALWAYS has exactly one private version: its
+        # draft or its draft-free clean MASK, never the old cached base as well.
+        mapping[positions[:b]] = -2
     # Shared legal context is refreshed at every layer, but NEVER reads any
     # speculative draft. I/O never become keys. One bank per original position.
-    choices = tuple(row+(True,)*t for row in plan.choices())+((False,)*b+(True,)*t,)*t
+    choices = tuple(row+(True,)*t+(tuple(not choice for choice in row) if clean else ()) for row in plan.choices())
+    choices += ((False,)*b+(True,)*(t+clean),)*(t+clean)
     choices = torch.tensor(choices, device=device, dtype=torch.bool).contiguous()
-    private_rows = torch.tensor(tuple(range(b))+tuple(range(b*plan.families,b*plan.families+t)),
+    private_rows = torch.tensor(tuple(range(b))+tuple(range(b*plan.families,b*plan.families+t+clean)),
                                 device=device,dtype=torch.long)
-    return Prepared(plan, ids, positions, mapping, choices, rotary,private_rows,t)
+    return Prepared(plan, ids, positions, mapping, choices, rotary,private_rows,t,clean)
 
 
 def rotate(x, positions, rotary):
@@ -52,7 +59,7 @@ def rotate(x, positions, rotary):
 
 
 @torch.no_grad()
-def forward(model, prepared, snapshot, *, changed_token=None, attention_reference=False):
+def forward(model, prepared, snapshot, *, changed_token=None, attention_reference=False, projection_reference=None):
     plan = prepared.plan
     core = model.model
     if len(snapshot) != len(core.transformer.blocks):
@@ -70,17 +77,19 @@ def forward(model, prepared, snapshot, *, changed_token=None, attention_referenc
         raise ValueError('The fixed LLaDA8B attention geometry is required')
     for block, (base_k, base_v) in zip(core.transformer.blocks, snapshot):
         xn = block.attn_norm(x)
-        q = block.q_proj(xn).view(-1, h, d)
-        # Only draft and uncontaminated legal shared rows are private keys.
-        # Accepted token IDs can differ from their pre-proposal cached MASK KV;
-        # omitting this shared refresh was the legacy diagnostic's confound.
-        keys = xn.index_select(0,prepared.private_rows)
-        k = block.k_proj(keys).view(-1, h, d)
-        v = block.v_proj(keys).view(-1, h, d).contiguous()
         if block.q_norm is not None or block.k_norm is not None:
             raise ValueError('Unexpected Q/K normalization in the pinned backbone')
-        q = rotate(q, prepared.positions, prepared.rotary).contiguous()
-        k = rotate(k, prepared.positions.index_select(0,prepared.private_rows), prepared.rotary).contiguous()
+        if projection_reference is not None:
+            # Paid same-state operator control, never a cache write. Q/K/V use
+            # the pinned native fused projection and its rounding order.
+            q,k,v = projection_reference(block,xn,prepared,h,d)
+        else:
+            q = block.q_proj(xn).view(-1,h,d)
+            keys = xn.index_select(0,prepared.private_rows)
+            k = block.k_proj(keys).view(-1,h,d)
+            v = block.v_proj(keys).view(-1,h,d).contiguous()
+            q = rotate(q,prepared.positions,prepared.rotary).contiguous()
+            k = rotate(k,prepared.positions.index_select(0,prepared.private_rows),prepared.rotary).contiguous()
         attention = dense_reference if attention_reference else streaming
         att = attention(q, base_k.view(-1, h, d), base_v.view(-1, h, d), k, v,
                         prepared.mapping, prepared.choices).to(x.dtype).flatten(1)

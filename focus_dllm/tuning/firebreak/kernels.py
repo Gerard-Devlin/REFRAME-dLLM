@@ -26,7 +26,7 @@ def versioned_attention(Q, BK, BV, DK, DV, Map, Choice, O,
         label = tl.load(Map+key, mask=key < N, other=-1)
         choose = tl.load(Choice+row[:, None]*B+tl.maximum(label[None], 0),
                          mask=(row[:, None] < M) & (label[None] >= 0), other=0)
-        allowed = (key[None] < N) & ~choose
+        allowed = (key[None] < N) & ~choose & (label[None] != -2)
         k = tl.load(BK+(key[None]*H+head)*D+dim[:, None],
                     mask=key[None] < N, other=0.)
         v = tl.load(BV+(key[:, None]*H+head)*D+dim[None],

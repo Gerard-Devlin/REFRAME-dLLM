@@ -112,3 +112,20 @@ motivation are prior art. Closest checks:
 The possible contribution is the actual provenance-closed non-global-prefix
 verification operator with a non-propagating cross veto, if it demonstrates a
 useful quality-cost advantage. A renamed or split Flash chain is insufficient.
+
+## Second implementation audit: background and projection
+
+The shared-context correction leaves candidate MASK KV from the last normal
+forward. In this audit, additionally recompute a draft-free MASK bank alongside
+legal tracked rows, replacing each candidate position with exactly one draft
+or clean MASK version. Neither legal nor clean background reads draft labels.
+This is a paid background-update policy change, not a free equivalent fix.
+
+Hold candidates, groups, gamma=.8 and eta=.05 fixed. Compare shared-only and
+clean-background chain/cross pairs at the same teacher state. Separately use
+the pinned original fused QKV projection in private buffers to test the known
+BF16-rounding-before-RoPE discrepancy. Its full cost, including otherwise unused
+private-row projections, is counted. The graph and acceptance rule stay fixed.
+Dense attention and label-perturbation controls must still pass. No new tokens
+are committed, no accuracy claim is made, and no 128-example expansion follows
+automatically. A changed accept set alone does not establish a speed benefit.

@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import inspect
+import importlib
 import json
 import statistics
 import time
@@ -14,6 +15,30 @@ from .layout import layout
 from .engine import prepare, forward, decide
 from .attention import streaming, dense_reference
 from .boundary import adapted
+
+
+def native_projection(block, xn, prepared, h, d):
+    """Pinned fused QKV operator, private buffers only; its cost is paid."""
+    kernel = importlib.import_module('flash_cache_triton')._flash_verify_qkv_proj_fwd
+    assert all(layer.bias is None for layer in (block.q_proj,block.k_proj,block.v_proj))
+    q,k,v = (torch.empty_like(xn) for _ in range(3))
+    table = prepared.projection_table
+    kernel[(len(table),h)](xn,q,k,v,prepared.positions,
+        block.q_proj.weight,block.k_proj.weight,block.v_proj.weight,
+        prepared.rotary[0],prepared.rotary[1],table,
+        HALF=d//2,D_MODEL=h*d,HEAD_DIM=d,BLOCK_M=64,BLOCK_D=32,
+        num_warps=4,num_stages=2)
+    return (q.view(-1,h,d),k.index_select(0,prepared.private_rows).view(-1,h,d),
+            v.index_select(0,prepared.private_rows).view(-1,h,d))
+
+
+def prepare_native(plan, rotary, device, shared_positions, shared_tokens, clean_masks):
+    ready=prepare(plan,rotary,device,shared_positions=shared_positions,
+                  shared_tokens=shared_tokens,clean_masks=clean_masks)
+    m=len(ready.ids)
+    ready.projection_table=torch.tensor([(0,plan.cache_length,i,min(i+64,m)) for i in range(0,m,64)],
+                                       device=device,dtype=torch.int32)
+    return ready
 
 
 def cache_equal(blocks, snapshot, n):
@@ -61,11 +86,21 @@ def kernel_check(device):
     assert torch.isfinite(actual).all() and error<.025,error
     checks.append(dict(candidates=16,shared=32,private_keys=b,cache=193,max_error=error,
                        reference='Dense FP32 diagnostic, not BF16 native equivalence'))
+    ready=prepare(plan,None,device,shared_positions=range(16,48),shared_tokens=range(40,72),clean_masks=True)
+    m,b=len(ready.ids),len(ready.private_rows)
+    q=(torch.randn(m,2,128,device=device)*.2).bfloat16()
+    dk=(torch.randn(b,2,128,device=device)*.2).bfloat16();dv=torch.randn_like(dk)
+    actual=streaming(q,bk,bv,dk,dv,ready.mapping,ready.choices)
+    reference=dense_reference(q,bk,bv,dk,dv,ready.mapping,ready.choices)
+    error=float((actual.float()-reference).abs().max())
+    assert torch.isfinite(actual).all() and error<.025,error
+    checks.append(dict(candidates=16,shared=32,clean_masks=16,private_keys=b,cache=193,max_error=error,
+                       reference='Clean MASK/draft exclusive version, dense FP32 diagnostic'))
     return checks
 
 
 def summarize(controls):
-    names = ('chain', 'groups2', 'groups4', 'groups4_cross')
+    names = tuple(controls[0]['methods']) if controls else ('chain','groups2','groups4','groups4_cross')
     result = dict(windows=len(controls), methods={})
     for name in names:
         rows = [c['methods'][name] for c in controls]
@@ -87,6 +122,15 @@ def summarize(controls):
         result['matched_progress_per_second_ratio'] = (cross['accepted']/cross_work)/(chain['accepted']/base_work) if chain['accepted'] and cross_work else None
         result['instrumented_matched_chain_seconds'] = base_work
         result['instrumented_cross_seconds'] = cross_work
+        if 'native_chain' in names:
+            result['controlled_cost_pairs']={}
+            for chain_name,cross_name in (('shared_chain','shared_cross'),('chain','groups4_cross'),('native_chain','native_cross')):
+                costs={name:sum(c['proposal_seconds']+c['snapshot_seconds']+c['methods'][name]['setup_seconds']
+                               +c['methods'][name]['stable_seconds']+c['methods'][name]['gate_seconds'] for c in controls)
+                       for name in (chain_name,cross_name)}
+                ca=result['methods'][chain_name]['accepted'];xa=result['methods'][cross_name]['accepted']
+                result['controlled_cost_pairs'][cross_name]=dict(chain=chain_name,cost_seconds=costs,
+                    progress_per_second_ratio=(xa/costs[cross_name])/(ca/costs[chain_name]) if ca else None)
     result['scope'] = ('Read-only development-state mechanism/cost diagnostic. Teacher agreement is not task '
                        'accuracy. Shadow accepts are not saved model calls or end-to-end acceleration.')
     return result
@@ -104,7 +148,10 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--refresh-shared',action='store_true',
         help='Audit the omitted legal tracked-context refresh; preserve stale control separately')
+    parser.add_argument('--clean-base-audit',action='store_true',
+        help='Factor clean MASK background refresh and native fused QKV; matched controls only')
     args = parser.parse_args(); args.output.mkdir(exist_ok=False)
+    assert not args.clean_base_audit or args.refresh_shared
     binding = check_binding(required=True)
     cls, official, adaptation = load_external(args.third_party, 'flash_verify')
     source = Path(inspect.getsourcefile(inspect.unwrap(official)))
@@ -119,10 +166,14 @@ def main():
         implementation={str(p.relative_to(Path(__file__).parent)):sha256(p) for p in Path(__file__).parent.rglob('*.py')},
         configuration=dict(length=256, block=32, threshold=.9, gamma=.8, eta=.05,
                            groups=[1,2,4], seed=51713, prompts_per_task=2, windows_per_prompt=2,
-                           shared_context_refresh=args.refresh_shared),
+                           shared_context_refresh=args.refresh_shared,clean_mask_refresh=args.clean_base_audit),
         datasets={task:sha256(path) for task,path in zip(('humaneval','mbpp','math'),args.datasets)},
         kernel_checks=[], prompts=[], controls=[], torch_sdpa_calls=0,
         scope='Private experimental contexts, no online FIREBREAK commits, no task-quality/speed/novelty claim.')
+    if args.clean_base_audit:
+        projection_source=Path(inspect.getsourcefile(importlib.import_module('flash_cache_triton')))
+        report['projection_source']=dict(path=str(projection_source),sha256=sha256(projection_source),
+            control='Original pinned fused projection; private outputs, no public KV writes')
     write_json(args.output/'diagnostic.json', report)
     original_sdpa = F.scaled_dot_product_attention
     def watched(*a, **k):
@@ -199,24 +250,38 @@ def main():
                                 stale_control['root_top1_matches_normal']=int(stale_value['iso'][0].argmax())==int(native.argmax())
                                 del stale_value,stale_prepared
                             first_plan=None; first_prepared=None; first_value=None
-                            for name,groups,cross in [('chain',1,False),('groups2',2,False),('groups4',4,False),('groups4_cross',4,True)]:
+                            cases=[('chain',1,False,args.clean_base_audit,False),('groups2',2,False,args.clean_base_audit,False),
+                                   ('groups4',4,False,args.clean_base_audit,False),('groups4_cross',4,True,args.clean_base_audit,False)]
+                            if args.clean_base_audit:
+                                cases += [('shared_chain',1,False,False,False),('shared_cross',4,True,False,False),
+                                          ('native_chain',1,False,True,True),('native_cross',4,True,True,True)]
+                            for name,groups,cross,clean_masks,native_qkv in cases:
                                 plan=layout(positions,tokens,cache_length=n,group_count=groups,cross=cross,forbidden=forbidden)
-                                prepared,setup=measured(lambda:prepare(plan,kwargs['positions'][2],model.device,
-                                    shared_positions=shared_positions,shared_tokens=shared_tokens))
-                                value,cold=measured(lambda:forward(model,prepared,snapshot));flags['shadow']+=1
+                                prepared,setup=measured(lambda:prepare_native(plan,kwargs['positions'][2],model.device,
+                                    shared_positions,shared_tokens,clean_masks) if native_qkv else prepare(plan,kwargs['positions'][2],model.device,
+                                    shared_positions=shared_positions,shared_tokens=shared_tokens,clean_masks=clean_masks))
+                                reference=native_projection if native_qkv else None
+                                value,cold=measured(lambda:forward(model,prepared,snapshot,projection_reference=reference));flags['shadow']+=1
                                 gate,gate_seconds=measured(lambda:decide(value,plan))
                                 if name=='groups4_cross':
                                     first_plan,first_prepared,first_value=plan,prepared,value
                                 times=[]
                                 for _ in range(3):
-                                    repeated,seconds=measured(lambda:forward(model,prepared,snapshot));flags['shadow']+=1
+                                    repeated,seconds=measured(lambda:forward(model,prepared,snapshot,projection_reference=reference));flags['shadow']+=1
                                     assert torch.equal(value['iso'],repeated['iso'])
                                     if cross:assert torch.equal(value['cross'],repeated['cross'])
                                     times.append(seconds);del repeated
                                 results[name]=dict(**gate,setup_seconds=setup,cold_seconds=cold,
                                     stable_seconds=statistics.median(times),gate_seconds=gate_seconds,
                                     query_rows=len(prepared.ids),private_key_rows=len(prepared.private_rows),
-                                    shared_rows=prepared.shared_count)
+                                    shared_rows=prepared.shared_count,clean_mask_rows=prepared.clean_mask_count,
+                                    projection='pinned fused QKV' if native_qkv else 'BF16 linear then RoPE')
+                                if args.clean_base_audit and name in ('native_chain','native_cross'):
+                                    target='chain' if name=='native_chain' else 'groups4_cross'
+                                    results[name]['comparison_to_linear']=dict(
+                                        accepted_matches=gate['accepted']==results[target]['accepted'],
+                                        probability_max_error=max(abs(a-b) for a,b in zip(gate['probabilities'],results[target]['probabilities'])),
+                                        js_max_error=max(abs(a-b) for a,b in zip(gate['js_nats'],results[target]['js_nats'])))
                                 if args.refresh_shared and name=='groups4_cross' and flags['controls']==0:
                                     dense,dense_seconds=measured(lambda:forward(model,prepared,snapshot,attention_reference=True));flags['shadow']+=1
                                     dense_gate=decide(dense,plan)
@@ -237,6 +302,16 @@ def main():
                             draft_error=float((first_value['draft_hidden'][outside].float()-altered['draft_hidden'][outside].float()).abs().max()) if outside else 0.
                             shared_error=float((first_value['shared_hidden'].float()-altered['shared_hidden'].float()).abs().max()) if shared_positions else 0.
                             assert iso_error==own_cross_error==draft_error==shared_error==0, (iso_error,own_cross_error,draft_error,shared_error)
+                            native_noninterference=None
+                            if args.clean_base_audit and flags['controls']==0:
+                                np=prepare_native(first_plan,kwargs['positions'][2],model.device,shared_positions,shared_tokens,True)
+                                clean_native,_=measured(lambda:forward(model,np,snapshot,projection_reference=native_projection));flags['shadow']+=1
+                                changed_native,_=measured(lambda:forward(model,np,snapshot,changed_token=replacement,projection_reference=native_projection));flags['shadow']+=1
+                                native_noninterference=dict(iso=float((clean_native['iso'][iso_independent].float()-changed_native['iso'][iso_independent].float()).abs().max()),
+                                    own_cross=float((clean_native['cross'][0].float()-changed_native['cross'][0].float()).abs().max()),
+                                    clean_background=float((clean_native['shared_hidden'].float()-changed_native['shared_hidden'].float()).abs().max()))
+                                assert all(v==0 for v in native_noninterference.values()),native_noninterference
+                                del clean_native,changed_native,np
                             assert cache_equal(blocks,snapshot,n),'Private verifier wrote the public cache'
                             pending=dict(task=task,id=ident,positions=list(positions),tokens=list(tokens),
                                 methods=results,snapshot_seconds=snapshot_seconds,
@@ -247,6 +322,7 @@ def main():
                                 shared_tokens=list(shared_tokens),stale_control=stale_control,
                                 changed_label_index=0,old_label=tokens[0],replacement=replacement,
                                 tracked=tracked,search=search)
+                            pending['native_projection_noninterference']=native_noninterference
                             assert pending['proposal_seconds'] is not None
                             flags['pending']=pending; flags['controls']+=1
                             del first_value,altered,snapshot
@@ -302,6 +378,7 @@ def main():
                     print(f'Completed FIREBREAK prompt {len(report["prompts"])}/6',flush=True)
                 finally:count_handle.remove()
         assert report['torch_sdpa_calls']==0 and source_sha==sha256(source)
+        if args.clean_base_audit:assert sha256(projection_source)==report['projection_source']['sha256']
         assert len(report['prompts'])==6 and report['controls']
         write_json(args.output/'diagnostic.json',report)
         (args.output/'complete').write_text('OK\n')

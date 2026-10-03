@@ -12,7 +12,7 @@ def dense_reference(q, base_k, base_v, draft_k, draft_v, mapping, choices):
     n = base_k.shape[0]
     scores_b = torch.einsum('mhd,nhd->mhn', q.float(), base_k.float())
     scores_d = torch.einsum('mhd,bhd->mhb', q.float(), draft_k.float())
-    selected = choices[:, mapping.clamp_min(0)] & (mapping[None] >= 0)
+    selected = (choices[:, mapping.clamp_min(0)] & (mapping[None] >= 0)) | (mapping[None] == -2)
     scores = torch.cat((scores_b.masked_fill(selected[:, None], -torch.inf),
                         scores_d.masked_fill(~choices[:, None], -torch.inf)), -1)
     p = (scores/math.sqrt(q.shape[-1])).softmax(-1)

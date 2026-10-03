@@ -59,6 +59,28 @@ class ProvenanceTests(unittest.TestCase):
 
 
 class AttentionAndDecisionTests(unittest.TestCase):
+    def test_clean_mask_or_draft_one_version(self):
+        p=layout([1],[5],cache_length=2,group_count=1,cross=False)
+        ready=prepare(p,None,'cpu',shared_positions=[0],shared_tokens=[2],clean_masks=True)
+        self.assertEqual(ready.mapping.tolist(),[1,-2])
+        # Keys are D, shared, clean-MASK; query rows are D,I,shared,clean.
+        q=torch.zeros(4,1,2);bk=torch.zeros(2,1,2);bv=torch.full_like(bk,99.)
+        dk=torch.zeros(3,1,2);dv=torch.tensor([[[3.,3.]],[[7.,7.]],[[11.,11.]]])
+        actual=dense_reference(q,bk,bv,dk,dv,ready.mapping,ready.choices)
+        self.assertEqual(actual[:,0,0].tolist(),[5.,9.,9.,9.])
+        self.assertTrue((ready.choices[:,0].to(torch.int64)+ready.choices[:,2].to(torch.int64)==1).all())
+
+    def test_clean_background_has_no_draft_path(self):
+        p=layout([7,2,9,1],[30,40,50,60],cache_length=12,group_count=2)
+        ready=prepare(p,None,'cpu',shared_positions=[0,10],shared_tokens=[11,12],clean_masks=True)
+        paths=torch.zeros(len(ready.ids),4,dtype=torch.int64);paths[:4]=torch.eye(4,dtype=torch.int64)
+        for _ in range(32):
+            paths=((paths+ready.choices.to(torch.int64)@paths[ready.private_rows])>0).to(torch.int64)
+        self.assertFalse(paths[12:].any())
+        for i in range(4):
+            self.assertEqual(paths[4+i].tolist(),[int(j<i and p.groups[j]==p.groups[i]) for j in range(4)])
+            self.assertEqual(paths[8+i,i].item(),0)
+
     def test_shared_context_never_reads_speculative_labels(self):
         p=layout([7,2,9,1],[30,40,50,60],cache_length=12,group_count=2)
         ready=prepare(p,None,'cpu',shared_positions=[0,10],shared_tokens=[11,12])
