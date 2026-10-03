@@ -1,0 +1,8 @@
+{
+  "seconds": {
+    "refresh_only": 0.9993404857814312,
+    "admission_only": 0.9031046694144607,
+    "both": 0.9016833389177918
+  },
+  "excluded_from_report": true
+}

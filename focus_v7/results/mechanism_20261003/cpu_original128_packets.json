@@ -1,0 +1,25 @@
+{
+  "questions": 128,
+  "packets": 3911,
+  "accepted_draft_tokens": 16593,
+  "forced_audit_corrections": 3810,
+  "total_packet_commits": 20403,
+  "special_eos_commits": 942,
+  "groups": {
+    "True": {
+      "questions": 17,
+      "mean_nfe": 33.23529411764706,
+      "mean_cold_proposals": 145.1764705882353,
+      "mean_output_tokens": 167.7058823529412,
+      "correction_fraction": 0.17960837272113436
+    },
+    "False": {
+      "questions": 111,
+      "mean_nfe": 31.2972972972973,
+      "mean_cold_proposals": 128.34234234234233,
+      "mean_output_tokens": 149.66666666666666,
+      "correction_fraction": 0.18794793876497906
+    }
+  },
+  "scope": "CPU description of real128 records; group correlations do not identify causality; saved packets do not contain confidence values"
+}

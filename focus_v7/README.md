@@ -181,3 +181,77 @@ archive validation report are in `results/quality128_20261003/`.
 This fixed prototype fails the user's quality requirement. Preserve the real
 speed result and the larger quality failure separately; do not call it a
 successful accelerator or automatically expand it further.
+
+## Implementation/admission mechanism audit
+
+Following the user's request to investigate implementation and parameters, a
+read-only observer reproduced the exact six saved v7 token/action/text/NFE
+trajectories. Six repeated32layer packet controls had zero clean/audit logit and
+private source KV error; cache objects, versions and contents were preserved.
+The job exited0 with24CPU tests,52separately counted paid shadow calls and SDPA0.
+
+Across23predeclared early/middle windows (368candidate positions), current clean
+top1 matches the paid full current-canvas prediction276/368(75%). Holding the
+packet order/mask fixed while replacing ONLY external cached KV with fresh paid
+values raises that to365/368(99.18%). The audit's top1 changes64/368times, and its
+prefix/correction decision changes10/23times. This identifies a cache freshness
+effect on the packet's predictions; a full MASK prediction is not gold or the
+same conditional distribution as sequential verification. Full recomputation
+has already been paid and supplies no executable free acceleration.
+
+The same six real v7 trajectories committed694accepted drafts and163forced audit
+corrections. Respectively261(37.61%) and123(75.46%) had probability below.9;
+73corrections(44.79%) were even below.5. That is an explicit aggressive admission
+policy, rather than ordinary .9confidence decoding. It is not alone a proof of
+which task failures it caused. Same-state controlled evidence and all outputs
+are archived in `results/mechanism_20261003/`.
+
+A separate fixed16question factorial screen in `REVISION_PLAN.md` tests own-paid
+frontier cache/proposal refresh, clean-root+probabilistic-prefix admission, and
+both. All original algorithm files and128records remain unchanged. This tests
+engineering/algorithm mechanisms; confidence rules and periodic refresh alone
+are not claimed as novel contributions or a publishable result.
+
+## Completed16question implementation/admission screen
+
+All three predeclared variants completed with29passing CPU checks, unchanged
+frozen research sources, SDPA0 and GPU1 released. The disabled revision controls
+also reproduced the original v7's first-question raw tokens, packet actions,
+text and model-call count exactly. All full refreshes, cache/proposal maintenance,
+selection and rendering are included in the new generation timings.
+
+| Method | Official pass@1 on these16IDs | Mean seconds/question | Mean model calls |
+|---|---:|---:|---:|
+| Saved original v1 |7/16 (43.75%)|3.028949|historical|
+| Saved original FOCUS |2/16 (12.5%)|2.687440|historical|
+| Saved FOCUS IO/infra adapter |2/16 (12.5%)|2.396020|historical|
+| Saved original v7 |2/16 (12.5%)|1.002777|historical|
+| Own-paid frontier refresh only |2/16 (12.5%)|1.328011|30.8750|
+| Conservative admission only |2/16 (12.5%)|2.633215|85.9375|
+| Both revisions |2/16 (12.5%)|3.077940|86.8125|
+
+The original v1 score was read from the frozen same-ID official code-execution
+results; both original record/score file hashes were checked. No old baseline
+was regenerated. The saved optimized Flash method got5/16on these same IDs;
+its128question mean time must not be substituted for a same16question time.
+
+Conservative admission repairs HumanEval/122 but loses HumanEval/144, leaving
+the aggregate at2/16. Cache refresh alone preserves the old v7 correct set
+(HumanEval/144 and HumanEval/34) without increasing the total. None improves
+aggregate quality, and conservative admission increases model calls to about86.
+These changes do not meet the speed-quality goal and are not expanded by default.
+
+This tiny reused development subset is not representative: saved FOCUS got
+43/128on the larger screen, while original v1 got53/128and v7 got17/128. Equal
+2/16totals do not establish quality preservation; original FOCUS and v7 even
+solve different questions. The user now permits small quality losses for large
+real speed gains, but the observed v7 deficit is not a small one. Future
+candidates need a broader paired quality comparison before acceptance.
+
+The positive mechanism evidence remains separate from these failed remedies:
+fresh external KV strongly changes same-state predictions, and the original
+admission rule accepts many low-probability tokens. That does not prove that
+periodic full refresh or stricter thresholds solve the problem, nor rule out
+all implementation defects. Full per-question outputs, scored outcomes, source
+snapshot, test/launch logs and CPU analysis are in
+`results/revision16_20261003/`, including `cpu_v1_comparison.json`.

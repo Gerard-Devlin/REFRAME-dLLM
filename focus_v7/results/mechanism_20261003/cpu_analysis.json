@@ -1,0 +1,117 @@
+{
+  "summary": {
+    "packets": 167,
+    "commits": 857,
+    "admission": {
+      "accepted_draft": {
+        "count": 694,
+        "below_05": 73,
+        "below_09": 261,
+        "mean_probability": 0.8393660848914742
+      },
+      "correction": {
+        "count": 163,
+        "below_05": 73,
+        "below_09": 123,
+        "mean_probability": 0.5688701960589503
+      }
+    },
+    "shadows": {
+      "windows": 23,
+      "old_clean_vs_full": {
+        "matches": 276,
+        "positions": 368,
+        "fraction": 0.75
+      },
+      "fresh_clean_vs_full": {
+        "matches": 365,
+        "positions": 368,
+        "fraction": 0.9918478260869565
+      },
+      "old_audit_vs_fresh_audit": {
+        "matches": 304,
+        "positions": 368,
+        "fraction": 0.8260869565217391
+      },
+      "old_actual_commit_vs_full": {
+        "matches": 142,
+        "positions": 165,
+        "fraction": 0.8606060606060606
+      },
+      "mean_audit_logit_rms": 0.6769742913868116,
+      "old_fresh_decision_changes": 10,
+      "scope": "Paid same-state shadows; full MASK top1 is not gold or sequential verification equivalence"
+    }
+  },
+  "per_prompt": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "windows": 4,
+      "online_nfe": 26,
+      "shadow_calls": 9,
+      "clean_matches": 44,
+      "fresh_matches": 63,
+      "positions": 64,
+      "decision_changes": 3
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "windows": 4,
+      "online_nfe": 39,
+      "shadow_calls": 9,
+      "clean_matches": 46,
+      "fresh_matches": 64,
+      "positions": 64,
+      "decision_changes": 2
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "windows": 3,
+      "online_nfe": 8,
+      "shadow_calls": 7,
+      "clean_matches": 39,
+      "fresh_matches": 47,
+      "positions": 48,
+      "decision_changes": 1
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "windows": 4,
+      "online_nfe": 13,
+      "shadow_calls": 9,
+      "clean_matches": 53,
+      "fresh_matches": 64,
+      "positions": 64,
+      "decision_changes": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "windows": 4,
+      "online_nfe": 37,
+      "shadow_calls": 9,
+      "clean_matches": 51,
+      "fresh_matches": 64,
+      "positions": 64,
+      "decision_changes": 2
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "windows": 4,
+      "online_nfe": 50,
+      "shadow_calls": 9,
+      "clean_matches": 43,
+      "fresh_matches": 63,
+      "positions": 64,
+      "decision_changes": 1
+    }
+  ],
+  "source_isolation_repeat_controls": 6,
+  "shadow_calls": 52,
+  "scope": "Same-input private freshness intervention, not final task-score causality or a free cache refresh"
+}
