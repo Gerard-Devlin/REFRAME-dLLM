@@ -218,6 +218,16 @@ class ExecutionTests(unittest.TestCase):
 
 
 class PoolTests(unittest.TestCase):
+    def test_identity_scan_is_once_not_per_position(self):
+        from .signals import measure
+        ledger=Ledger([11]*256+[126336]*16)
+        original=ledger.dirty;calls=[]
+        def watched():calls.append(1);return original()
+        ledger.dirty=watched
+        runtime=SimpleNamespace(ledger=ledger,cache=[None]*3+[(torch.randn(272,2,128).bfloat16(),None)])
+        measure(runtime,torch.randn(16,2,128).bfloat16(),tuple(range(256,272)),tuple(range(256,272)))
+        self.assertEqual(len(calls),1,'Cache planning must not scan the whole canvas for every position')
+
     def test_vectorized_pool_matches_per_tile_reference(self):
         from .signals import pooled_keys
         torch.manual_seed(87254)

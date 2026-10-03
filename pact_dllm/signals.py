@@ -27,7 +27,8 @@ def pooled_keys(keys,tiles):
 @torch.no_grad()
 def measure(runtime, query, query_positions, candidate_positions, *, tile_width=4, pool_tiles=8, requirements_per_candidate=2):
     ledger = runtime.ledger; n = len(ledger.tokens)
-    known = [i for i in range(n) if ledger.tokens[i] != 126336 and i not in ledger.dirty()]
+    dirty = set(ledger.dirty())
+    known = [i for i in range(n) if ledger.tokens[i] != 126336 and i not in dirty]
     tiles = [tuple(known[i:i+tile_width]) for i in range(0,len(known),tile_width)]
     if not candidate_positions:
         return dict(tiles=(),requirements=(),interaction=())
