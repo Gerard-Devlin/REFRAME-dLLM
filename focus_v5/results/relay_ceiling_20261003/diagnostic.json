@@ -1,0 +1,1350 @@
+{
+  "model": "GSAI-ML/LLaDA-8B-Instruct",
+  "revision": "08b83a6feb34df1a6011b80c3c00c7563e963b07",
+  "binding": {
+    "visible_uuid": "GPU-43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "actual_uuid": "43d49500-e070-14e1-48b2-6a468fa01f8b",
+    "device_name": "NVIDIA GeForce RTX 5090"
+  },
+  "official_generate_sha256": "96d3e15b2600eb73e7084d7cd3f23a1c74c44451a1ff7b5db96942d671e0e2d8",
+  "implementation": {
+    "launch_relay_ceiling.py": "1c84c5741b2fbde4db53c37a0d334a45ff93c9840c04375dcb541bba2b207805",
+    "relay_ceiling_probe.py": "827906bde3b2e0d3663f9aa145ff37ed83e6b17b030bdf740f796df89b4b8100",
+    "cost_model.py": "2551fcdc0f10a409d6af4c92d8549a9551ffd207f538db933d263d47de2b262c",
+    "relay_cache.py": "ebfd270b2903413244cd48d4fba3a868af0f40795bbcef6cb24e7db459984094",
+    "__init__.py": "47e7f4acc3961535e8d1e729471a831a27166fb0f1f035dedaaba60d06362b3d"
+  },
+  "datasets": {
+    "humaneval": "bc61f7f86cdd60d34fcd025f88c0572831847c7e21c3d44fb90dea9811a6be66",
+    "mbpp": "9a86a512c07b4c882cbcf32d9c02cd4c4c39db6fa100a0e81e9f25d27ae92bc5",
+    "math": "9040adebb273671ce570ac946fa795456c882354c21b56c0ca1b3fff1a8ec3e5"
+  },
+  "adaptation": [],
+  "configuration": {
+    "length": 256,
+    "block": 32,
+    "threshold": 0.9,
+    "gamma": 0.8,
+    "track_num": 4,
+    "mask_num": 4,
+    "prompts_per_task": 2
+  },
+  "prompts": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "prompt_tokens": 153,
+      "cycles": 23,
+      "model_calls": 46,
+      "official_iterations": 23,
+      "text_sha256": "39e3819d9963fc3ec4bf34972b86f14db87b621c2b3181f50b58fa8ed2e145c4"
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "prompt_tokens": 150,
+      "cycles": 8,
+      "model_calls": 16,
+      "official_iterations": 8,
+      "text_sha256": "2152b9780c7a83ac85c97546bebb5745271f21d79bceaf53f24fded4b3e6965f"
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "prompt_tokens": 731,
+      "cycles": 6,
+      "model_calls": 12,
+      "official_iterations": 6,
+      "text_sha256": "636efe92f5faeaab1d148eb23e16df104707df8df61ab7b400c81d55a54eb258"
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "prompt_tokens": 701,
+      "cycles": 12,
+      "model_calls": 24,
+      "official_iterations": 12,
+      "text_sha256": "72f214717f052347af5ef1e4e82ffb433cfe19bf9cd4b6dcfe3a2b73de127467"
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "prompt_tokens": 721,
+      "cycles": 48,
+      "model_calls": 96,
+      "official_iterations": 48,
+      "text_sha256": "73edb612f782aaa0fa789acc765925462379d3aa2c00e2b6c305cb3b4584e850"
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "prompt_tokens": 659,
+      "cycles": 41,
+      "model_calls": 82,
+      "official_iterations": 41,
+      "text_sha256": "0152212be98b20ce3584187a6b214eff3cd0c56c2286674a7d80008f6be08dfc"
+    }
+  ],
+  "cycles": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 0,
+      "regular_rows": 512,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 1,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 2,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 3,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 0,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 4,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 16
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 5,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 6,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 16
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 7,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 3,
+      "accepted": 3
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 8,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 9,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 10,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 11,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 12,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 5
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 13,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 12
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 14,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 15,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 16,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 17,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 18,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 19,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 20,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 13,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 21,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 6,
+      "accepted": 3
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "cycle": 22,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 1,
+      "accepted": 1
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 0,
+      "regular_rows": 512,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 1,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 2,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 3,
+      "accepted": 3
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 3,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 2,
+      "accepted": 2
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 4,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 10,
+      "accepted": 10
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 5,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 10,
+      "accepted": 6
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 6,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "cycle": 7,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 0,
+      "accepted": 0
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 0,
+      "regular_rows": 1024,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 1,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 2,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 11
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 3,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 4,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 9,
+      "accepted": 2
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "cycle": 5,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 0,
+      "accepted": 0
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 0,
+      "regular_rows": 1024,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 1,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 2,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 3,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 4,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 5,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 6,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 7,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 8,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 10
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 9,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 10,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 10,
+      "accepted": 9
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "cycle": 11,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 0,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 0,
+      "regular_rows": 1024,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 14
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 1,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 2,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 3,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 4,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 5,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 6,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 7,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 8,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 9,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 10,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 11,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 12,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 13,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 9
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 14,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 15,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 11
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 16,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 17,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 18,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 19,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 20,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 21,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 22,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 23,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 24,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 25,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 26,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 27,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 28,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 29,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 30,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 31,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 32,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 33,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 34,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 35,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 36,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 37,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 6
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 38,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 6
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 39,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 40,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 41,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 42,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 43,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 13,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 44,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 10,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 45,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 7,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 46,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 3,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "cycle": 47,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 1,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 0,
+      "regular_rows": 1024,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 1,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 16
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 2,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 3,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 4,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 5,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 6,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 7,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 8,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 9,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 10
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 10,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 13
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 11,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 5
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 12,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 5
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 13,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 14,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 15,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 11
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 16,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 6
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 17,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 12
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 18,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 19,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 20,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 6
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 21,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 22,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 6
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 23,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 3
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 24,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 25,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 26,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 27,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 28,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 29,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 2
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 30,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 31,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 32,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 13
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 33,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 34,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 35,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 8
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 36,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 4
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 37,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 16,
+      "accepted": 1
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 38,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 15,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 39,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 14,
+      "accepted": 0
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "cycle": 40,
+      "regular_rows": 256,
+      "verify_rows": 64,
+      "search": 10,
+      "accepted": 10
+    }
+  ],
+  "scope": "Read-only official Flash trajectory on reused development prompts. No gold, tests, solutions, future tokens, or teacher state enter generation.",
+  "summary": {
+    "cycles": 138,
+    "baseline_query_rows": 47744,
+    "relay_query_rows": 13248,
+    "optimistic_row_speedup": 3.603864734299517,
+    "relay_rows_per_cycle": 96,
+    "scope": "Screening ceiling only. It assumes the clean branch can supply the next proposal; real acceptance, kernels and latency must be measured.",
+    "proposals": 1996,
+    "accepted": 445,
+    "mean_regular_rows": 281.9710144927536,
+    "min_regular_rows": 256,
+    "max_regular_rows": 1024,
+    "all_verify_rows": [
+      64
+    ],
+    "claim": "Row-work ceiling only; no Relay generation, latency, or quality claim."
+  }
+}
