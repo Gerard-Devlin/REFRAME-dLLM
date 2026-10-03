@@ -7,6 +7,23 @@ import math
 import torch
 
 
+def pooled_keys(keys,tiles):
+    """One gather/reduction for equal-width tiles, at most one tail gather."""
+    if not tiles:
+        return keys.new_empty((0,)+tuple(keys.shape[1:]),dtype=torch.float32)
+    width=len(tiles[0]);full=len(tiles) if len(tiles[-1])==width else len(tiles)-1
+    if any(len(t)!=width for t in tiles[:full]):
+        raise ValueError('Equal-width tiles and at most one short tail required')
+    pieces=[]
+    if full:
+        index=torch.tensor([p for t in tiles[:full] for p in t],device=keys.device)
+        pieces.append(keys.index_select(0,index).view(full,width,*keys.shape[1:]).float().mean(1))
+    if full<len(tiles):
+        index=torch.tensor(tiles[-1],device=keys.device)
+        pieces.append(keys.index_select(0,index).float().mean(0,keepdim=True))
+    return torch.cat(pieces,0) if len(pieces)>1 else pieces[0]
+
+
 @torch.no_grad()
 def measure(runtime, query, query_positions, candidate_positions, *, tile_width=4, pool_tiles=8, requirements_per_candidate=2):
     ledger = runtime.ledger; n = len(ledger.tokens)
@@ -22,7 +39,7 @@ def measure(runtime, query, query_positions, candidate_positions, *, tile_width=
     interaction = interaction.softmax(-1).cpu().tolist()
     if not tiles:
         return dict(tiles=(),requirements=((),)*len(candidate_positions),interaction=interaction)
-    centers = torch.stack([keys[list(t)].float().mean(0) for t in tiles])
+    centers = pooled_keys(keys,tiles)
     coarse = torch.einsum('ihd,jhd->ij',q,centers)/(q.shape[1]*math.sqrt(q.shape[-1]))
     saliency = coarse.softmax(-1).cpu().tolist()
     scores = []

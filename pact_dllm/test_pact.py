@@ -217,4 +217,25 @@ class ExecutionTests(unittest.TestCase):
             self.assertTrue(all(torch.equal(x,y) for x,y in zip(a,b)))
 
 
+class PoolTests(unittest.TestCase):
+    def test_vectorized_pool_matches_per_tile_reference(self):
+        from .signals import pooled_keys
+        torch.manual_seed(87254)
+        for n in (1,3,4,5,8,15,256,1001):
+            keys=torch.randn(n,2,128).bfloat16()
+            tiles=[tuple(range(i,min(i+4,n))) for i in range(0,n,4)]
+            expected=torch.stack([keys[list(t)].float().mean(0) for t in tiles])
+            self.assertTrue(torch.equal(pooled_keys(keys,tiles),expected))
+
+    def test_noncontiguous_positions_and_ragged_tail(self):
+        from .signals import pooled_keys
+        keys=torch.randn(31,2,128)
+        tiles=[(1,5,7,13),(18,20,21,22),(25,30)]
+        self.assertTrue(torch.equal(pooled_keys(keys,tiles),torch.stack([keys[list(t)].mean(0) for t in tiles])))
+
+    def test_empty_pool(self):
+        from .signals import pooled_keys
+        self.assertEqual(pooled_keys(torch.randn(4,2,128),()).shape,(0,2,128))
+
+
 if __name__=='__main__':unittest.main()

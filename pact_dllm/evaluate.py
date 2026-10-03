@@ -83,10 +83,12 @@ def main():
                     for variant in args.variants:
                         audit=None
                         if args.scope=='mechanism_smoke' and index==0 and variant=='joint':
-                            from .gpu_controls import control
+                            from .gpu_controls import control,fork_control
                             def audit(runtime,ready,dag):
                                 if any(r['task']==task for r in report['private_controls']):return
                                 row=control(runtime,ready,dag,tokenizer);row.update(task=task,id=ident)
+                                row['fork_control']=fork_control(runtime,ready,tokenizer)
+                                row['context']='Hypothetical full-proposal DAG; not a commit/acceptance measurement'
                                 report['private_controls'].append(row)
                         value=generate(model,ids,module.get_rotary_embedding,config,variant=variant,forbidden=forbidden,trace=True)
                         if audit is not None:
@@ -94,6 +96,15 @@ def main():
                             assert instrumented['token_ids']==value['token_ids'] and instrumented['nfe']==value['nfe']
                             assert instrumented['actions']==value['actions'],'Read-only controls altered online commits'
                             value['audit_seconds_separate']=instrumented['seconds']
+                        if args.scope=='mechanism_smoke':
+                            # Same request after its shapes are compiled; all setup,
+                            # state allocation and repair remain in the timer.
+                            repeated=generate(model,ids,module.get_rotary_embedding,config,variant=variant,forbidden=forbidden,trace=True)
+                            assert repeated['token_ids']==value['token_ids'] and repeated['nfe']==value['nfe']
+                            assert repeated['actions']==value['actions']
+                            value['first_execution_seconds']=value['seconds']
+                            value['seconds']=repeated['seconds']
+                            value['stats']=repeated['stats']
                         value['text'],value['output_tokens']=postprocess_output(tokenizer,value['token_ids'],sample,task)
                         value['first_eos']=value['token_ids'].index(126081) if 126081 in value['token_ids'] else None
                         value['truncated']=value['first_eos'] is None

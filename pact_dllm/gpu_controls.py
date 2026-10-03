@@ -42,6 +42,24 @@ def control(runtime,ready,dag,tokenizer):
 
 
 @torch.no_grad()
+def fork_control(runtime,ready,tokenizer):
+    """Actual32-layer fork/join layout even when the optimizer selects one row."""
+    from .engine import prepare
+    from .graph import DAG
+    candidates=tuple(p for p in ready.clean_positions if runtime.ledger.tokens[p]==126336)[:4]
+    if len(candidates)<4:
+        return dict(skipped=True,reason='Fewer than four remaining MASK positions')
+    legal=[t for t in tokenizer.encode('0 1',add_special_tokens=False) if t not in tokenizer.all_special_ids]
+    graph=DAG(((),(0,),(),(0,2)))
+    frame=prepare(runtime.ledger.tokens,ready.clean_positions,ready.rotary,ready.ids.device,
+                  candidate_positions=candidates,candidate_tokens=(legal[0],)*4,dag=graph)
+    result=control(runtime,frame,graph,tokenizer)
+    result.update(candidates=4,parents=[list(p) for p in graph.parents],synthetic_draft=True,
+                  quality_or_acceptance_claim=False)
+    return result
+
+
+@torch.no_grad()
 def kernel_controls(device):
     from .engine import prepare
     from .graph import DAG
@@ -60,4 +78,11 @@ def kernel_controls(device):
         reference=dense_reference(q,k,v,pk,pv,ready.mapping,ready.choices)
         error=float((fast.float()-reference).abs().max());assert error<.025 and torch.isfinite(fast).all()
         checks.append(dict(candidates=count,cache=n,max_error=error))
+    from .signals import pooled_keys
+    keys=torch.randn(1001,2,128,device=device).bfloat16()
+    tiles=[tuple(range(i,min(i+4,1001))) for i in range(0,1001,4)]
+    old=torch.stack([keys[list(t)].float().mean(0) for t in tiles])
+    new=pooled_keys(keys,tiles)
+    assert torch.equal(old,new),'Batched pooling changed the observed tile statistic'
+    checks.append(dict(vectorized_pool_bitwise_equal=True,tiles=len(tiles)))
     return checks

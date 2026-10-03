@@ -55,6 +55,12 @@ Recorded latency includes prefill, initialization, signal extraction, CPU
 planning/synchronization, every forward and cache repair. Private perturbation
 and dense controls run in a separate generation; their timing is not a speed
 baseline. Record full tokens/actions/NFE, per-task summary, truncation and EOS.
+In a smoke run each configuration is replayed after its kernel shapes compile;
+first-execution time is retained separately. Tokens, actions and NFE must match
+the replay. Tile pooling uses batched gather/reduction, with a bitwise check
+against the original per-tile statistic. Four-node private fork/join controls
+test the actual32-layer path even when the planner selects too few candidates
+to expose branching. They do not demonstrate task quality.
 
 No training, new checkpoint, early EOS shortcut, or automatic parameter sweep.
 `focus_dllm/README.md`, old main results and original LLaDA/v1 remain unchanged.

@@ -124,6 +124,14 @@ def generate(model, prompt, rotary_factory, config=Config(), *, variant='joint',
                 tick=time.perf_counter(); dag,plan=plan_cycle(variant,signals,scores,config)
                 stats['planner_seconds'] += time.perf_counter()-tick
                 selected=plan['candidates'];stats['draft_proposed'] += len(cp);stats['draft_selected'] += len(selected)
+                if audit is not None:
+                    # Read-only hypothetical full proposal graph: test isolation
+                    # even if the planner chooses an empty execution set.
+                    probe_masks=tuple(i for i in range(block_start,block_end) if runtime.ledger.tokens[i]==MASK)
+                    probe_clean=tuple(sorted(set(runtime.ledger.dirty()+probe_masks)))
+                    probe_ready=prepare(runtime.ledger.tokens,probe_clean,rotary,device,
+                        candidate_positions=cp,candidate_tokens=ct,dag=dag)
+                    audit(runtime,probe_ready,dag)
                 if selected:
                     subdag=dag.subset(selected)
                     positions=tuple(cp[i] for i in selected);proposals=tuple(ct[i] for i in selected)
@@ -133,9 +141,6 @@ def generate(model, prompt, rotary_factory, config=Config(), *, variant='joint',
                     clean=tuple(sorted(set(optional+mandatory+masks)))
                     ready=prepare(runtime.ledger.tokens,clean,rotary,device,candidate_positions=positions,
                                   candidate_tokens=proposals,dag=subdag)
-                    if audit is not None:
-                        # Read-only private controls are counted separately, never as free online calls.
-                        audit(runtime,ready,subdag)
                     verify=runtime.run(ready);stats['verify_calls'] += 1;stats['queries'] += verify['queries']
                     vp=probabilities(verify['logits'])
                     proposed=torch.tensor(proposals,device=device)
