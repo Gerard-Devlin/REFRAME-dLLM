@@ -1,0 +1,170 @@
+{
+  "methods": {
+    "coverage_recent": {
+      "correct": 3,
+      "correct_ids": [
+        "HumanEval/122",
+        "HumanEval/34",
+        "HumanEval/30"
+      ],
+      "mean_seconds": 1.8977299325633794,
+      "mean_nfe": 59.5625,
+      "packet_draft_prefix_commits": 1485,
+      "packet_total_commits": 2723,
+      "prefix_share": 0.5453543885420492,
+      "mean_bootstrap_commits": 1,
+      "packets": 937,
+      "packets_with_no_accepted_draft": 436,
+      "packets_with_16_commits": 40,
+      "past_horizon_or_render_mask_cases": 0,
+      "historical_v1_speedup": 1.596090611220583,
+      "historical_flash_speedup": 0.7221705695478113,
+      "v1_right_method_wrong": [
+        "HumanEval/144",
+        "HumanEval/124",
+        "HumanEval/83",
+        "HumanEval/158"
+      ],
+      "method_right_v1_wrong": []
+    },
+    "coverage_age": {
+      "correct": 4,
+      "correct_ids": [
+        "HumanEval/122",
+        "HumanEval/34",
+        "HumanEval/30",
+        "HumanEval/158"
+      ],
+      "mean_seconds": 1.696204665582627,
+      "mean_nfe": 52.75,
+      "packet_draft_prefix_commits": 1554,
+      "packet_total_commits": 2862,
+      "prefix_share": 0.5429769392033543,
+      "mean_bootstrap_commits": 1,
+      "packets": 828,
+      "packets_with_no_accepted_draft": 370,
+      "packets_with_16_commits": 51,
+      "past_horizon_or_render_mask_cases": 0,
+      "historical_v1_speedup": 1.7857213751715926,
+      "historical_flash_speedup": 0.8079713103350529,
+      "v1_right_method_wrong": [
+        "HumanEval/144",
+        "HumanEval/124",
+        "HumanEval/83"
+      ],
+      "method_right_v1_wrong": []
+    }
+  },
+  "baselines": {
+    "v1": {
+      "correct": 7,
+      "total": 16,
+      "accuracy": 0.4375,
+      "correct_ids": [
+        "HumanEval/122",
+        "HumanEval/144",
+        "HumanEval/34",
+        "HumanEval/124",
+        "HumanEval/30",
+        "HumanEval/83",
+        "HumanEval/158"
+      ],
+      "correctness": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true,
+        true
+      ],
+      "mean_seconds": 3.02894892799668
+    },
+    "focus": {
+      "correct": 2,
+      "total": 16,
+      "accuracy": 0.125,
+      "correct_ids": [
+        "HumanEval/34",
+        "HumanEval/30"
+      ],
+      "correctness": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        false
+      ],
+      "mean_seconds": 2.6874403188121505
+    },
+    "llada": {
+      "correct": 4,
+      "total": 16,
+      "accuracy": 0.25,
+      "correct_ids": [
+        "HumanEval/122",
+        "HumanEval/34",
+        "HumanEval/30",
+        "HumanEval/158"
+      ],
+      "correctness": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        true,
+        false,
+        false,
+        true,
+        false,
+        true
+      ],
+      "mean_seconds": 14.31027952407021
+    }
+  },
+  "flash_same16": {
+    "correct": 5,
+    "correct_ids": [
+      "HumanEval/122",
+      "HumanEval/25",
+      "HumanEval/34",
+      "HumanEval/30",
+      "HumanEval/158"
+    ],
+    "mean_seconds": 1.3704847062472254,
+    "mean_nfe": 46.875,
+    "scope": "Saved same16IDs optimized Flash, official execution scores; historical request timing"
+  },
+  "same_ids_verified": true,
+  "local_v7_source_hashes_verified": true,
+  "server_frozen_source_set_verified": true,
+  "cpu_tests": 37,
+  "tested_source_sha256": "1113650a2865a4b267ac8c5062b4707cd129fa53be2e3964307ce62fb3354afb",
+  "scope": "Same16reused development questions; historical baseline timings; prefix-share accounting is not an online ablation or a quality certificate"
+}

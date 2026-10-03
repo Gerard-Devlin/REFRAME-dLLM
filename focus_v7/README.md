@@ -255,3 +255,62 @@ periodic full refresh or stricter thresholds solve the problem, nor rule out
 all implementation defects. Full per-question outputs, scored outcomes, source
 snapshot, test/launch logs and CPU analysis are in
 `results/revision16_20261003/`, including `cpu_v1_comparison.json`.
+
+## Query-budget redistribution: local improvement, still behind Flash
+
+The next fixed experiment reallocates the64query packet from T16/C16/D16/A16 to
+T16/C32/D8/A8. Clean predictions cover twice as many MASK positions, while eight
+candidates get private draft/audit replicas. Admission stays.9for clean roots
+and.8for cumulative prefix probability; at most16positions commit so mandatory
+identity repair fits. One-version geometry and32layer label isolation remain.
+
+Two predeclared variants compare recent-background fill with oldest-cache-version
+rotation, after mandatory repairs. No paid full refresh, teacher future state,
+training or extra online forward was introduced. The new implementation with
+C16/D16 reproduced the saved conservative first two prompts' exact text, raw
+tokens, actions and NFE. Real GPU repeat and own/later-label controls had zero
+eligible-logit/private-KV error and preserved public cache. Six shadow calls were
+separate from online NFE.
+
+| Method on the same16HumanEval IDs | Correct | Mean seconds | Mean model calls |
+|---|---:|---:|---:|
+| Saved original v1 |7/16|3.028949|historical|
+| Saved original FOCUS |2/16|2.687440|historical|
+| Saved FOCUS IO/infra adapter |2/16|2.396020|historical|
+| Saved optimized Flash |5/16|1.370485|46.8750|
+| Previous conservative C16/D16 |2/16|2.633215|85.9375|
+| C32/D8, recent background |3/16|1.897730|59.5625|
+| C32/D8, oldest-version rotation |4/16|1.696205|52.7500|
+
+Age rotation solves HumanEval/122,34,30,158, but not144,124,83which v1 solves.
+All four age-correct questions are also v1-correct. It is1.79x faster than saved
+v1 and1.41x faster than engineering FOCUS, but loses3/16versus v1. Against saved
+optimized Flash it is23.8% slower and gets one fewer right. Historical same-ID
+timings are not contemporaneous paired GPU controls. These reused development
+questions do not replace FOCUS's43/128larger result.
+
+This improves the previous conservative implementation, but does not satisfy
+the strong-baseline goal or establish publishable novelty. Do not expand solely
+because it beats FOCUS on an unusually weak small subset. Accepted draft prefixes
+contribute1554/2862packet commits (54.30%) for age rotation;370/828packets accept
+no draft. Accounting is not a causal audit-benefit estimate or proof that removing
+verification would be free. Neither variant has a past-horizon/count-render MASK
+anomaly here; formatting does not explain away the remaining quality gap.
+
+The first attempt stopped before scoring at a compact-readout observer API error.
+Its log, successful legacy controls and tested source remain in
+`results/budget16_readout_failure_20261003/`. After actual process termination and
+a before-repair snapshot, only the new observer/test and explicit retry launcher
+were repaired; the algorithm did not change. The repaired run passed37CPU checks,
+completed exit0 and retained all frozen/protected source hashes. The own GPU
+process exited; no baseline was regenerated. Complete records, controls, logs,
+tested source and CPU validation are in `results/budget16_20261003/`. A later small
+foreign GPU allocation is user-authorized and was not stopped/reset.
+
+## FreeDave source review
+
+`FREEDAVE_IMPLEMENTATION_REVIEW.md` records the reviewed official commit and
+concrete differences in selected-state prediction handoff, branch coverage,
+private cache persistence, numerical reference and physical model-call counting.
+Eight CPU primitive checks are in `results/freedave_review_20261003.json`.
+They do not constitute a new decoder, FreeDave GPU result or quality guarantee.

@@ -1,0 +1,32 @@
+{
+  "completed_questions": 16,
+  "total_questions": 16,
+  "summary": {
+    "coverage_recent": {
+      "completed": 16,
+      "correct": 3,
+      "accuracy": 0.1875,
+      "mean_seconds": 1.8977299325633794,
+      "mean_nfe": 59.5625,
+      "mean_output_tokens": 152.875,
+      "truncations": 0,
+      "mean_clean_coverage": 29.77801494130203,
+      "mean_audit_width": 7.854855923159018,
+      "historical_engineering_focus_speedup": 1.2625714926504013,
+      "scope": "16 reused development IDs; not independent accuracy/noninferiority evidence"
+    },
+    "coverage_age": {
+      "completed": 16,
+      "correct": 4,
+      "accuracy": 0.25,
+      "mean_seconds": 1.696204665582627,
+      "mean_nfe": 52.75,
+      "mean_output_tokens": 158.125,
+      "truncations": 0,
+      "mean_clean_coverage": 29.6219806763285,
+      "mean_audit_width": 7.823671497584541,
+      "historical_engineering_focus_speedup": 1.4125770092613712,
+      "scope": "16 reused development IDs; not independent accuracy/noninferiority evidence"
+    }
+  }
+}

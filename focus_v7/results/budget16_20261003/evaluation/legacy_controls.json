@@ -1,0 +1,12 @@
+[
+  {
+    "id": "HumanEval/122",
+    "tokens_actions_text_nfe_exact": true,
+    "excluded_from_report": true
+  },
+  {
+    "id": "HumanEval/54",
+    "tokens_actions_text_nfe_exact": true,
+    "excluded_from_report": true
+  }
+]

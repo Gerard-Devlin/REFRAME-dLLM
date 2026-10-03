@@ -1,0 +1,3205 @@
+{
+  "index": 3,
+  "id": "HumanEval/140",
+  "method": "coverage_recent",
+  "result": {
+    "text": "def fix_spaces(text):\n    \"\"\"\n    Given a string text, replace all spaces in it with underscores, \n    and if a string has more than 2 consecutive spaces, \n    then replace all consecutive spaces with - \n    \n    fix_spaces(\"Example\") == \"Example\"\n    fix_spaces(\"Example 1\") == \"Example_1\"\n    fix_spaces(\" Example 2\") == \"_Example_2\"\n    fix_spaces(\" Example   3\") == \"_Example-3\"\n    \"\"\"\n    result = \"\"\n    for char in text:\n        if char == ' ':\n            result += '_'\n        elif char == ' ' and len(result) > 0:\n            result += '-'\n        else:\n            result += char\n    return result",
+    "raw_token_ids": [
+      1413,
+      6878,
+      18256,
+      3395,
+      23656,
+      3535,
+      198,
+      305,
+      9913,
+      198,
+      305,
+      16050,
+      259,
+      2410,
+      3019,
+      11,
+      6165,
+      654,
+      11435,
+      296,
+      403,
+      391,
+      89576,
+      11,
+      220,
+      198,
+      305,
+      301,
+      624,
+      259,
+      2410,
+      723,
+      778,
+      1040,
+      220,
+      17,
+      23420,
+      11435,
+      11,
+      220,
+      198,
+      305,
+      1310,
+      6165,
+      654,
+      23420,
+      11435,
+      391,
+      537,
+      220,
+      198,
+      263,
+      198,
+      305,
+      6878,
+      18256,
+      3395,
+      1070,
+      19464,
+      2442,
+      1613,
+      477,
+      19464,
+      1,
+      198,
+      305,
+      6878,
+      18256,
+      3395,
+      1070,
+      19464,
+      220,
+      16,
+      2442,
+      1613,
+      477,
+      19464,
+      62,
+      16,
+      1,
+      198,
+      305,
+      6878,
+      18256,
+      3395,
+      1070,
+      17084,
+      220,
+      17,
+      2442,
+      1613,
+      24370,
+      19464,
+      62,
+      17,
+      1,
+      198,
+      305,
+      6878,
+      18256,
+      3395,
+      1070,
+      17084,
+      256,
+      220,
+      18,
+      2442,
+      1613,
+      24370,
+      19464,
+      12,
+      18,
+      1,
+      198,
+      305,
+      9913,
+      198,
+      305,
+      1490,
+      373,
+      4260,
+      198,
+      305,
+      352,
+      1740,
+      296,
+      3019,
+      25,
+      198,
+      394,
+      624,
+      1740,
+      1613,
+      689,
+      30241,
+      198,
+      542,
+      1490,
+      4780,
+      113906,
+      198,
+      394,
+      13918,
+      1740,
+      1613,
+      689,
+      689,
+      301,
+      6496,
+      14795,
+      8,
+      1944,
+      220,
+      15,
+      25,
+      198,
+      542,
+      1490,
+      4780,
+      88782,
+      198,
+      394,
+      1942,
+      25,
+      198,
+      542,
+      1490,
+      4780,
+      1740,
+      198,
+      305,
+      944,
+      1490,
+      126348,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336
+    ],
+    "nfe": 59,
+    "packets": [
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 7,
+        "correction": null,
+        "positions": [
+          129,
+          130,
+          134,
+          133,
+          132,
+          135,
+          136
+        ],
+        "tokens": [
+          1413,
+          6878,
+          3535,
+          23656,
+          3395,
+          198,
+          305
+        ],
+        "dirty": [
+          129,
+          130,
+          134,
+          133,
+          132,
+          135,
+          136
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 305,
+        "positions": [
+          139
+        ],
+        "tokens": [
+          305
+        ],
+        "dirty": [
+          139
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 5,
+        "progress": 11,
+        "correction": null,
+        "positions": [
+          138,
+          140,
+          143,
+          137,
+          146,
+          144,
+          147,
+          149,
+          145,
+          141,
+          142
+        ],
+        "tokens": [
+          198,
+          16050,
+          3019,
+          9913,
+          654,
+          11,
+          11435,
+          403,
+          6165,
+          259,
+          2410
+        ],
+        "dirty": [
+          144,
+          147,
+          149,
+          145,
+          141,
+          142
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 4,
+        "progress": 5,
+        "correction": null,
+        "positions": [
+          148,
+          150,
+          151,
+          165,
+          152
+        ],
+        "tokens": [
+          296,
+          391,
+          89576,
+          23420,
+          11
+        ],
+        "dirty": [
+          152
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 14,
+        "correction": null,
+        "positions": [
+          162,
+          166,
+          159,
+          161,
+          157,
+          164,
+          163,
+          160,
+          167,
+          154,
+          158,
+          156,
+          155,
+          153
+        ],
+        "tokens": [
+          1040,
+          11435,
+          2410,
+          778,
+          624,
+          17,
+          220,
+          723,
+          11,
+          198,
+          259,
+          301,
+          305,
+          220
+        ],
+        "dirty": [
+          167,
+          154,
+          158,
+          156,
+          155,
+          153
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          170,
+          169,
+          168
+        ],
+        "tokens": [
+          305,
+          198,
+          220
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 6165,
+        "positions": [
+          172
+        ],
+        "tokens": [
+          6165
+        ],
+        "dirty": [
+          172
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 4,
+        "correction": null,
+        "positions": [
+          173,
+          171,
+          175,
+          174
+        ],
+        "tokens": [
+          654,
+          1310,
+          11435,
+          23420
+        ],
+        "dirty": [
+          174
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          176
+        ],
+        "tokens": [
+          391
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 198,
+        "positions": [
+          179
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [
+          179
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 305,
+        "positions": [
+          182
+        ],
+        "tokens": [
+          305
+        ],
+        "dirty": [
+          182
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          180,
+          181
+        ],
+        "tokens": [
+          263,
+          198
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          185
+        ],
+        "tokens": [
+          3395
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 16,
+        "correction": null,
+        "positions": [
+          186,
+          193,
+          188,
+          194,
+          192,
+          200,
+          198,
+          187,
+          183,
+          184,
+          197,
+          191,
+          196,
+          195,
+          190,
+          199
+        ],
+        "tokens": [
+          1070,
+          198,
+          2442,
+          305,
+          1,
+          220,
+          1070,
+          19464,
+          6878,
+          18256,
+          3395,
+          19464,
+          18256,
+          6878,
+          477,
+          19464
+        ],
+        "dirty": [
+          183,
+          184,
+          197,
+          191,
+          196,
+          195,
+          190,
+          199
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 16,
+        "correction": null,
+        "positions": [
+          189,
+          203,
+          212,
+          202,
+          207,
+          201,
+          209,
+          208,
+          213,
+          205,
+          214,
+          211,
+          210,
+          204,
+          221,
+          216
+        ],
+        "tokens": [
+          1613,
+          1613,
+          18256,
+          2442,
+          16,
+          16,
+          198,
+          1,
+          3395,
+          19464,
+          1070,
+          6878,
+          305,
+          477,
+          19464,
+          220
+        ],
+        "dirty": [
+          213,
+          205,
+          214,
+          211,
+          210,
+          204,
+          221,
+          216
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 16,
+        "correction": null,
+        "positions": [
+          228,
+          219,
+          218,
+          226,
+          225,
+          217,
+          229,
+          224,
+          230,
+          233,
+          227,
+          238,
+          223,
+          242,
+          236,
+          234
+        ],
+        "tokens": [
+          18256,
+          1613,
+          2442,
+          305,
+          198,
+          17,
+          3395,
+          1,
+          1070,
+          220,
+          6878,
+          19464,
+          17,
+          198,
+          1613,
+          18
+        ],
+        "dirty": [
+          230,
+          233,
+          227,
+          238,
+          223,
+          242,
+          236,
+          234
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 13,
+        "correction": null,
+        "positions": [
+          240,
+          237,
+          243,
+          232,
+          206,
+          241,
+          235,
+          239,
+          220,
+          244,
+          245,
+          222,
+          246
+        ],
+        "tokens": [
+          18,
+          24370,
+          305,
+          256,
+          62,
+          1,
+          2442,
+          12,
+          24370,
+          9913,
+          198,
+          62,
+          305
+        ],
+        "dirty": [
+          220,
+          244,
+          245,
+          222,
+          246
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          215
+        ],
+        "tokens": [
+          17084
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 17084,
+        "positions": [
+          231
+        ],
+        "tokens": [
+          17084
+        ],
+        "dirty": [
+          231
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 537,
+        "positions": [
+          177
+        ],
+        "tokens": [
+          537
+        ],
+        "dirty": [
+          177
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 220,
+        "positions": [
+          178
+        ],
+        "tokens": [
+          220
+        ],
+        "dirty": [
+          178
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 373,
+        "positions": [
+          248
+        ],
+        "tokens": [
+          373
+        ],
+        "dirty": [
+          248
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 305,
+        "positions": [
+          251
+        ],
+        "tokens": [
+          305
+        ],
+        "dirty": [
+          251
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          250
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          252
+        ],
+        "tokens": [
+          352
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          247,
+          255,
+          254
+        ],
+        "tokens": [
+          1490,
+          3019,
+          296
+        ],
+        "dirty": [
+          255,
+          254
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 4,
+        "correction": null,
+        "positions": [
+          256,
+          257,
+          258,
+          259
+        ],
+        "tokens": [
+          25,
+          198,
+          394,
+          624
+        ],
+        "dirty": [
+          259
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          253
+        ],
+        "tokens": [
+          1740
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          260
+        ],
+        "tokens": [
+          1740
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          262
+        ],
+        "tokens": [
+          689
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          264
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          261,
+          265,
+          263
+        ],
+        "tokens": [
+          1613,
+          542,
+          30241
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 1490,
+        "positions": [
+          266
+        ],
+        "tokens": [
+          1490
+        ],
+        "dirty": [
+          266
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 4780,
+        "positions": [
+          267
+        ],
+        "tokens": [
+          4780
+        ],
+        "dirty": [
+          267
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 4260,
+        "positions": [
+          249
+        ],
+        "tokens": [
+          4260
+        ],
+        "dirty": [
+          249
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 198,
+        "positions": [
+          269
+        ],
+        "tokens": [
+          198
+        ],
+        "dirty": [
+          269
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 13918,
+        "positions": [
+          271
+        ],
+        "tokens": [
+          13918
+        ],
+        "dirty": [
+          271
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          270
+        ],
+        "tokens": [
+          394
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 689,
+        "positions": [
+          274
+        ],
+        "tokens": [
+          689
+        ],
+        "dirty": [
+          274
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          272
+        ],
+        "tokens": [
+          1740
+        ],
+        "dirty": [
+          272
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          273
+        ],
+        "tokens": [
+          1613
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 689,
+        "positions": [
+          275
+        ],
+        "tokens": [
+          689
+        ],
+        "dirty": [
+          275
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 301,
+        "positions": [
+          276
+        ],
+        "tokens": [
+          301
+        ],
+        "dirty": [
+          276
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 113906,
+        "positions": [
+          268
+        ],
+        "tokens": [
+          113906
+        ],
+        "dirty": [
+          268
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 6496,
+        "positions": [
+          277
+        ],
+        "tokens": [
+          6496
+        ],
+        "dirty": [
+          277
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 0,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          279
+        ],
+        "tokens": [
+          8
+        ],
+        "dirty": [
+          279
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          281,
+          280
+        ],
+        "tokens": [
+          220,
+          1944
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          283
+        ],
+        "tokens": [
+          25
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          284,
+          278,
+          285
+        ],
+        "tokens": [
+          198,
+          14795,
+          542
+        ],
+        "dirty": [
+          285
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 3,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          287,
+          286,
+          289
+        ],
+        "tokens": [
+          4780,
+          1490,
+          198
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          288
+        ],
+        "tokens": [
+          88782
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 1,
+        "progress": 1,
+        "correction": null,
+        "positions": [
+          290
+        ],
+        "tokens": [
+          394
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 6,
+        "progress": 6,
+        "correction": null,
+        "positions": [
+          291,
+          293,
+          292,
+          298,
+          294,
+          295
+        ],
+        "tokens": [
+          1942,
+          198,
+          25,
+          198,
+          542,
+          1490
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 4,
+        "progress": 4,
+        "correction": null,
+        "positions": [
+          297,
+          296,
+          299,
+          300
+        ],
+        "tokens": [
+          1740,
+          4780,
+          305,
+          944
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 2,
+        "progress": 2,
+        "correction": null,
+        "positions": [
+          301,
+          318
+        ],
+        "tokens": [
+          1490,
+          126081
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 8,
+        "accepted": 8,
+        "progress": 13,
+        "correction": null,
+        "positions": [
+          313,
+          312,
+          314,
+          315,
+          317,
+          311,
+          310,
+          309,
+          316,
+          308,
+          307,
+          306,
+          305
+        ],
+        "tokens": [
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081,
+          126081
+        ],
+        "dirty": [
+          316,
+          308,
+          307,
+          306,
+          305
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 4,
+        "accepted": 3,
+        "progress": 3,
+        "correction": null,
+        "positions": [
+          304,
+          303,
+          302
+        ],
+        "tokens": [
+          126081,
+          126081,
+          126348
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      },
+      {
+        "k": 1,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 15,
+        "positions": [
+          282
+        ],
+        "tokens": [
+          15
+        ],
+        "dirty": [
+          282
+        ],
+        "queried_rows": 64
+      }
+    ],
+    "bootstrap_commits": 1,
+    "cold_proposal_positions": 171,
+    "cold_projection_calls": 55,
+    "committed_count": 190,
+    "first_eos": 174,
+    "discovered_eos": 189,
+    "truncated": false,
+    "horizon": 190,
+    "fixed_work": false,
+    "sdpa_calls": 0,
+    "approximation": "Conditional private audit, expanded clean coverage, approximate background KV",
+    "query_geometry": [
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 32,
+        "draft": 8,
+        "tracked": 16,
+        "query_rows": 64
+      },
+      {
+        "clean": 17,
+        "draft": 8,
+        "tracked": 31,
+        "query_rows": 64
+      },
+      {
+        "clean": 4,
+        "draft": 4,
+        "tracked": 52,
+        "query_rows": 64
+      },
+      {
+        "clean": 1,
+        "draft": 1,
+        "tracked": 61,
+        "query_rows": 64
+      }
+    ],
+    "tracked_history": [
+      {
+        "step": 0,
+        "tracked": [
+          131,
+          128,
+          127,
+          126,
+          125,
+          124,
+          123,
+          122,
+          121,
+          120,
+          119,
+          118,
+          117,
+          116,
+          115,
+          114
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 1,
+        "tracked": [
+          129,
+          130,
+          134,
+          133,
+          132,
+          135,
+          136,
+          131,
+          128,
+          127,
+          126,
+          125,
+          124,
+          123,
+          122,
+          121
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 2,
+        "tracked": [
+          139,
+          136,
+          135,
+          132,
+          133,
+          134,
+          130,
+          129,
+          131,
+          128,
+          127,
+          126,
+          125,
+          124,
+          123,
+          122
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 3,
+        "tracked": [
+          138,
+          140,
+          143,
+          137,
+          146,
+          144,
+          147,
+          149,
+          145,
+          141,
+          142,
+          139,
+          136,
+          135,
+          132,
+          133
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 4,
+        "tracked": [
+          148,
+          150,
+          151,
+          165,
+          152,
+          142,
+          141,
+          145,
+          149,
+          147,
+          144,
+          146,
+          137,
+          143,
+          140,
+          138
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 5,
+        "tracked": [
+          162,
+          166,
+          159,
+          161,
+          157,
+          164,
+          163,
+          160,
+          167,
+          154,
+          158,
+          156,
+          155,
+          153,
+          152,
+          165
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 6,
+        "tracked": [
+          170,
+          169,
+          168,
+          153,
+          155,
+          156,
+          158,
+          154,
+          167,
+          160,
+          163,
+          164,
+          157,
+          161,
+          159,
+          166
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 7,
+        "tracked": [
+          172,
+          168,
+          169,
+          170,
+          153,
+          155,
+          156,
+          158,
+          154,
+          167,
+          160,
+          163,
+          164,
+          157,
+          161,
+          159
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 8,
+        "tracked": [
+          173,
+          171,
+          175,
+          174,
+          172,
+          168,
+          169,
+          170,
+          153,
+          155,
+          156,
+          158,
+          154,
+          167,
+          160,
+          163
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 9,
+        "tracked": [
+          176,
+          174,
+          175,
+          171,
+          173,
+          172,
+          168,
+          169,
+          170,
+          153,
+          155,
+          156,
+          158,
+          154,
+          167,
+          160
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 10,
+        "tracked": [
+          179,
+          176,
+          174,
+          175,
+          171,
+          173,
+          172,
+          168,
+          169,
+          170,
+          153,
+          155,
+          156,
+          158,
+          154,
+          167
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 11,
+        "tracked": [
+          182,
+          179,
+          176,
+          174,
+          175,
+          171,
+          173,
+          172,
+          168,
+          169,
+          170,
+          153,
+          155,
+          156,
+          158,
+          154
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 12,
+        "tracked": [
+          180,
+          181,
+          182,
+          179,
+          176,
+          174,
+          175,
+          171,
+          173,
+          172,
+          168,
+          169,
+          170,
+          153,
+          155,
+          156
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 13,
+        "tracked": [
+          185,
+          181,
+          180,
+          182,
+          179,
+          176,
+          174,
+          175,
+          171,
+          173,
+          172,
+          168,
+          169,
+          170,
+          153,
+          155
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 14,
+        "tracked": [
+          186,
+          193,
+          188,
+          194,
+          192,
+          200,
+          198,
+          187,
+          183,
+          184,
+          197,
+          191,
+          196,
+          195,
+          190,
+          199
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 15,
+        "tracked": [
+          189,
+          203,
+          212,
+          202,
+          207,
+          201,
+          209,
+          208,
+          213,
+          205,
+          214,
+          211,
+          210,
+          204,
+          221,
+          216
+        ],
+        "max_age": 15
+      },
+      {
+        "step": 16,
+        "tracked": [
+          228,
+          219,
+          218,
+          226,
+          225,
+          217,
+          229,
+          224,
+          230,
+          233,
+          227,
+          238,
+          223,
+          242,
+          236,
+          234
+        ],
+        "max_age": 16
+      },
+      {
+        "step": 17,
+        "tracked": [
+          240,
+          237,
+          243,
+          232,
+          206,
+          241,
+          235,
+          239,
+          220,
+          244,
+          245,
+          222,
+          246,
+          234,
+          236,
+          242
+        ],
+        "max_age": 17
+      },
+      {
+        "step": 18,
+        "tracked": [
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206,
+          232,
+          243,
+          237,
+          240,
+          234,
+          236
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 19,
+        "tracked": [
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206,
+          232,
+          243,
+          237,
+          240,
+          234
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 20,
+        "tracked": [
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206,
+          232,
+          243,
+          237,
+          240
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 21,
+        "tracked": [
+          178,
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206,
+          232,
+          243,
+          237
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 22,
+        "tracked": [
+          248,
+          178,
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206,
+          232,
+          243
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 23,
+        "tracked": [
+          251,
+          248,
+          178,
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206,
+          232
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 24,
+        "tracked": [
+          250,
+          251,
+          248,
+          178,
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241,
+          206
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 25,
+        "tracked": [
+          252,
+          250,
+          251,
+          248,
+          178,
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220,
+          239,
+          235,
+          241
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 26,
+        "tracked": [
+          247,
+          255,
+          254,
+          252,
+          250,
+          251,
+          248,
+          178,
+          177,
+          231,
+          215,
+          246,
+          222,
+          245,
+          244,
+          220
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 27,
+        "tracked": [
+          256,
+          257,
+          258,
+          259,
+          254,
+          255,
+          247,
+          252,
+          250,
+          251,
+          248,
+          178,
+          177,
+          231,
+          215,
+          246
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 28,
+        "tracked": [
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247,
+          252,
+          250,
+          251,
+          248,
+          178,
+          177,
+          231,
+          215
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 29,
+        "tracked": [
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247,
+          252,
+          250,
+          251,
+          248,
+          178,
+          177,
+          231
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 30,
+        "tracked": [
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247,
+          252,
+          250,
+          251,
+          248,
+          178,
+          177
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 31,
+        "tracked": [
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247,
+          252,
+          250,
+          251,
+          248,
+          178
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 32,
+        "tracked": [
+          261,
+          265,
+          263,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247,
+          252,
+          250
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 33,
+        "tracked": [
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247,
+          252
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 34,
+        "tracked": [
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255,
+          247
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 35,
+        "tracked": [
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254,
+          255
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 36,
+        "tracked": [
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256,
+          254
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 37,
+        "tracked": [
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257,
+          256
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 38,
+        "tracked": [
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258,
+          257
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 39,
+        "tracked": [
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259,
+          258
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 40,
+        "tracked": [
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 41,
+        "tracked": [
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 42,
+        "tracked": [
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 43,
+        "tracked": [
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 44,
+        "tracked": [
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 45,
+        "tracked": [
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 46,
+        "tracked": [
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 47,
+        "tracked": [
+          281,
+          280,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 48,
+        "tracked": [
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 49,
+        "tracked": [
+          284,
+          278,
+          285,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271
+        ],
+        "max_age": 1
+      },
+      {
+        "step": 50,
+        "tracked": [
+          287,
+          286,
+          289,
+          285,
+          278,
+          284,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 51,
+        "tracked": [
+          288,
+          289,
+          286,
+          287,
+          285,
+          278,
+          284,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 52,
+        "tracked": [
+          290,
+          288,
+          289,
+          286,
+          287,
+          285,
+          278,
+          284,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 53,
+        "tracked": [
+          291,
+          293,
+          292,
+          298,
+          294,
+          295,
+          290,
+          288,
+          289,
+          286,
+          287,
+          285,
+          278,
+          284,
+          283,
+          280
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 54,
+        "tracked": [
+          297,
+          296,
+          299,
+          300,
+          295,
+          294,
+          298,
+          292,
+          293,
+          291,
+          290,
+          288,
+          289,
+          286,
+          287,
+          285
+        ],
+        "max_age": 0
+      },
+      {
+        "step": 55,
+        "tracked": [
+          301,
+          318,
+          300,
+          299,
+          296,
+          297,
+          295,
+          294,
+          298,
+          292,
+          293,
+          291,
+          290,
+          288,
+          289,
+          286,
+          287,
+          285,
+          278,
+          284,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274
+        ],
+        "max_age": 5
+      },
+      {
+        "step": 56,
+        "tracked": [
+          313,
+          312,
+          314,
+          315,
+          317,
+          311,
+          310,
+          309,
+          316,
+          308,
+          307,
+          306,
+          305,
+          318,
+          301,
+          300,
+          299,
+          296,
+          297,
+          295,
+          294,
+          298,
+          292,
+          293,
+          291,
+          290,
+          288,
+          289,
+          286,
+          287,
+          285,
+          278,
+          284,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265
+        ],
+        "max_age": 9
+      },
+      {
+        "step": 57,
+        "tracked": [
+          304,
+          303,
+          302,
+          305,
+          306,
+          307,
+          308,
+          316,
+          309,
+          310,
+          311,
+          317,
+          315,
+          314,
+          312,
+          313,
+          318,
+          301,
+          300,
+          299,
+          296,
+          297,
+          295,
+          294,
+          298,
+          292,
+          293,
+          291,
+          290,
+          288,
+          289,
+          286,
+          287,
+          285,
+          278,
+          284,
+          283,
+          280,
+          281,
+          279,
+          277,
+          268,
+          276,
+          275,
+          273,
+          272,
+          274,
+          270,
+          271,
+          269,
+          249,
+          267,
+          266,
+          263,
+          265,
+          261,
+          264,
+          262,
+          260,
+          253,
+          259
+        ],
+        "max_age": 16
+      }
+    ],
+    "configuration": {
+      "clean_limit": 32,
+      "draft_limit": 8,
+      "tracking": "recent",
+      "threshold": 0.9,
+      "gamma": 0.8,
+      "query_width": 64
+    },
+    "seconds": 1.8714912943542004,
+    "output_tokens": 173
+  },
+  "correct": false
+}
