@@ -1,0 +1,1296 @@
+{
+  "index": 31,
+  "id": "HumanEval/49",
+  "result": {
+    "text": "To implement the function `pmod` correctly, we need to compute \\(2^n^n \\mod p`\\). This operation can be efficiently done using modular arithmetic. Here's the complete function implementation:\n):\n\n```python\ndef modp(n: int, p: int):\n    \"\"\"Return 2^n modulo p (be aware of numerics).\n    >>> modp(3, 5)\n    3\n    >>> modp(1101, 101)\n    2\n    >>> modp(0, 101)\n    1\n    >>> modp(3, 11)\n    8\n    >>> modp(100, 101)\n    1\n    \"\"\"\n    return (2 ** n) % p\n```\n\nThis function uses the `**` operator (%) to compute the power and the modulo `` operator to get the result modulo \\(p\\). The `%` operator is used to find the remainder when the",
+    "raw_token_ids": [
+      2088,
+      4479,
+      268,
+      1399,
+      2874,
+      103098,
+      63,
+      13280,
+      11,
+      438,
+      1050,
+      297,
+      15752,
+      24946,
+      17,
+      21649,
+      21649,
+      795,
+      4058,
+      282,
+      63,
+      59,
+      931,
+      1077,
+      6973,
+      560,
+      367,
+      20375,
+      3226,
+      1661,
+      37007,
+      43093,
+      13,
+      5177,
+      698,
+      268,
+      4486,
+      1399,
+      9183,
+      25,
+      198,
+      3535,
+      198,
+      198,
+      2891,
+      18514,
+      198,
+      1413,
+      1273,
+      79,
+      3733,
+      25,
+      616,
+      11,
+      282,
+      25,
+      616,
+      3535,
+      198,
+      305,
+      9913,
+      9854,
+      220,
+      17,
+      21649,
+      73591,
+      282,
+      363,
+      2339,
+      6805,
+      300,
+      6868,
+      1314,
+      931,
+      198,
+      305,
+      20153,
+      1273,
+      79,
+      7,
+      18,
+      11,
+      220,
+      20,
+      8,
+      198,
+      305,
+      220,
+      18,
+      198,
+      305,
+      20153,
+      1273,
+      79,
+      7,
+      16,
+      16,
+      15,
+      16,
+      11,
+      220,
+      16,
+      15,
+      16,
+      8,
+      198,
+      305,
+      220,
+      17,
+      198,
+      305,
+      20153,
+      1273,
+      79,
+      7,
+      15,
+      11,
+      220,
+      16,
+      15,
+      16,
+      8,
+      198,
+      305,
+      220,
+      16,
+      198,
+      305,
+      20153,
+      1273,
+      79,
+      7,
+      18,
+      11,
+      220,
+      16,
+      16,
+      8,
+      198,
+      305,
+      220,
+      23,
+      198,
+      305,
+      20153,
+      1273,
+      79,
+      7,
+      16,
+      15,
+      15,
+      11,
+      220,
+      16,
+      15,
+      16,
+      8,
+      198,
+      305,
+      220,
+      16,
+      198,
+      305,
+      9913,
+      198,
+      305,
+      944,
+      363,
+      17,
+      5321,
+      320,
+      8,
+      2281,
+      282,
+      198,
+      2891,
+      198,
+      198,
+      1921,
+      1399,
+      5349,
+      268,
+      2874,
+      480,
+      63,
+      9275,
+      67338,
+      297,
+      15752,
+      268,
+      2548,
+      301,
+      268,
+      73591,
+      2874,
+      63,
+      9275,
+      297,
+      834,
+      268,
+      1490,
+      73591,
+      24946,
+      79,
+      59,
+      931,
+      468,
+      2874,
+      4,
+      63,
+      9275,
+      341,
+      1440,
+      297,
+      1491,
+      268,
+      14874,
+      950,
+      268,
+      126348,
+      126348,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126081,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336,
+      126336
+    ],
+    "nfe": 41,
+    "packets": [
+      {
+        "k": 16,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 21649,
+        "positions": [
+          146
+        ],
+        "tokens": [
+          21649
+        ],
+        "dirty": [
+          146
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 2,
+        "progress": 3,
+        "correction": 63,
+        "positions": [
+          130,
+          133,
+          136
+        ],
+        "tokens": [
+          2088,
+          1399,
+          63
+        ],
+        "dirty": [
+          136
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 2874,
+        "positions": [
+          144,
+          134
+        ],
+        "tokens": [
+          17,
+          2874
+        ],
+        "dirty": [
+          134
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 2,
+        "progress": 3,
+        "correction": 4058,
+        "positions": [
+          131,
+          149,
+          148
+        ],
+        "tokens": [
+          4479,
+          282,
+          4058
+        ],
+        "dirty": [
+          148
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 4,
+        "progress": 5,
+        "correction": 795,
+        "positions": [
+          143,
+          135,
+          141,
+          140,
+          147
+        ],
+        "tokens": [
+          24946,
+          103098,
+          297,
+          1050,
+          795
+        ],
+        "dirty": [
+          147
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 13280,
+        "positions": [
+          139,
+          137
+        ],
+        "tokens": [
+          438,
+          13280
+        ],
+        "dirty": [
+          137
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 4,
+        "progress": 5,
+        "correction": 25,
+        "positions": [
+          138,
+          142,
+          172,
+          173,
+          169
+        ],
+        "tokens": [
+          11,
+          15752,
+          198,
+          198,
+          25
+        ],
+        "dirty": [
+          169
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 18514,
+        "positions": [
+          175
+        ],
+        "tokens": [
+          18514
+        ],
+        "dirty": [
+          175
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 3,
+        "progress": 4,
+        "correction": 1413,
+        "positions": [
+          171,
+          174,
+          170,
+          177
+        ],
+        "tokens": [
+          3535,
+          2891,
+          198,
+          1413
+        ],
+        "dirty": [
+          177
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 9,
+        "progress": 10,
+        "correction": 1399,
+        "positions": [
+          176,
+          179,
+          180,
+          181,
+          183,
+          178,
+          182,
+          184,
+          165,
+          167
+        ],
+        "tokens": [
+          198,
+          79,
+          3733,
+          25,
+          11,
+          1273,
+          616,
+          282,
+          268,
+          1399
+        ],
+        "dirty": [
+          167
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 4,
+        "progress": 5,
+        "correction": 5177,
+        "positions": [
+          185,
+          186,
+          188,
+          187,
+          163
+        ],
+        "tokens": [
+          25,
+          616,
+          198,
+          3535,
+          5177
+        ],
+        "dirty": [
+          163
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 220,
+        "positions": [
+          189,
+          192
+        ],
+        "tokens": [
+          305,
+          220
+        ],
+        "dirty": [
+          192
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 14,
+        "progress": 15,
+        "correction": 305,
+        "positions": [
+          190,
+          193,
+          194,
+          191,
+          197,
+          202,
+          196,
+          198,
+          200,
+          199,
+          195,
+          164,
+          201,
+          203,
+          205
+        ],
+        "tokens": [
+          9913,
+          17,
+          21649,
+          9854,
+          363,
+          1314,
+          282,
+          2339,
+          300,
+          6805,
+          73591,
+          698,
+          6868,
+          931,
+          305
+        ],
+        "dirty": [
+          205
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 305,
+        "positions": [
+          204,
+          220
+        ],
+        "tokens": [
+          198,
+          305
+        ],
+        "dirty": [
+          220
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 14,
+        "progress": 15,
+        "correction": 1273,
+        "positions": [
+          208,
+          207,
+          210,
+          212,
+          209,
+          211,
+          214,
+          213,
+          219,
+          216,
+          217,
+          215,
+          206,
+          218,
+          222
+        ],
+        "tokens": [
+          79,
+          1273,
+          18,
+          220,
+          7,
+          11,
+          8,
+          20,
+          198,
+          305,
+          220,
+          198,
+          20153,
+          18,
+          1273
+        ],
+        "dirty": [
+          222
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 198,
+        "positions": [
+          221,
+          235
+        ],
+        "tokens": [
+          20153,
+          198
+        ],
+        "dirty": [
+          235
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 14,
+        "progress": 15,
+        "correction": 198,
+        "positions": [
+          223,
+          224,
+          231,
+          229,
+          230,
+          225,
+          236,
+          232,
+          227,
+          228,
+          234,
+          233,
+          226,
+          237,
+          239
+        ],
+        "tokens": [
+          79,
+          7,
+          16,
+          11,
+          220,
+          16,
+          305,
+          15,
+          15,
+          16,
+          8,
+          16,
+          16,
+          220,
+          198
+        ],
+        "dirty": [
+          239
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 20153,
+        "positions": [
+          238,
+          241
+        ],
+        "tokens": [
+          17,
+          20153
+        ],
+        "dirty": [
+          241
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 15,
+        "progress": 16,
+        "correction": 198,
+        "positions": [
+          243,
+          240,
+          244,
+          242,
+          247,
+          248,
+          245,
+          246,
+          249,
+          251,
+          250,
+          253,
+          252,
+          254,
+          255,
+          256
+        ],
+        "tokens": [
+          79,
+          305,
+          7,
+          1273,
+          220,
+          16,
+          15,
+          11,
+          15,
+          8,
+          16,
+          305,
+          198,
+          220,
+          16,
+          198
+        ],
+        "dirty": [
+          256
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 20153,
+        "positions": [
+          258
+        ],
+        "tokens": [
+          20153
+        ],
+        "dirty": [
+          258
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 15,
+        "progress": 16,
+        "correction": 305,
+        "positions": [
+          257,
+          260,
+          264,
+          259,
+          263,
+          261,
+          265,
+          266,
+          269,
+          262,
+          267,
+          268,
+          270,
+          272,
+          271,
+          273
+        ],
+        "tokens": [
+          305,
+          79,
+          220,
+          1273,
+          11,
+          7,
+          16,
+          16,
+          305,
+          18,
+          8,
+          198,
+          220,
+          198,
+          23,
+          305
+        ],
+        "dirty": [
+          273
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 79,
+        "positions": [
+          276
+        ],
+        "tokens": [
+          79
+        ],
+        "dirty": [
+          276
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 15,
+        "progress": 16,
+        "correction": 16,
+        "positions": [
+          275,
+          274,
+          277,
+          278,
+          282,
+          279,
+          280,
+          281,
+          283,
+          286,
+          284,
+          287,
+          288,
+          285,
+          289,
+          290
+        ],
+        "tokens": [
+          1273,
+          20153,
+          7,
+          16,
+          220,
+          15,
+          15,
+          11,
+          16,
+          8,
+          15,
+          198,
+          305,
+          16,
+          220,
+          16
+        ],
+        "dirty": [
+          290
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 8,
+        "positions": [
+          306,
+          301
+        ],
+        "tokens": [
+          198,
+          8
+        ],
+        "dirty": [
+          301
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 10,
+        "progress": 11,
+        "correction": 2891,
+        "positions": [
+          292,
+          294,
+          295,
+          291,
+          293,
+          296,
+          298,
+          299,
+          297,
+          302,
+          305
+        ],
+        "tokens": [
+          305,
+          198,
+          305,
+          198,
+          9913,
+          944,
+          17,
+          5321,
+          363,
+          2281,
+          2891
+        ],
+        "dirty": [
+          305
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 5,
+        "progress": 6,
+        "correction": 1399,
+        "positions": [
+          304,
+          303,
+          300,
+          307,
+          308,
+          309
+        ],
+        "tokens": [
+          198,
+          282,
+          320,
+          198,
+          1921,
+          1399
+        ],
+        "dirty": [
+          309
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 3,
+        "progress": 4,
+        "correction": 268,
+        "positions": [
+          310,
+          311,
+          312,
+          322
+        ],
+        "tokens": [
+          5349,
+          268,
+          2874,
+          268
+        ],
+        "dirty": [
+          322
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 3,
+        "progress": 4,
+        "correction": 480,
+        "positions": [
+          166,
+          168,
+          151,
+          313
+        ],
+        "tokens": [
+          4486,
+          9183,
+          59,
+          480
+        ],
+        "dirty": [
+          313
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 3,
+        "progress": 4,
+        "correction": 268,
+        "positions": [
+          315,
+          314,
+          145,
+          329
+        ],
+        "tokens": [
+          9275,
+          63,
+          21649,
+          268
+        ],
+        "dirty": [
+          329
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 301,
+        "positions": [
+          317,
+          321
+        ],
+        "tokens": [
+          297,
+          301
+        ],
+        "dirty": [
+          321
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 4,
+        "progress": 5,
+        "correction": 834,
+        "positions": [
+          327,
+          330,
+          323,
+          333,
+          328
+        ],
+        "tokens": [
+          297,
+          1490,
+          73591,
+          79,
+          834
+        ],
+        "dirty": [
+          328
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 73591,
+        "positions": [
+          318,
+          331
+        ],
+        "tokens": [
+          15752,
+          73591
+        ],
+        "dirty": [
+          331
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 4,
+        "progress": 5,
+        "correction": 2874,
+        "positions": [
+          334,
+          335,
+          332,
+          336,
+          337
+        ],
+        "tokens": [
+          59,
+          931,
+          24946,
+          468,
+          2874
+        ],
+        "dirty": [
+          337
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 4,
+        "positions": [
+          161,
+          338
+        ],
+        "tokens": [
+          43093,
+          4
+        ],
+        "dirty": [
+          338
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 4,
+        "progress": 5,
+        "correction": 1440,
+        "positions": [
+          339,
+          340,
+          341,
+          343,
+          342
+        ],
+        "tokens": [
+          63,
+          9275,
+          341,
+          297,
+          1440
+        ],
+        "dirty": [
+          342
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 5,
+        "progress": 6,
+        "correction": 14874,
+        "positions": [
+          162,
+          326,
+          159,
+          345,
+          358,
+          346
+        ],
+        "tokens": [
+          13,
+          9275,
+          1661,
+          268,
+          126081,
+          14874
+        ],
+        "dirty": [
+          346
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 0,
+        "progress": 1,
+        "correction": 1491,
+        "positions": [
+          344
+        ],
+        "tokens": [
+          1491
+        ],
+        "dirty": [
+          344
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 16,
+        "accepted": 12,
+        "progress": 13,
+        "correction": 3226,
+        "positions": [
+          319,
+          160,
+          357,
+          356,
+          355,
+          354,
+          347,
+          320,
+          353,
+          348,
+          352,
+          155,
+          158
+        ],
+        "tokens": [
+          268,
+          37007,
+          126081,
+          126081,
+          126081,
+          126081,
+          950,
+          2548,
+          126081,
+          268,
+          126081,
+          560,
+          3226
+        ],
+        "dirty": [
+          158
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 12,
+        "accepted": 1,
+        "progress": 2,
+        "correction": 2874,
+        "positions": [
+          156,
+          324
+        ],
+        "tokens": [
+          367,
+          2874
+        ],
+        "dirty": [
+          324
+        ],
+        "queried_rows": 64
+      },
+      {
+        "k": 10,
+        "accepted": 10,
+        "progress": 10,
+        "correction": null,
+        "positions": [
+          157,
+          152,
+          325,
+          351,
+          153,
+          350,
+          349,
+          316,
+          154,
+          150
+        ],
+        "tokens": [
+          20375,
+          931,
+          63,
+          126081,
+          1077,
+          126348,
+          126348,
+          67338,
+          6973,
+          63
+        ],
+        "dirty": [],
+        "queried_rows": 64
+      }
+    ],
+    "bootstrap_commits": 1,
+    "cold_proposal_positions": 197,
+    "cold_projection_calls": 36,
+    "committed_count": 229,
+    "first_eos": 221,
+    "discovered_eos": 228,
+    "truncated": false,
+    "horizon": 229,
+    "fixed_work": false,
+    "sdpa_calls": 0,
+    "approximation": "conditional prefix KV plus dated cold proposals",
+    "seconds": 1.3152919113636017,
+    "output_tokens": 218
+  },
+  "correct": true
+}

@@ -1,0 +1,182 @@
+{
+  "source_sha256": "99940d9ff1062157767e710d059393a8bbf29ce42fc8ad0ae0b7b20dddcd14f2",
+  "scope": "CPU summary of immutable six-dev outputs; no rescoring or causal claim",
+  "task_summary": {
+    "humaneval": {
+      "flash_verify": {
+        "correct": 1,
+        "total": 2,
+        "mean_seconds": 0.9888838487677276,
+        "mean_nfe": 31,
+        "mean_committed": 193,
+        "truncations": 0
+      },
+      "focus_v7": {
+        "correct": 0,
+        "total": 2,
+        "mean_seconds": 1.0332461912184954,
+        "mean_nfe": 32.5,
+        "mean_committed": 187,
+        "truncations": 0
+      },
+      "latency_ratio": 0.9570650801059797
+    },
+    "mbpp": {
+      "flash_verify": {
+        "correct": 0,
+        "total": 2,
+        "mean_seconds": 0.7033429001457989,
+        "mean_nfe": 18,
+        "mean_committed": 58.5,
+        "truncations": 0
+      },
+      "focus_v7": {
+        "correct": 0,
+        "total": 2,
+        "mean_seconds": 0.44845986599102616,
+        "mean_nfe": 10.5,
+        "mean_committed": 50.5,
+        "truncations": 0
+      },
+      "latency_ratio": 1.5683519384538929
+    },
+    "math": {
+      "flash_verify": {
+        "correct": 0,
+        "total": 2,
+        "mean_seconds": 2.893578819464892,
+        "mean_nfe": 89,
+        "mean_committed": 205,
+        "truncations": 0
+      },
+      "focus_v7": {
+        "correct": 0,
+        "total": 2,
+        "mean_seconds": 1.445338061079383,
+        "mean_nfe": 43.5,
+        "mean_committed": 194,
+        "truncations": 0
+      },
+      "latency_ratio": 2.002008317212624
+    }
+  },
+  "fixed_work": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "flash_seconds": 1.4307069862261415,
+      "ours_seconds": 0.9953484861180186,
+      "ratio": 1.4373930399051236,
+      "flash_nfe": 46,
+      "ours_nfe": 32,
+      "filled_positions": 256
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "flash_seconds": 0.9207879519090056,
+      "ours_seconds": 0.7231297101825476,
+      "ratio": 1.2733371882570848,
+      "flash_nfe": 22,
+      "ours_nfe": 20,
+      "filled_positions": 256
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "flash_seconds": 3.357961842790246,
+      "ours_seconds": 1.630985900759697,
+      "ratio": 2.0588539982020326,
+      "flash_nfe": 104,
+      "ours_nfe": 43,
+      "filled_positions": 256
+    }
+  ],
+  "per_prompt": [
+    {
+      "task": "humaneval",
+      "id": "HumanEval/122",
+      "flash_correct": true,
+      "ours_correct": false,
+      "latency_ratio": 1.751402341107432,
+      "flash_nfe": 46,
+      "ours_nfe": 26,
+      "mean_packet_progress": 5.96,
+      "zero_prefix_packets": 3,
+      "full16_prefix_packets": 1,
+      "cold_proposal_positions": 118,
+      "committed_ratio": 0.7142857142857143
+    },
+    {
+      "task": "humaneval",
+      "id": "HumanEval/54",
+      "flash_correct": false,
+      "ours_correct": false,
+      "latency_ratio": 0.43694305418645646,
+      "flash_nfe": 16,
+      "ours_nfe": 39,
+      "mean_packet_progress": 5.868421052631579,
+      "zero_prefix_packets": 6,
+      "full16_prefix_packets": 0,
+      "cold_proposal_positions": 196,
+      "committed_ratio": 1.2727272727272727
+    },
+    {
+      "task": "mbpp",
+      "id": "358",
+      "flash_correct": false,
+      "ours_correct": false,
+      "latency_ratio": 1.5835556477751958,
+      "flash_nfe": 12,
+      "ours_nfe": 8,
+      "mean_packet_progress": 6.714285714285714,
+      "zero_prefix_packets": 0,
+      "full16_prefix_packets": 0,
+      "cold_proposal_positions": 16,
+      "committed_ratio": 1.0212765957446808
+    },
+    {
+      "task": "mbpp",
+      "id": "337",
+      "flash_correct": false,
+      "ours_correct": false,
+      "latency_ratio": 1.5586669526169425,
+      "flash_nfe": 24,
+      "ours_nfe": 13,
+      "mean_packet_progress": 4.333333333333333,
+      "zero_prefix_packets": 2,
+      "full16_prefix_packets": 0,
+      "cold_proposal_positions": 25,
+      "committed_ratio": 0.7571428571428571
+    },
+    {
+      "task": "math",
+      "id": "prealgebra:test:609",
+      "flash_correct": false,
+      "ours_correct": false,
+      "latency_ratio": 2.5275922003889337,
+      "flash_nfe": 96,
+      "ours_nfe": 37,
+      "mean_packet_progress": 4.333333333333333,
+      "zero_prefix_packets": 9,
+      "full16_prefix_packets": 0,
+      "cold_proposal_positions": 125,
+      "committed_ratio": 0.98125
+    },
+    {
+      "task": "math",
+      "id": "algebra:test:923",
+      "flash_correct": false,
+      "ours_correct": false,
+      "latency_ratio": 1.606092739402829,
+      "flash_nfe": 82,
+      "ours_nfe": 50,
+      "mean_packet_progress": 4.6938775510204085,
+      "zero_prefix_packets": 11,
+      "full16_prefix_packets": 0,
+      "cold_proposal_positions": 199,
+      "committed_ratio": 0.924
+    }
+  ],
+  "conclusion": "Not uniform quality/speed success. HE122 loses a correct answer through real semantic changes (ignores k and uses <=10); not repaired by changing extraction. Fixed-work controls support a local execution opportunity. Cache freshness, conditional masking, ordering and admission are confounded in online generation; no one cause established."
+}

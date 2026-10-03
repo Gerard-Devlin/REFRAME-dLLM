@@ -1,0 +1,26 @@
+{
+  "diagnostic_sha256": "795b0a7928fedcbb7f3c2fe0b3829756b64caae033bdc97aeac4a83733522676",
+  "scope": "CPU retrospective policy distinction. No new token agreement or achieved speed claim. Teacher final reference was not saved for newly admitted tokens.",
+  "k": {
+    "8": {
+      "first_rejection_categories": {
+        "top1_mismatch": 2,
+        "budget_only": 10,
+        "all_pass": 0
+      },
+      "hypothetical_top1_prefix_plus_correction_count": 60,
+      "new_copy_cost_measured": false,
+      "new_tokens_reference_agreement_measured": false
+    },
+    "16": {
+      "first_rejection_categories": {
+        "top1_mismatch": 4,
+        "budget_only": 8,
+        "all_pass": 0
+      },
+      "hypothetical_top1_prefix_plus_correction_count": 83,
+      "new_copy_cost_measured": false,
+      "new_tokens_reference_agreement_measured": false
+    }
+  }
+}
